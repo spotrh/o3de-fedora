@@ -1,0 +1,143 @@
+From df57abde9f96e2aa3e6b0ac54034df6259ab0f1f Mon Sep 17 00:00:00 2001
+From: Sergio Martins <sergio.martins@kdab.com>
+Date: Wed, 6 Jun 2018 10:52:33 +0100
+Subject: [PATCH 13/32] Decouple QStyleSheetStyle from qApp->styleSheet().
+
+QStyleSheetStyle now supports arbitrary global sheets.
+Also further unglues it from qApp.
+
+Task-Id: AMZN-1637
+Task-number: QTBUG-68671
+Task-number: QTBUG-68310
+Change-Id: Ia7e2073b54fd98013911cb738d29eddccb076f41
+Reviewed-on: https://codereview.kdab.com/58355
+Reviewed-by: Michael Hughes <mhughes@amazon.com>
+Reviewed-on: https://codereview.kdab.com/69427
+Reviewed-by: Aimini <daimini@amazon.com>
+---
+ src/widgets/kernel/qapplication.cpp     |  4 ++--
+ src/widgets/styles/qstylesheetstyle.cpp | 23 ++++++++++++++++-------
+ src/widgets/styles/qstylesheetstyle_p.h |  8 +++++---
+ 3 files changed, 23 insertions(+), 12 deletions(-)
+
+diff --git a/src/widgets/kernel/qapplication.cpp b/src/widgets/kernel/qapplication.cpp
+index 0375531960..c5223b3431 100644
+--- a/src/widgets/kernel/qapplication.cpp
++++ b/src/widgets/kernel/qapplication.cpp
+@@ -943,9 +943,9 @@ void QApplication::setStyleSheet(const QString& styleSheet)
+             return; // there was no stylesheet before
+         setStyle(styleSheetStyle->base);
+     } else if (styleSheetStyle) { // style sheet update, just repolish
+-        styleSheetStyle->repolish(qApp);
++        styleSheetStyle->setGlobalSheet(styleSheet);
+     } else { // stylesheet set the first time
+-        QStyleSheetStyle *newStyleSheetStyle = new QStyleSheetStyle(QApplicationPrivate::app_style);
++        QStyleSheetStyle *newStyleSheetStyle = new QStyleSheetStyle(QApplicationPrivate::app_style, styleSheet);
+         QApplicationPrivate::app_style->setParent(newStyleSheetStyle);
+         setStyle(newStyleSheetStyle);
+     }
+diff --git a/src/widgets/styles/qstylesheetstyle.cpp b/src/widgets/styles/qstylesheetstyle.cpp
+index e2c8a0a541..18822f3c32 100644
+--- a/src/widgets/styles/qstylesheetstyle.cpp
++++ b/src/widgets/styles/qstylesheetstyle.cpp
+@@ -1621,14 +1621,14 @@ QVector<QCss::StyleRule> QStyleSheetStyle::styleRules(const QObject *obj) const
+     }
+     styleSelector.styleSheets += defaultSs;
+ 
+-    if (!qApp->styleSheet().isEmpty()) {
++    if (!globalSheet.isEmpty()) {
+         StyleSheet appSs;
+         QHash<const void *, StyleSheet>::const_iterator appCacheIt = styleSheetCaches->styleSheetCache.constFind(qApp);
+         if (appCacheIt == styleSheetCaches->styleSheetCache.constEnd()) {
+-            QString ss = qApp->styleSheet();
++            QString ss = globalSheet;
+             if (ss.startsWith(QLatin1String("file:///")))
+                 ss.remove(0, 8);
+-            parser.init(ss, qApp->styleSheet() != ss);
++            parser.init(ss, globalSheet != ss);
+             if (Q_UNLIKELY(!parser.parse(&appSs)))
+                 qWarning("Could not parse application stylesheet");
+             appSs.origin = StyleSheetOrigin_Inline;
+@@ -2757,8 +2757,9 @@ static void updateObjects(const QList<const QObject *>& objects)
+ // The stylesheet style
+ int QStyleSheetStyle::numinstances = 0;
+ 
+-QStyleSheetStyle::QStyleSheetStyle(QStyle *base)
++QStyleSheetStyle::QStyleSheetStyle(QStyle *base, const QString &globalSheet)
+     : QWindowsStyle(*new QStyleSheetStylePrivate), base(base), refcount(1)
++    , globalSheet(globalSheet)
+ {
+     ++numinstances;
+     if (numinstances == 1) {
+@@ -2773,6 +2774,15 @@ QStyleSheetStyle::~QStyleSheetStyle()
+         delete styleSheetCaches;
+     }
+ }
++
++void QStyleSheetStyle::setGlobalSheet(const QString &sheet)
++{
++    if (globalSheet != sheet) {
++        globalSheet = sheet;
++        repolishGlobalSheet();
++    }
++}
++
+ QStyle *QStyleSheetStyle::baseStyle() const
+ {
+     if (base)
+@@ -2931,11 +2941,10 @@ void QStyleSheetStyle::repolish(QWidget *w)
+     updateObjects(children);
+ }
+ 
+-void QStyleSheetStyle::repolish(QApplication *app)
++void QStyleSheetStyle::repolishGlobalSheet()
+ {
+-    Q_UNUSED(app);
+     const QList<const QObject*> allObjects = styleSheetCaches->styleRulesCache.keys();
+-    styleSheetCaches->styleSheetCache.remove(qApp);
++    styleSheetCaches->styleSheetCache.remove(qApp); // Could be any object, maybe even "this" or nullptr, we just need a object as key
+     styleSheetCaches->styleRulesCache.clear();
+     styleSheetCaches->hasStyleRuleCache.clear();
+     styleSheetCaches->renderRulesCache.clear();
+diff --git a/src/widgets/styles/qstylesheetstyle_p.h b/src/widgets/styles/qstylesheetstyle_p.h
+index c5266558af..0a30b2aaec 100644
+--- a/src/widgets/styles/qstylesheetstyle_p.h
++++ b/src/widgets/styles/qstylesheetstyle_p.h
+@@ -72,14 +72,15 @@ class QAbstractScrollArea;
+ class QStyleSheetStylePrivate;
+ class QStyleOptionTitleBar;
+ 
+-class Q_AUTOTEST_EXPORT QStyleSheetStyle : public QWindowsStyle
++class Q_WIDGETS_EXPORT QStyleSheetStyle : public QWindowsStyle
+ {
+     typedef QWindowsStyle ParentStyle;
+ 
+     Q_OBJECT
+ public:
+-    QStyleSheetStyle(QStyle *baseStyle);
++    QStyleSheetStyle(QStyle *baseStyle, const QString &globalSheet = QString());
+     ~QStyleSheetStyle();
++    void setGlobalSheet(const QString &sheet);
+ 
+     void drawComplexControl(ComplexControl cc, const QStyleOptionComplex *opt, QPainter *p,
+                             const QWidget *w = nullptr) const override;
+@@ -120,7 +121,7 @@ public:
+     // These functions are called from QApplication/QWidget. Be careful.
+     QStyle *baseStyle() const;
+     void repolish(QWidget *widget);
+-    void repolish(QApplication *app);
++    void repolishGlobalSheet();
+ 
+     void unpolish(QWidget *widget) override;
+     void unpolish(QApplication *app) override;
+@@ -140,6 +141,7 @@ protected:
+ 
+ private:
+     int refcount;
++    QString globalSheet;
+ 
+     friend class QRenderRule;
+     int nativeFrameWidth(const QWidget *);
+-- 
+2.28.0.windows.1
+

@@ -1,0 +1,17 @@
+diff -up o3de/Code/CryEngine/CrySystem/LZ4Decompressor.cpp.lz4-safe o3de/Code/CryEngine/CrySystem/LZ4Decompressor.cpp
+--- o3de/Code/CryEngine/CrySystem/LZ4Decompressor.cpp.lz4-safe	2021-03-31 17:02:13.254208645 -0400
++++ o3de/Code/CryEngine/CrySystem/LZ4Decompressor.cpp	2021-03-31 17:16:11.280427915 -0400
+@@ -17,10 +17,12 @@
+ #include "CrySystem_precompiled.h"
+ #include <lz4.h>
+ #include "LZ4Decompressor.h"
++#include <string.h>
+ 
+ bool CLZ4Decompressor::DecompressData(const char* pIn, char* pOut, const uint outputSize) const
+ {
+-    return LZ4_decompress_fast(pIn, pOut, outputSize) >= 0;
++    const size_t src_size = strlen(pIn) + 1;
++    return LZ4_decompress_safe(pIn, pOut, src_size, outputSize) >= 0;
+ }
+ 
+ void CLZ4Decompressor::Release()

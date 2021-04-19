@@ -1,0 +1,67 @@
+From 5429e4521063f182b8453d7cf9c4fb9b03a85d3f Mon Sep 17 00:00:00 2001
+From: Mauro Persano <mauro.persano@kdab.com>
+Date: Wed, 15 Jan 2020 11:12:18 -0300
+Subject: [PATCH 23/32] Align menu text if one of the items is checkable
+ (adapted for Qt5.15)
+
+Change-Id: I44e99b7ec51b10ddd695075e4d4e3a2f80e98a09
+Task-Id: AMZN-1993
+Reviewed-on: https://codereview.kdab.com/c/amazon/qtbase/+/74408
+Reviewed-by: Aimini <daimini@amazon.com>
+---
+ src/widgets/styles/qstylesheetstyle.cpp | 15 +++++++--------
+ 1 file changed, 7 insertions(+), 8 deletions(-)
+
+diff --git a/src/widgets/styles/qstylesheetstyle.cpp b/src/widgets/styles/qstylesheetstyle.cpp
+index 99b831409c..b547b4a2cf 100644
+--- a/src/widgets/styles/qstylesheetstyle.cpp
++++ b/src/widgets/styles/qstylesheetstyle.cpp
+@@ -3757,7 +3757,8 @@ void QStyleSheetStyle::drawControl(ControlElement ce, const QStyleOption *opt, Q
+                 bool dis = !(opt->state & QStyle::State_Enabled),
+                      act = opt->state & QStyle::State_Selected;
+ 
+-                int textRectOffset = m->maxIconWidth;
++                int textRectOffset = 0;
++
+                 if (!mi.icon.isNull()) {
+                     QIcon::Mode mode = dis ? QIcon::Disabled : QIcon::Normal;
+                     if (act && !dis)
+@@ -3781,6 +3782,7 @@ void QStyleSheetStyle::drawControl(ControlElement ce, const QStyleOption *opt, Q
+                     QRect pmr(0, 0, pixw, pixh);
+                     pmr.moveCenter(iconRect.center());
+                     p->drawPixmap(pmr.topLeft(), pixmap);
++                    textRectOffset = m->maxIconWidth;
+                 } else if (checkable) {
+                     QRenderRule subSubRule = renderRule(w, opt, PseudoElement_MenuCheckMark);
+                     const QRect cmRect = positionRect(w, subRule, subSubRule, PseudoElement_MenuCheckMark, opt->rect, opt->direction);
+@@ -3793,7 +3795,6 @@ void QStyleSheetStyle::drawControl(ControlElement ce, const QStyleOption *opt, Q
+                         newMi.rect = cmRect;
+                         drawPrimitive(PE_IndicatorMenuCheckMark, &newMi, p, w);
+                     }
+-                    textRectOffset = std::max(textRectOffset, cmRect.width());
+                 }
+ 
+                 QRect textRect = subRule.contentsRect(opt->rect);
+@@ -5164,15 +5165,13 @@ QSize QStyleSheetStyle::sizeFromContents(ContentsType ct, const QStyleOption *op
+                 QSize sz(csz);
+                 if (mi->text.contains(QLatin1Char('\t')))
+                     sz.rwidth() += 12; //as in QCommonStyle
+-                bool checkable = mi->checkType != QStyleOptionMenuItem::NotCheckable;
+-                if (!mi->icon.isNull()) {
+-                    const int pmSmall = pixelMetric(PM_SmallIconSize);
+-                    const QSize pmSize = mi->icon.actualSize(QSize(pmSmall, pmSmall));
+-                    sz.rwidth() += pmSize.width() + 4;
+-                } else if (checkable) {
++                // Ensure items reserve space to align if any entries are checkable
++                if (mi->menuHasCheckableItems) {
+                     QRenderRule subSubRule = renderRule(w, opt, PseudoElement_MenuCheckMark);
+                     QRect checkmarkRect = positionRect(w, subRule, subSubRule, PseudoElement_MenuCheckMark, opt->rect, opt->direction);
+                     sz.rwidth() += std::max(mi->maxIconWidth, checkmarkRect.width()) + 4;
++                } else if (!mi->icon.isNull()) {
++                    sz.rwidth() = mi->maxIconWidth;
+                 }
+                 if (subRule.hasFont) {
+                     QFontMetrics fm(subRule.font);
+-- 
+2.28.0.windows.1
+

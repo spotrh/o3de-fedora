@@ -1,0 +1,48 @@
+diff -up o3de/Code/CryEngine/CrySystem/ImageHandler.cpp.system-tiff o3de/Code/CryEngine/CrySystem/ImageHandler.cpp
+--- o3de/Code/CryEngine/CrySystem/ImageHandler.cpp.system-tiff	2021-04-11 10:40:43.283077502 -0400
++++ o3de/Code/CryEngine/CrySystem/ImageHandler.cpp	2021-04-11 10:40:58.973199157 -0400
+@@ -22,7 +22,7 @@
+ #endif
+ 
+ #if !(defined(ANDROID) || defined(IOS) || defined(LINUX)) && AZ_LEGACY_CRYSYSTEM_TRAIT_IMAGEHANDLER_TIFFIO // Rally US1050 - Compile libtiff for Android and IOS
+-    #include <libtiff/tiffio.h>
++    #include <tiffio.h>
+ 
+ static_assert(sizeof(thandle_t) >= sizeof(AZ::IO::HandleType), "Platform defines thandle_t to be smaller than required");
+ #endif
+diff -up o3de/Code/Sandbox/Editor/Util/ImageTIF.cpp.system-tiff o3de/Code/Sandbox/Editor/Util/ImageTIF.cpp
+--- o3de/Code/Sandbox/Editor/Util/ImageTIF.cpp.system-tiff	2021-04-11 10:41:07.989269061 -0400
++++ o3de/Code/Sandbox/Editor/Util/ImageTIF.cpp	2021-04-11 10:41:17.364341746 -0400
+@@ -16,7 +16,7 @@
+ #include "ImageTIF.h"
+ 
+ /// libTiff
+-#include <libtiff/tiffio.h>  // TIFF library
++#include <tiffio.h>  // TIFF library
+ 
+ // Function prototypes
+ static tsize_t libtiffDummyReadProc (thandle_t fd, tdata_t buf, tsize_t size);
+diff -up o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/Source/ImageLoader/TIFFLoader.cpp.system-tiff o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/Source/ImageLoader/TIFFLoader.cpp
+--- o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/Source/ImageLoader/TIFFLoader.cpp.system-tiff	2021-04-11 10:41:28.241426077 -0400
++++ o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/Source/ImageLoader/TIFFLoader.cpp	2021-04-11 10:41:37.724499600 -0400
+@@ -20,7 +20,7 @@
+ 
+ #include <QString>
+ 
+-#include <libtiff/tiffio.h>  // TIFF library
++#include <tiffio.h>  // TIFF library
+ 
+ namespace ImageProcessingAtom
+ {
+diff -up o3de/Gems/ImageProcessing/Code/Source/ImageLoader/TIFFLoader.cpp.system-tiff o3de/Gems/ImageProcessing/Code/Source/ImageLoader/TIFFLoader.cpp
+--- o3de/Gems/ImageProcessing/Code/Source/ImageLoader/TIFFLoader.cpp.system-tiff	2021-04-11 10:41:50.373597669 -0400
++++ o3de/Gems/ImageProcessing/Code/Source/ImageLoader/TIFFLoader.cpp	2021-04-11 10:41:58.878663608 -0400
+@@ -22,7 +22,7 @@
+ 
+ #include <QString>
+ 
+-#include <libtiff/tiffio.h>  // TIFF library
++#include <tiffio.h>  // TIFF library
+ 
+ namespace ImageProcessing
+ {

@@ -1,0 +1,11 @@
+diff -up GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/gamelift-server-sdk/CMakeLists.txt.soversion GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/gamelift-server-sdk/CMakeLists.txt
+--- GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/gamelift-server-sdk/CMakeLists.txt.soversion	2021-03-26 09:53:06.867394888 -0400
++++ GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/gamelift-server-sdk/CMakeLists.txt	2021-03-26 09:53:37.668548560 -0400
+@@ -74,6 +74,7 @@ if(BUILD_SHARED_LIBS)
+     #Exporting symbols on the shared object/dll.
+     add_definitions(-DUSE_IMPORT_EXPORT)
+     add_definitions(-DAWS_GAMELIFT_EXPORTS)
++    set_target_properties(${TARGET_NAME} PROPERTIES SOVERSION 0)
+ endif(BUILD_SHARED_LIBS)
+ 
+ if(BUILD_FOR_UNREAL AND UNIX)

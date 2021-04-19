@@ -1,0 +1,13 @@
+diff -up qttools-everywhere-src-5.15.2/src/windeployqt/main.cpp.no-icudtl qttools-everywhere-src-5.15.2/src/windeployqt/main.cpp
+--- qttools-everywhere-src-5.15.2/src/windeployqt/main.cpp.no-icudtl	2021-04-13 11:08:25.558650018 -0400
++++ qttools-everywhere-src-5.15.2/src/windeployqt/main.cpp	2021-04-13 11:09:24.961094413 -0400
+@@ -1645,8 +1645,7 @@ static bool deployWebProcess(const QMap<
+ static bool deployWebEngineCore(const QMap<QString, QString> &qmakeVariables,
+                                 const Options &options, bool isDebug, QString *errorMessage)
+ {
+-    static const char *installDataFiles[] = {"icudtl.dat",
+-                                             "qtwebengine_devtools_resources.pak",
++    static const char *installDataFiles[] = {"qtwebengine_devtools_resources.pak",
+                                              "qtwebengine_resources.pak",
+                                              "qtwebengine_resources_100p.pak",
+                                              "qtwebengine_resources_200p.pak"};

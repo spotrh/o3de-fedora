@@ -1,0 +1,115 @@
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/buildtools/presets/public/linux-gcc.xml.system-OpenGL PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/buildtools/presets/public/linux-gcc.xml
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/buildtools/presets/public/linux-gcc.xml.system-OpenGL	2021-03-22 15:32:48.927216648 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/buildtools/presets/public/linux-gcc.xml	2021-03-22 15:32:48.934216683 -0400
+@@ -8,5 +8,6 @@
+   </CMakeSwitches>
+   <CMakeParams>
+     <cmakeParam name="CMAKE_INSTALL_PREFIX" value="install/linux/PhysX" comment="Install path relative to PhysX SDK root" />
++    <cmakeParam name="OpenGL_GL_PREFERENCE" value="GLVND" comment="Which GL to use" />
+   </CMakeParams>
+ </preset>
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleFramework.cmake.system-OpenGL PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleFramework.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleFramework.cmake.system-OpenGL	2021-03-22 15:32:48.931216668 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleFramework.cmake	2021-03-22 15:32:48.934216683 -0400
+@@ -29,7 +29,8 @@
+ # Build SampleFramework
+ #
+ 
+-find_package(OpenGL $ENV{PM_OpenGL_VERSION} CONFIG REQUIRED) # Pull in OpenGL and GLUT
++find_package(OpenGL)
++find_package(GLUT)
+ find_package(Cg $ENV{PM_cg_VERSION} CONFIG REQUIRED)
+ 
+ 
+@@ -63,4 +64,4 @@ SET(SAMPLEFRAMEWORK_PLATFORM_SOURCES
+ 	${PHYSX_ROOT_DIR}/samples/sampleframework/framework/src/linux/LinuxSampleAssetManager.cpp
+ )
+ 
+-SET(SAMPLEFRAMEWORK_PLATFORM_LINKED_LIBS Cg GL GLUT)
++SET(SAMPLEFRAMEWORK_PLATFORM_LINKED_LIBS Cg ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleRenderer.cmake.system-OpenGL PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleRenderer.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleRenderer.cmake.system-OpenGL	2021-03-22 15:32:48.933216678 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleRenderer.cmake	2021-03-22 15:32:48.934216683 -0400
+@@ -29,7 +29,8 @@
+ # Build SampleRenderer
+ #
+ 
+-find_package(OpenGL $ENV{PM_OpenGL_VERSION} CONFIG REQUIRED) # Pull in OpenGL and GLUT
++find_package(OpenGL)
++find_package(GLUT)
+ 
+ SET(SAMPLERENDERER_COMPILE_DEFS
+ 	# Common to all configurations
+@@ -98,4 +99,4 @@ SET(SAMPLERENDERER_PLATFORM_SOURCES
+ 	${SAMPLERENDERER_OGLRENDERER_SOURCES}
+ )
+ 
+-SET(SAMPLERENDERER_PLATFORM_LINKED_LIBS SamplePlatform GLEW Cg CgGL GL X11 Xxf86vm)
++SET(SAMPLERENDERER_PLATFORM_LINKED_LIBS SamplePlatform GLEW Cg CgGL ${OPENGL_LIBRARIES} X11 Xxf86vm)
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/Samples.cmake.system-OpenGL PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/Samples.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/Samples.cmake.system-OpenGL	2021-03-22 15:32:48.933216678 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/Samples.cmake	2021-03-22 15:32:48.935216688 -0400
+@@ -30,9 +30,9 @@
+ #
+ 
+ FIND_PACKAGE(GLEW)
+-
+-find_package(OpenGL $ENV{PM_OpenGL_VERSION} CONFIG REQUIRED) # Pull in OpenGL and GLUT
+-
++FIND_PACKAGE(OpenGL)
++# FIND_PACKAGE(GLU)
++FIND_PACKAGE(GLUT)
+ 
+ SET(SAMPLES_COMPILE_DEFS
+ 	# Common to all configurations
+@@ -46,4 +46,4 @@ SET(SAMPLES_COMPILE_DEFS
+ )
+ 
+ 
+-SET(SAMPLES_PLATFORM_LINKED_LIBS GLU X11 Xxf86vm Cg CgGL GL rt pthread dl GLEW -Wl,-rpath='${ORIGIN}')
++SET(SAMPLES_PLATFORM_LINKED_LIBS ${OPENGL_LIBRARIES} X11 Xxf86vm Cg CgGL rt pthread dl GLEW ${GLUT_LIBRARIES} -Wl,-rpath='${ORIGIN}')
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetRender.cmake.system-OpenGL PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetRender.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetRender.cmake.system-OpenGL	2021-03-22 15:32:48.931216668 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetRender.cmake	2021-03-22 15:32:48.935216688 -0400
+@@ -28,7 +28,10 @@
+ #
+ # Build SnippetRender
+ #
+-find_package(OpenGL $ENV{PM_OpenGL_VERSION} CONFIG REQUIRED) # Pull in OpenGL and GLUT
++find_package(OpenGL)
++# find_package(GLU)
++find_package(GLUT)
++
+ 
+ SET(SNIPPETRENDER_COMPILE_DEFS
+ 	# Common to all configurations
+@@ -50,4 +53,4 @@ ENDIF()
+ SET(SNIPPETRENDER_PLATFORM_INCLUDES
+ )
+ 
+-SET(SNIPPETRENDER_PLATFORM_LINKED_LIBS GL GLUT GLU)
+\ No newline at end of file
++SET(SNIPPETRENDER_PLATFORM_LINKED_LIBS ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetTemplate.cmake.system-OpenGL PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetTemplate.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetTemplate.cmake.system-OpenGL	2021-03-22 15:32:48.928216653 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetTemplate.cmake	2021-03-22 15:32:48.935216688 -0400
+@@ -77,7 +77,7 @@ IF(${CMAKE_CXX_COMPILER_ID} MATCHES "^AR
+ 	)
+ ELSE()
+ 	SET(SNIPPET_PLATFORM_LINKED_LIBS
+-		SnippetRender GL GLU GLUT X11 rt pthread dl -Wl,-rpath='${ORIGIN}'
++		SnippetRender ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} X11 rt pthread dl -Wl,-rpath='${ORIGIN}'
+ 	)
+ ENDIF()
+ 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetVehicleTemplate.cmake.system-OpenGL PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetVehicleTemplate.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetVehicleTemplate.cmake.system-OpenGL	2021-03-22 15:32:48.928216653 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetVehicleTemplate.cmake	2021-03-22 15:32:48.935216688 -0400
+@@ -67,6 +67,6 @@ IF(${CMAKE_CXX_COMPILER_ID} MATCHES "^AR
+ 	)
+ ELSE()
+ 	SET(SNIPPET_PLATFORM_LINKED_LIBS
+-		SnippetRender GL GLU GLUT X11 rt pthread dl
++		SnippetRender ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES} X11 rt pthread dl
+ 	)
+ ENDIF()

@@ -1,0 +1,47 @@
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SamplePlatform.cmake.system-glew PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SamplePlatform.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SamplePlatform.cmake.system-glew	2021-03-22 15:32:08.426016994 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SamplePlatform.cmake	2021-03-22 15:32:08.429017008 -0400
+@@ -29,7 +29,7 @@
+ # Build SamplePlatform
+ #
+ 
+-FIND_PACKAGE(glew $ENV{PM_glew_VERSION} REQUIRED CONFIG)
++FIND_PACKAGE(GLEW)
+ 
+ 
+ SET(SAMPLEPLATFORM_COMPILE_DEFS
+@@ -56,4 +56,4 @@ SET(SAMPLEPLATFORM_PLATFORM_SOURCES
+ )
+ 
+ 
+-SET(SAMPLEPLATFORM_PLATFORM_LINKED_LIBS glew Cg)
+\ No newline at end of file
++SET(SAMPLEPLATFORM_PLATFORM_LINKED_LIBS GLEW Cg)
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleRenderer.cmake.system-glew PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleRenderer.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleRenderer.cmake.system-glew	2021-03-22 15:32:08.426016994 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleRenderer.cmake	2021-03-22 15:32:08.429017008 -0400
+@@ -98,4 +98,4 @@ SET(SAMPLERENDERER_PLATFORM_SOURCES
+ 	${SAMPLERENDERER_OGLRENDERER_SOURCES}
+ )
+ 
+-SET(SAMPLERENDERER_PLATFORM_LINKED_LIBS SamplePlatform glew Cg CgGL GL X11 Xxf86vm)
+\ No newline at end of file
++SET(SAMPLERENDERER_PLATFORM_LINKED_LIBS SamplePlatform GLEW Cg CgGL GL X11 Xxf86vm)
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/Samples.cmake.system-glew PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/Samples.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/Samples.cmake.system-glew	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/Samples.cmake	2021-03-22 15:32:08.429017008 -0400
+@@ -29,7 +29,7 @@
+ # Build Samples
+ #
+ 
+-FIND_PACKAGE(glew $ENV{PM_glew_VERSION} REQUIRED CONFIG)
++FIND_PACKAGE(GLEW)
+ 
+ find_package(OpenGL $ENV{PM_OpenGL_VERSION} CONFIG REQUIRED) # Pull in OpenGL and GLUT
+ 
+@@ -46,4 +46,4 @@ SET(SAMPLES_COMPILE_DEFS
+ )
+ 
+ 
+-SET(SAMPLES_PLATFORM_LINKED_LIBS GLU X11 Xxf86vm Cg CgGL GL rt pthread dl glew -Wl,-rpath='${ORIGIN}')
++SET(SAMPLES_PLATFORM_LINKED_LIBS GLU X11 Xxf86vm Cg CgGL GL rt pthread dl GLEW -Wl,-rpath='${ORIGIN}')

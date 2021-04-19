@@ -1,0 +1,12 @@
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/geomutils/src/gjk/GuGJKType.h.compilefix PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/geomutils/src/gjk/GuGJKType.h
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/geomutils/src/gjk/GuGJKType.h.compilefix	2021-03-19 16:53:54.996096219 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/geomutils/src/gjk/GuGJKType.h	2021-03-19 16:54:08.842167579 -0400
+@@ -151,7 +151,7 @@ namespace Gu
+ 
+ 		virtual Ps::aos::Vec3V getCenter() const { return mAToB.transform(getConvex<Convex>().getCenter()); }
+ 
+-		PX_FORCE_INLINE Ps::aos::PsMatTransformV& getRelativeTransform(){ return mAToB; }
++		PX_FORCE_INLINE const Ps::aos::PsMatTransformV& getRelativeTransform(){ return mAToB; }
+ 
+ 		//ML: we can't force inline function, otherwise win modern will throw compiler error
+ 		PX_INLINE RelativeConvex<typename ConvexGeom<Convex>::Type > getGjkConvex() const

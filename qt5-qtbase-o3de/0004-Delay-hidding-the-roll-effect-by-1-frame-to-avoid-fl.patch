@@ -1,0 +1,58 @@
+From 8420f4297d6f4613d47a5a1e5c2024d2aa746a18 Mon Sep 17 00:00:00 2001
+From: Nathan Collins <nathan.collins@kdab.com>
+Date: Mon, 11 Dec 2017 17:12:09 +0000
+Subject: [PATCH 04/32] Delay hidding the roll effect by 1 frame to avoid
+ flicker
+
+Task-Id: AMZN-1365
+Change-Id: I35edd2fb54dd4c0acce3740d514d03d03b3ac844
+Reviewed-on: https://codereview.kdab.com/69418
+Reviewed-by: Aimini <daimini@amazon.com>
+
+# Conflicts:
+#	src/widgets/widgets/qeffects.cpp
+---
+ src/widgets/widgets/qeffects.cpp | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/src/widgets/widgets/qeffects.cpp b/src/widgets/widgets/qeffects.cpp
+index 074352b736..9d4f3093cc 100644
+--- a/src/widgets/widgets/qeffects.cpp
++++ b/src/widgets/widgets/qeffects.cpp
+@@ -548,18 +548,32 @@ void QRollEffect::scroll()
+                 setFocus();
+ #endif
+                 widget->hide();
++                q_roll = 0;
++                deleteLater();
+             } else {
+                 //Since we are faking the visibility of the widget
+                 //we need to unset the hidden state on it before calling show
+                 widget->setAttribute(Qt::WA_WState_Hidden, true);
+                 widget->show();
++#ifndef Q_OS_WIN
+                 lower();
++                q_roll = 0;
++                deleteLater();
++#else
++                // Delay deleting the QRollEffect for a frame or so to prevent
++                // flickering when displaying the popup.
++                QTimer::singleShot(16, this, [&] {
++                    q_roll = 0;
++                    deleteLater();
++                });
++#endif
+             }
+-        }
++        } else {
+         q_roll = nullptr;
+         deleteLater();
+     }
+ }
++}
+ 
+ /*!
+     Scroll widget \a w in \a time ms. \a orient may be 1 (vertical), 2
+-- 
+2.28.0.windows.1
+

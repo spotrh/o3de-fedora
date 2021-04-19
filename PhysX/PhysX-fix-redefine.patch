@@ -1,0 +1,14 @@
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/externals/targa/include/targa.h.fix-redefine PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/externals/targa/include/targa.h
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/externals/targa/include/targa.h.fix-redefine	2021-03-20 19:56:35.056065909 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/externals/targa/include/targa.h	2021-03-20 19:57:36.658415480 -0400
+@@ -37,7 +37,9 @@
+ # define htole16(x) ( (((x) & 0x00FF) << 8) | (((x) & 0xFF00) >> 8) )
+ # define letoh16(x) htole16(x)
+ #else /* little endian */
+-# define htole16(x) (x)
++# ifndef htole16
++#  define htole16(x) (x)
++# endif
+ # define letoh16(x) (x)
+ #endif /* endianness */
+ 

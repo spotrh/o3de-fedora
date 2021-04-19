@@ -1,0 +1,20 @@
+diff -up o3de/Gems/AWSCore/Code/Include/Public/Framework/AWSApiJobConfig.h.frpfix o3de/Gems/AWSCore/Code/Include/Public/Framework/AWSApiJobConfig.h
+--- o3de/Gems/AWSCore/Code/Include/Public/Framework/AWSApiJobConfig.h.frpfix	2021-04-13 14:29:50.090426836 -0400
++++ o3de/Gems/AWSCore/Code/Include/Public/Framework/AWSApiJobConfig.h	2021-04-13 14:33:24.755061013 -0400
+@@ -27,6 +27,7 @@ AZ_PUSH_DISABLE_WARNING(4251 4996, "-Wun
+ #include <aws/core/http/Scheme.h>
+ #include <aws/core/Region.h>
+ #include <aws/core/http/HttpTypes.h>
++#include <aws/core/client/ClientConfiguration.h>
+ AZ_POP_DISABLE_WARNING
+ 
+ #include <AWSCoreBus.h>
+@@ -140,7 +141,7 @@ namespace AWSCore
+         Override<std::shared_ptr<Aws::Utils::RateLimits::RateLimiterInterface>> writeRateLimiter;
+         Override<std::shared_ptr<Aws::Utils::RateLimits::RateLimiterInterface>> readRateLimiter;
+         Override<Aws::Http::TransferLibType> httpLibOverride;
+-        Override<bool> followRedirects;
++        Override<Aws::Client::FollowRedirectsPolicy> followRedirects;
+         Override<Aws::String> caFile;
+ 
+         /// Applys settings changes made after first use.

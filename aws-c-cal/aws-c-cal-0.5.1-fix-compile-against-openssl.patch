@@ -1,0 +1,43 @@
+diff -up aws-c-cal-0.5.1/include/aws/cal/private/opensslcrypto_common.h.fixup aws-c-cal-0.5.1/include/aws/cal/private/opensslcrypto_common.h
+--- aws-c-cal-0.5.1/include/aws/cal/private/opensslcrypto_common.h.fixup	2021-03-04 16:47:42.000000000 -0500
++++ aws-c-cal-0.5.1/include/aws/cal/private/opensslcrypto_common.h	2021-03-17 14:49:36.112940963 -0400
+@@ -6,10 +6,10 @@
+ #include <openssl/hmac.h>
+ 
+ typedef HMAC_CTX *(*hmac_ctx_new)(void);
+-typedef void (*hmac_ctx_reset)(HMAC_CTX *);
++typedef int (*hmac_ctx_reset)(HMAC_CTX *);
+ typedef void (*hmac_ctx_free)(HMAC_CTX *);
+ typedef void (*hmac_ctx_init)(HMAC_CTX *);
+-typedef int (*hmac_ctx_init_ex)(HMAC_CTX *, const void *, size_t, const EVP_MD *, ENGINE *);
++typedef int (*hmac_ctx_init_ex)(HMAC_CTX *, const void *, int, const EVP_MD *, ENGINE *);
+ typedef void (*hmac_ctx_clean_up)(HMAC_CTX *);
+ typedef int (*hmac_ctx_update)(HMAC_CTX *, const unsigned char *, size_t);
+ typedef int (*hmac_ctx_final)(HMAC_CTX *, unsigned char *, unsigned int *);
+diff -up aws-c-cal-0.5.1/source/unix/openssl_platform_init.c.fixup aws-c-cal-0.5.1/source/unix/openssl_platform_init.c
+--- aws-c-cal-0.5.1/source/unix/openssl_platform_init.c.fixup	2021-03-04 16:47:42.000000000 -0500
++++ aws-c-cal-0.5.1/source/unix/openssl_platform_init.c	2021-03-17 14:52:28.371791703 -0400
+@@ -31,12 +31,12 @@ struct openssl_evp_md_ctx_table *g_aws_o
+  */
+ extern HMAC_CTX *HMAC_CTX_new(void) __attribute__((weak)) __attribute__((used));
+ extern void HMAC_CTX_free(HMAC_CTX *) __attribute__((weak)) __attribute__((used));
+-extern void HMAC_CTX_reset(HMAC_CTX *) __attribute__((weak)) __attribute__((used));
++extern int HMAC_CTX_reset(HMAC_CTX *) __attribute__((weak)) __attribute__((used));
+ extern void HMAC_CTX_init(HMAC_CTX *) __attribute__((weak)) __attribute__((used));
+ extern void HMAC_CTX_cleanup(HMAC_CTX *) __attribute__((weak)) __attribute__((used));
+ extern int HMAC_Update(HMAC_CTX *, const unsigned char *, size_t) __attribute__((weak)) __attribute__((used));
+ extern int HMAC_Final(HMAC_CTX *, unsigned char *, unsigned int *) __attribute__((weak)) __attribute__((used));
+-extern int HMAC_Init_ex(HMAC_CTX *, const void *, size_t, const EVP_MD *, ENGINE *) __attribute__((weak))
++extern int HMAC_Init_ex(HMAC_CTX *, const void *, int, const EVP_MD *, ENGINE *) __attribute__((weak))
+ __attribute__((used));
+ 
+ enum aws_libcrypto_version {
+@@ -96,7 +96,7 @@ static int s_resolve_libcrypto_md(enum a
+     evp_md_ctx_new md_new_fn = EVP_MD_CTX_new;
+     evp_md_ctx_new md_create_fn = EVP_MD_CTX_new;
+     evp_md_ctx_free md_free_fn = EVP_MD_CTX_free;
+-    evp_md_ctx_free md_destroy_fn = EVP_MD_CTX_destroy;
++    evp_md_ctx_free md_destroy_fn = EVP_MD_CTX_free;
+     evp_md_ctx_digest_init_ex md_init_ex_fn = EVP_DigestInit_ex;
+     evp_md_ctx_digest_update md_update_fn = EVP_DigestUpdate;
+     evp_md_ctx_digest_final_ex md_final_ex_fn = EVP_DigestFinal_ex;

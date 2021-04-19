@@ -1,0 +1,12 @@
+diff -up qttools-everywhere-src-5.15.2/src/shared/winutils/utils.cpp.fedora qttools-everywhere-src-5.15.2/src/shared/winutils/utils.cpp
+--- qttools-everywhere-src-5.15.2/src/shared/winutils/utils.cpp.fedora	2021-04-09 17:39:53.408945240 -0400
++++ qttools-everywhere-src-5.15.2/src/shared/winutils/utils.cpp	2021-04-09 17:40:01.063211248 -0400
+@@ -499,7 +499,7 @@ QMap<QString, QString> queryQMakeAll(QSt
+     QByteArray stdOut;
+     QByteArray stdErr;
+     unsigned long exitCode = 0;
+-    const QString binary = QStringLiteral("qmake");
++    const QString binary = QStringLiteral("qmake-qt5");
+     if (!runProcess(binary, QStringList(QStringLiteral("-query")), QString(), &exitCode, &stdOut, &stdErr, errorMessage))
+         return QMap<QString, QString>();
+     if (exitCode) {

@@ -1,0 +1,25 @@
+diff -up civetweb-1.13/Makefile.fix-duk civetweb-1.13/Makefile
+--- civetweb-1.13/Makefile.fix-duk	2021-03-25 15:03:34.693336255 -0400
++++ civetweb-1.13/Makefile	2021-03-25 15:04:06.683506022 -0400
+@@ -242,6 +242,9 @@ else
+ ifdef WITH_LUA_SHARED
+   LIBS += $(LUA_SHARED_LIB_FLAG)
+ endif
++ifdef WITH_DUKTAPE_SHARED
++  LIBS += $(DUKTAPE_SHARED_LIB_FLAG)
++endif
+ endif
+ 
+ ifneq (, $(findstring mingw32, $(shell $(CC) -dumpmachine)))
+diff -up civetweb-1.13/resources/Makefile.in-duktape.fix-duk civetweb-1.13/resources/Makefile.in-duktape
+--- civetweb-1.13/resources/Makefile.in-duktape.fix-duk	2020-09-30 14:24:15.000000000 -0400
++++ civetweb-1.13/resources/Makefile.in-duktape	2021-03-25 14:59:17.677972346 -0400
+@@ -40,7 +40,7 @@ endif
+ ifeq ($(WITH_DUKTAPE_VERSION), 202)
+   $(info Duktape: Using version 2.2.0)
+   DUKTAPE_DIR = src/third_party/duktape-2.2.0/src
+-  DUKTAPE_SHARED_LIB_FLAG = -lduktape2.2
++  DUKTAPE_SHARED_LIB_FLAG = -lduktape
+   DUKTAPE_CFLAGS = -DDUKTAPE_VERSION_MAKEFILE=202
+   DUKTAPE_VERSION_KNOWN = 1
+ endif

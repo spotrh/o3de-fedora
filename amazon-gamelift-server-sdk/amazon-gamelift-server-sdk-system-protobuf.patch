@@ -1,0 +1,110 @@
+diff -up GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/cmake/External_protobuf.cmake.system-protobuf GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/cmake/External_protobuf.cmake
+--- GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/cmake/External_protobuf.cmake.system-protobuf	2020-11-11 17:24:10.000000000 -0500
++++ GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/cmake/External_protobuf.cmake	2021-03-25 17:35:03.555043745 -0400
+@@ -1,44 +0,0 @@
+-if(UNIX)
+-    ExternalProject_Add(protobuf
+-      DOWNLOAD_DIR ${download_dir}
+-      URL https://github.com/google/protobuf/releases/download/v3.3.0/protobuf-cpp-3.3.0.tar.gz
+-      URL_MD5 73c28d3044e89782bdc8d9fdcfbb5792
+-      SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/protobuf"
+-      INSTALL_DIR "${GameLiftServerSdk_INSTALL_PREFIX}"
+-      CONFIGURE_COMMAND <SOURCE_DIR>/configure CXXFLAGS=-fPIC --prefix=<INSTALL_DIR>
+-      CMAKE_CACHE_ARGS
+-          ${GameLiftServerSdk_DEFAULT_ARGS}
+-          ${GameLiftServerSdk_THIRDPARTYLIBS_ARGS}
+-    )
+-elseif(WIN32)
+-# Need to download first and then build from source using the cmake directory of Protobuf on Windows since the configure step does not seem to work.
+-    ExternalProject_Add(
+-       protobuf-src
+-       DOWNLOAD_DIR ${download_dir}
+-       URL https://github.com/google/protobuf/releases/download/v3.3.0/protobuf-cpp-3.3.0.tar.gz
+-       URL_MD5 73c28d3044e89782bdc8d9fdcfbb5792
+-       SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/protobuf"
+-       UPDATE_COMMAND ""
+-       PATCH_COMMAND ""
+-       INSTALL_COMMAND ""
+-       CONFIGURE_COMMAND ""
+-       BUILD_COMMAND ""
+-     )
+- 
+-     ExternalProject_Add(
+-       protobuf
+-       DEPENDS protobuf-src
+-       DOWNLOAD_COMMAND ""
+-       SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/protobuf/cmake
+-       INSTALL_DIR "${GameLiftServerSdk_INSTALL_PREFIX}"
+-       UPDATE_COMMAND ""
+-       PATCH_COMMAND ""
+-       CMAKE_ARGS
+-        -Dprotobuf_BUILD_TESTS=OFF
+-        -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
+-        -Dprotobuf_BUILD_SHARED_LIBS=OFF
+-       CMAKE_CACHE_ARGS
+-         ${GameLiftServerSdk_DEFAULT_ARGS}
+-         ${GameLiftServerSdk_THIRDPARTYLIBS_ARGS}
+-     )
+-endif(UNIX)
+diff -up GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/cmake/Findprotobuf.cmake.system-protobuf GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/cmake/Findprotobuf.cmake
+--- GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/cmake/Findprotobuf.cmake.system-protobuf	2021-03-25 17:32:27.422232608 -0400
++++ GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/cmake/Findprotobuf.cmake	2021-03-25 17:34:54.385996111 -0400
+@@ -0,0 +1,58 @@
++if(UNIX)
++    find_path(PROTOBUF_INCLUDE_DIR
++              NAMES "google/protobuf/arena.h")
++    find_library(PROTOBUF_LIBRARY
++                 NAMES protobuf)
++    set(PROTOBUF_LIBRARIES ${protobuf_LIBRARY})
++
++    include(FindPackageHandleStandardArgs)
++    find_package_handle_standard_args(PROTOBUF DEFAULT_MSG
++         PROTOBUF_INCLUDE_DIR PROTOBUF_LIBRARY)
++
++    mark_as_advanced(PROTOBUF_INCLUDE_DIR PROTOBUF_LIBRARY)
++
++    if(NOT PROTOBUF_FOUND)
++      ExternalProject_Add(protobuf
++        DOWNLOAD_DIR ${download_dir}
++        URL https://github.com/google/protobuf/releases/download/v3.3.0/protobuf-cpp-3.3.0.tar.gz
++        URL_MD5 73c28d3044e89782bdc8d9fdcfbb5792
++        SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/protobuf"
++        INSTALL_DIR "${GameLiftServerSdk_INSTALL_PREFIX}"
++        CONFIGURE_COMMAND <SOURCE_DIR>/configure CXXFLAGS=-fPIC --prefix=<INSTALL_DIR>
++        CMAKE_CACHE_ARGS
++            ${GameLiftServerSdk_DEFAULT_ARGS}
++            ${GameLiftServerSdk_THIRDPARTYLIBS_ARGS}
++      )
++    endif()
++elseif(WIN32)
++# Need to download first and then build from source using the cmake directory of Protobuf on Windows since the configure step does not seem to work.
++    ExternalProject_Add(
++       protobuf-src
++       DOWNLOAD_DIR ${download_dir}
++       URL https://github.com/google/protobuf/releases/download/v3.3.0/protobuf-cpp-3.3.0.tar.gz
++       URL_MD5 73c28d3044e89782bdc8d9fdcfbb5792
++       SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/protobuf"
++       UPDATE_COMMAND ""
++       PATCH_COMMAND ""
++       INSTALL_COMMAND ""
++       CONFIGURE_COMMAND ""
++       BUILD_COMMAND ""
++     )
++ 
++     ExternalProject_Add(
++       protobuf
++       DEPENDS protobuf-src
++       DOWNLOAD_COMMAND ""
++       SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/protobuf/cmake
++       INSTALL_DIR "${GameLiftServerSdk_INSTALL_PREFIX}"
++       UPDATE_COMMAND ""
++       PATCH_COMMAND ""
++       CMAKE_ARGS
++        -Dprotobuf_BUILD_TESTS=OFF
++        -Dprotobuf_MSVC_STATIC_RUNTIME=OFF
++        -Dprotobuf_BUILD_SHARED_LIBS=OFF
++       CMAKE_CACHE_ARGS
++         ${GameLiftServerSdk_DEFAULT_ARGS}
++         ${GameLiftServerSdk_THIRDPARTYLIBS_ARGS}
++     )
++endif(UNIX)

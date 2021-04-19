@@ -1,0 +1,42 @@
+From 7d5a8ffcddbbbf74e40d60e3824bb332906cd21e Mon Sep 17 00:00:00 2001
+From: Christoph Schleifenbaum <christoph.schleifenbaum@kdab.com>
+Date: Mon, 9 Jul 2018 16:26:29 +0200
+Subject: [PATCH 15/32] Save dialog: Don't add the default suffix if suffix
+ selected
+
+Do not add the default suffix to the user entered filename (without
+suffix) if the user selected a file type in the combo box.
+
+Change-Id: I66a491170bb507f3c527d0a09c1b3b375a353030
+Task-Id: AMZN-1583
+Task-Id: LY-73073
+Reviewed-on: https://codereview.kdab.com/59621
+Reviewed-by: Michael Hughes <mhughes@amazon.com>
+Reviewed-on: https://codereview.kdab.com/69429
+Reviewed-by: Aimini <daimini@amazon.com>
+---
+ src/plugins/platforms/cocoa/qcocoafiledialoghelper.mm | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/plugins/platforms/cocoa/qcocoafiledialoghelper.mm b/src/plugins/platforms/cocoa/qcocoafiledialoghelper.mm
+index 15e83db48f..44654c1037 100644
+--- a/src/plugins/platforms/cocoa/qcocoafiledialoghelper.mm
++++ b/src/plugins/platforms/cocoa/qcocoafiledialoghelper.mm
+@@ -386,9 +386,13 @@ static QString strippedText(QString s)
+         QString filename = QString::fromNSString([[mSavePanel URL] path]).normalized(QString::NormalizationForm_C);
+         const QString defaultSuffix = mOptions->defaultSuffix();
+         const QFileInfo fileInfo(filename);
++        const QString selectedFilterSuffix = mNameFilterDropDownList->value([mPopUpButton indexOfSelectedItem]);
++        if (fileInfo.suffix().isEmpty() && !selectedFilterSuffix.isEmpty()) {
++            filename.append('.').append(selectedFilterSuffix);
++        }
+         // If neither the user or the NSSavePanel have provided a suffix, use
+         // the default suffix (if it exists).
+-        if (fileInfo.suffix().isEmpty() && !defaultSuffix.isEmpty()) {
++        else if (fileInfo.suffix().isEmpty() && !defaultSuffix.isEmpty()) {
+                 filename.append('.').append(defaultSuffix);
+         }
+         result << QUrl::fromLocalFile(filename.remove(QLatin1String("___qt_very_unlikely_prefix_")));
+-- 
+2.28.0.windows.1
+

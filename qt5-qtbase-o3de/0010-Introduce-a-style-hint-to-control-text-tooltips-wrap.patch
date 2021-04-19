@@ -1,0 +1,118 @@
+From 0ca86554bf73c85873105d02529254fefc7afd26 Mon Sep 17 00:00:00 2001
+From: Filipe Azevedo <filipe.azevedo@kdab.com>
+Date: Tue, 27 Feb 2018 15:54:23 +0100
+Subject: [PATCH 10/32] Introduce a style hint to control text tooltips wrap
+ mode
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Just return one of the QTextOption::WrapMode to change the behavior.
+
+Change-Id: Ia5c5dcf107f00891c83dbcd84dbb2d25b0522313
+Task-Id: AMZN-1623
+Reviewed-on: https://codereview.kdab.com/55046
+Reviewed-by: Sérgio Martins <sergio@kdab.com>
+Reviewed-by: Michael Hughes <mhughes@amazon.com>
+Reviewed-on: https://codereview.kdab.com/69424
+Reviewed-by: Aimini <daimini@amazon.com>
+---
+ src/widgets/kernel/qtooltip.cpp     | 32 ++++++++++++++++++++++++-----
+ src/widgets/styles/qcommonstyle.cpp |  3 +++
+ src/widgets/styles/qstyle.cpp       |  4 ++++
+ src/widgets/styles/qstyle.h         |  1 +
+ 4 files changed, 35 insertions(+), 5 deletions(-)
+
+diff --git a/src/widgets/kernel/qtooltip.cpp b/src/widgets/kernel/qtooltip.cpp
+index 661568dcad..27e338f0e8 100644
+--- a/src/widgets/kernel/qtooltip.cpp
++++ b/src/widgets/kernel/qtooltip.cpp
+@@ -229,17 +229,39 @@ void  QTipLabel::updateSize(const QPoint &pos)
+     // Make it look good with the default ToolTip font on Mac, which has a small descent.
+     if (fm.descent() == 2 && fm.ascent() >= 11)
+         ++extra.rheight();
+-    setWordWrap(Qt::mightBeRichText(text()));
++    const int hint = style()->styleHint(QStyle::SH_ToolTipLabel_TextWrapMode);
++    const bool richText = Qt::mightBeRichText(text());
++    bool wrap = richText;
++    if (hint != -1) {
++        const QTextOption::WrapMode mode = static_cast<QTextOption::WrapMode>(hint);
++        switch (mode) {
++        case QTextOption::NoWrap:
++        case QTextOption::ManualWrap:
++            wrap = false;
++            break;
++        case QTextOption::WordWrap:
++        case QTextOption::WrapAnywhere:
++        case QTextOption::WrapAtWordBoundaryOrAnywhere:
++            wrap = true;
++            break;
++        }
++    }
++    setWordWrap(wrap);
+     QSize sh = sizeHint();
+     // ### When the above WinRT code is fixed, windowhandle should be used to find the screen.
+     QScreen *screen = QGuiApplication::screenAt(pos);
+     if (!screen)
+         screen = QGuiApplication::primaryScreen();
+     if (screen) {
+-        const qreal screenWidth = screen->geometry().width();
+-        if (!wordWrap() && sh.width() > screenWidth) {
+-            setWordWrap(true);
+-            sh = sizeHint();
++        const QRect screenRect = screen->geometry();
++        if (sh.width() > screenRect.width()) {
++            if (wrap) {
++                sh.setWidth(screenRect.width() * .8);
++                sh.setHeight(heightForWidth(sh.width()));
++            } else {
++                setWordWrap(true);
++                sh = sizeHint();
++            }
+         }
+     }
+     resize(sh + extra);
+diff --git a/src/widgets/styles/qcommonstyle.cpp b/src/widgets/styles/qcommonstyle.cpp
+index 5e37b81faf..658fcf705f 100644
+--- a/src/widgets/styles/qcommonstyle.cpp
++++ b/src/widgets/styles/qcommonstyle.cpp
+@@ -5415,6 +5415,9 @@ int QCommonStyle::styleHint(StyleHint sh, const QStyleOption *opt, const QWidget
+     case SH_SpinBox_StepModifier:
+         ret = Qt::ControlModifier;
+         break;
++    case SH_ToolTipLabel_TextWrapMode:
++        ret = -1;
++        break;
+     default:
+         ret = 0;
+         break;
+diff --git a/src/widgets/styles/qstyle.cpp b/src/widgets/styles/qstyle.cpp
+index c20ac94f8b..7c4b45200d 100644
+--- a/src/widgets/styles/qstyle.cpp
++++ b/src/widgets/styles/qstyle.cpp
+@@ -2011,6 +2011,10 @@ void QStyle::drawItemPixmap(QPainter *painter, const QRect &rect, int alignment,
+            disables this feature.
+            This enum value has been introduced in Qt 5.12.
+ 
++    \value SH_ToolTipLabel_TextWrapMode Determines the wordWrap property to apply for tooltips label.
++           This enum value has been introduced in Qt 5.12
++
++
+     \sa styleHint()
+ */
+ 
+diff --git a/src/widgets/styles/qstyle.h b/src/widgets/styles/qstyle.h
+index 5be1b4b290..09495aec0a 100644
+--- a/src/widgets/styles/qstyle.h
++++ b/src/widgets/styles/qstyle.h
+@@ -758,6 +758,7 @@ public:
+         SH_SpinBox_ButtonsInsideFrame,
+         SH_SpinBox_StepModifier,
+         // Add new style hint values here
++        SH_ToolTipLabel_TextWrapMode,
+ 
+         SH_CustomBase = 0xf0000000
+     };
+-- 
+2.28.0.windows.1
+

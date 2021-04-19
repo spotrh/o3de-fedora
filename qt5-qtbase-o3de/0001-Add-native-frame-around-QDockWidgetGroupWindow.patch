@@ -1,0 +1,48 @@
+From cef7beabae30a959fd8a5abbb9262c99b01689e2 Mon Sep 17 00:00:00 2001
+From: Sergio Martins <sergio.martins@kdab.com>
+Date: Tue, 13 Dec 2016 14:55:27 +0000
+Subject: [PATCH 01/32] Add native frame around QDockWidgetGroupWindow
+
+We just don't want the native title bar.
+The native frame gives us nice shadow and nice resize handle threshold.
+
+Windows10 requires a different approach due to QTBUG-47543.
+Change-Id: I10183f4d4dca07f929ff701796264e310cf57286
+Reviewed-on: https://codereview.kdab.com/69415
+Reviewed-by: Aimini <daimini@amazon.com>
+---
+ src/widgets/widgets/qmainwindowlayout.cpp | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/src/widgets/widgets/qmainwindowlayout.cpp b/src/widgets/widgets/qmainwindowlayout.cpp
+index d1571263eb..2e75e5a509 100644
+--- a/src/widgets/widgets/qmainwindowlayout.cpp
++++ b/src/widgets/widgets/qmainwindowlayout.cpp
+@@ -60,6 +60,7 @@
+ #endif
+ 
+ #include <qapplication.h>
++#include <qoperatingsystemversion.h>
+ #if QT_CONFIG(statusbar)
+ #include <qstatusbar.h>
+ #endif
+@@ -475,13 +476,13 @@ void QDockWidgetGroupWindow::adjustFlags()
+     if (!top) { // nested tabs, show window decoration
+         flags =
+             ((oldFlags & ~Qt::FramelessWindowHint) | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
+-    } else if (static_cast<QDockWidgetGroupLayout *>(layout())->nativeWindowDeco()) {
++    } else if (static_cast<QDockWidgetGroupLayout *>(layout())->nativeWindowDeco() ||
++               QOperatingSystemVersion::current() >= QOperatingSystemVersion::Windows10) {
+         flags |= Qt::CustomizeWindowHint | Qt::WindowTitleHint;
+         flags.setFlag(Qt::WindowCloseButtonHint, top->features() & QDockWidget::DockWidgetClosable);
+         flags &= ~Qt::FramelessWindowHint;
+     } else {
+-        flags &= ~(Qt::WindowCloseButtonHint | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
+-        flags |= Qt::FramelessWindowHint;
++        flags = Qt::Tool | Qt::CustomizeWindowHint;
+     }
+ 
+     if (oldFlags != flags) {
+-- 
+2.28.0.windows.1
+

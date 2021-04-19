@@ -1,0 +1,24 @@
+From 395736ddc3bda970ad245df16650528c57fc2574 Mon Sep 17 00:00:00 2001
+From: Nicholas VanSickle <nvsickle@amazon.com>
+Date: Wed, 30 Sep 2020 12:06:37 -0700
+Subject: [PATCH 29/32] Fix icon offset
+
+---
+ src/widgets/styles/qstylesheetstyle.cpp | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/widgets/styles/qstylesheetstyle.cpp b/src/widgets/styles/qstylesheetstyle.cpp
+index b547b4a2cf..14f90ba834 100644
+--- a/src/widgets/styles/qstylesheetstyle.cpp
++++ b/src/widgets/styles/qstylesheetstyle.cpp
+@@ -3782,7 +3782,6 @@ void QStyleSheetStyle::drawControl(ControlElement ce, const QStyleOption *opt, Q
+                     QRect pmr(0, 0, pixw, pixh);
+                     pmr.moveCenter(iconRect.center());
+                     p->drawPixmap(pmr.topLeft(), pixmap);
+-                    textRectOffset = m->maxIconWidth;
+                 } else if (checkable) {
+                     QRenderRule subSubRule = renderRule(w, opt, PseudoElement_MenuCheckMark);
+                     const QRect cmRect = positionRect(w, subRule, subSubRule, PseudoElement_MenuCheckMark, opt->rect, opt->direction);
+-- 
+2.28.0.windows.1
+

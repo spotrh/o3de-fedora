@@ -1,0 +1,13 @@
+diff -up v-hacd-1a49edf29c69039df15286181f2f27e17ceb9aef/src/VHACD_Lib/CMakeLists.txt.soversion v-hacd-1a49edf29c69039df15286181f2f27e17ceb9aef/src/VHACD_Lib/CMakeLists.txt
+--- v-hacd-1a49edf29c69039df15286181f2f27e17ceb9aef/src/VHACD_Lib/CMakeLists.txt.soversion	2021-03-29 15:33:52.237991574 -0400
++++ v-hacd-1a49edf29c69039df15286181f2f27e17ceb9aef/src/VHACD_Lib/CMakeLists.txt	2021-03-29 15:35:04.780361014 -0400
+@@ -19,6 +19,9 @@ endif()
+ set(LIB_TYPE "STATIC" CACHE STRING "STATIC, SHARED or MODULE?")
+ message("[VHACD] \t LIB_TYPE " ${LIB_TYPE})
+ add_library(vhacd ${LIB_TYPE} ${PROJECT_CPP_FILES} ${PROJECT_C_FILES} ${PROJECT_INC_FILES} ${PROJECT_INL_FILES} ${PROJECT_CL_FILES})
++if(LIB_TYPE STREQUAL "SHARED")
++    set_target_properties(vhacd PROPERTIES SOVERSION 0)
++endif()
+ 
+ if (OpenCL_FOUND)
+     target_include_directories(vhacd PRIVATE "${OpenCL_INCLUDE_DIR}")

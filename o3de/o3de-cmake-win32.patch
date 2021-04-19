@@ -1,0 +1,12 @@
+diff -up o3de/Code/CryEngine/RenderDll/XRenderD3D9/DXGL/CMakeLists.txt.win32 o3de/Code/CryEngine/RenderDll/XRenderD3D9/DXGL/CMakeLists.txt
+--- o3de/Code/CryEngine/RenderDll/XRenderD3D9/DXGL/CMakeLists.txt.win32	2021-03-15 16:32:57.595816261 -0400
++++ o3de/Code/CryEngine/RenderDll/XRenderD3D9/DXGL/CMakeLists.txt	2021-03-15 16:33:33.472990550 -0400
+@@ -13,7 +13,7 @@ ly_get_list_relative_pal_filename(pal_di
+ 
+ include(${pal_dir}/DXGL_traits_${PAL_PLATFORM_NAME_LOWERCASE}.cmake)
+ 
+-if(DXGL_TRAIT_BUILD_OPENGL_SUPPORTED AND (NOT LY_MONOLITHIC_GAME OR LY_TRAIT_USE_LEGACY_IN_MONOLITHIC)) # Only Atom is supported in monolithic builds
++if(DXGL_TRAIT_BUILD_OPENGL_SUPPORTED AND WIN32 AND (NOT LY_MONOLITHIC_GAME OR LY_TRAIT_USE_LEGACY_IN_MONOLITHIC)) # Only Atom is supported in monolithic builds
+     ly_add_target(
+         NAME CryRenderGL.Static STATIC
+         NAMESPACE Legacy

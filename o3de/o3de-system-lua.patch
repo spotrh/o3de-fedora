@@ -1,0 +1,156 @@
+diff -up o3de/Code/Framework/AzCore/AzCore/Script/lua/lua.h.system-lua o3de/Code/Framework/AzCore/AzCore/Script/lua/lua.h
+--- o3de/Code/Framework/AzCore/AzCore/Script/lua/lua.h.system-lua	2021-04-11 19:45:49.000000000 -0400
++++ o3de/Code/Framework/AzCore/AzCore/Script/lua/lua.h	2021-04-12 14:48:23.690642867 -0400
+@@ -13,9 +13,9 @@
+ #define AZCORE_LUA
+ 
+ extern "C" {
+-#   include <Lua/lua.h>
+-#   include <Lua/lualib.h>
+-#   include <Lua/lauxlib.h>
++#   include <lua.h>
++#   include <lualib.h>
++#   include <lauxlib.h>
+ }
+ 
+ // Currently we support Lua 5.1 and later (we have tested with 5.2)
+diff -up o3de/Code/Framework/AzCore/AzCore/Script/ScriptContext.cpp.system-lua o3de/Code/Framework/AzCore/AzCore/Script/ScriptContext.cpp
+--- o3de/Code/Framework/AzCore/AzCore/Script/ScriptContext.cpp.system-lua	2021-04-11 19:45:49.000000000 -0400
++++ o3de/Code/Framework/AzCore/AzCore/Script/ScriptContext.cpp	2021-04-12 14:48:23.690642867 -0400
+@@ -26,9 +26,20 @@
+ #include <AzCore/StringFunc/StringFunc.h>
+ 
+ extern "C" {
+-#   include <Lua/lualib.h>
+-#   include <Lua/lauxlib.h>
+-#   include <Lua/lobject.h>
++#   include <lualib.h>
++#   include <lauxlib.h>
++#   include <lobject.h>
++
++#if !defined(L_Umaxalign)
++typedef union {
++  lua_Number n;
++  double u;
++  void *s;
++  lua_Integer i;
++  long l;
++} L_Umaxalign;
++#endif
++
+ }
+ 
+ #include <limits>
+diff -up o3de/Code/Framework/AzCore/AzCore/Script/ScriptContextDebug.cpp.system-lua o3de/Code/Framework/AzCore/AzCore/Script/ScriptContextDebug.cpp
+--- o3de/Code/Framework/AzCore/AzCore/Script/ScriptContextDebug.cpp.system-lua	2021-04-11 19:45:49.000000000 -0400
++++ o3de/Code/Framework/AzCore/AzCore/Script/ScriptContextDebug.cpp	2021-04-12 14:48:23.690642867 -0400
+@@ -23,8 +23,8 @@
+ #include <AzCore/std/string/tokenize.h>
+ 
+ extern "C" {
+-#   include <Lua/lualib.h>
+-#   include <Lua/lauxlib.h>
++#   include <lualib.h>
++#   include <lauxlib.h>
+ }
+ 
+ namespace AZ
+diff -up o3de/Code/Framework/AzCore/AzCore/Script/ScriptPropertyTable.cpp.system-lua o3de/Code/Framework/AzCore/AzCore/Script/ScriptPropertyTable.cpp
+--- o3de/Code/Framework/AzCore/AzCore/Script/ScriptPropertyTable.cpp.system-lua	2021-04-11 19:45:49.000000000 -0400
++++ o3de/Code/Framework/AzCore/AzCore/Script/ScriptPropertyTable.cpp	2021-04-12 14:48:23.690642867 -0400
+@@ -17,8 +17,8 @@
+ 
+ 
+ extern "C" {
+-#   include <Lua/lualib.h>
+-#   include <Lua/lauxlib.h>
++#   include <lualib.h>
++#   include <lauxlib.h>
+ }
+ 
+ namespace AZ
+diff -up o3de/Code/Framework/AzFramework/AzFramework/Script/ScriptComponent.cpp.system-lua o3de/Code/Framework/AzFramework/AzFramework/Script/ScriptComponent.cpp
+--- o3de/Code/Framework/AzFramework/AzFramework/Script/ScriptComponent.cpp.system-lua	2021-04-11 19:45:49.000000000 -0400
++++ o3de/Code/Framework/AzFramework/AzFramework/Script/ScriptComponent.cpp	2021-04-12 14:48:23.690642867 -0400
+@@ -36,8 +36,8 @@
+ 
+ 
+ extern "C" {
+-#   include <Lua/lualib.h>
+-#   include <Lua/lauxlib.h>
++#   include <lualib.h>
++#   include <lauxlib.h>
+ }
+ 
+ namespace ScriptComponentCpp
+diff -up o3de/Code/Framework/AzFramework/AzFramework/Script/ScriptNetBindings.cpp.system-lua o3de/Code/Framework/AzFramework/AzFramework/Script/ScriptNetBindings.cpp
+--- o3de/Code/Framework/AzFramework/AzFramework/Script/ScriptNetBindings.cpp.system-lua	2021-04-11 19:45:49.000000000 -0400
++++ o3de/Code/Framework/AzFramework/AzFramework/Script/ScriptNetBindings.cpp	2021-04-12 14:48:23.690642867 -0400
+@@ -17,8 +17,8 @@
+ #include <GridMate/Replica/ReplicaFunctions.h>
+ 
+ extern "C" {
+-#   include <Lua/lualib.h>
+-#   include <Lua/lauxlib.h>
++#   include <lualib.h>
++#   include <lauxlib.h>
+ }
+ 
+ namespace AzFramework
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/ScriptEditorComponent.cpp.system-lua o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/ScriptEditorComponent.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/ScriptEditorComponent.cpp.system-lua	2021-04-11 19:45:49.000000000 -0400
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/ScriptEditorComponent.cpp	2021-04-12 14:48:23.690642867 -0400
+@@ -26,8 +26,8 @@
+ #include <AzCore/Script/ScriptContextDebug.h>
+ 
+ extern "C" {
+-#include<Lua/lualib.h>
+-#include<Lua/lauxlib.h>
++#include <lualib.h>
++#include <lauxlib.h>
+ }
+ 
+ namespace AZ
+diff -up o3de/Code/Framework/Tests/Script/ScriptComponentTests.cpp.system-lua o3de/Code/Framework/Tests/Script/ScriptComponentTests.cpp
+--- o3de/Code/Framework/Tests/Script/ScriptComponentTests.cpp.system-lua	2021-04-12 16:29:50.001161556 -0400
++++ o3de/Code/Framework/Tests/Script/ScriptComponentTests.cpp	2021-04-12 16:30:00.672256347 -0400
+@@ -22,8 +22,8 @@
+ #include "EntityTestbed.h"
+ 
+ extern "C" {
+-#   include <Lua/lualib.h>
+-#   include <Lua/lauxlib.h>
++#   include <lualib.h>
++#   include <lauxlib.h>
+ }
+ 
+ namespace UnitTest
+diff -up o3de/Code/Tools/RC/ResourceCompilerPC/LuaCompiler.cpp.system-lua o3de/Code/Tools/RC/ResourceCompilerPC/LuaCompiler.cpp
+--- o3de/Code/Tools/RC/ResourceCompilerPC/LuaCompiler.cpp.system-lua	2021-04-11 19:45:49.000000000 -0400
++++ o3de/Code/Tools/RC/ResourceCompilerPC/LuaCompiler.cpp	2021-04-12 14:48:23.691642874 -0400
+@@ -21,16 +21,16 @@
+ 
+ extern "C"
+ {
+-#include <Lua/lua.h>
+-#include <Lua/lauxlib.h>
++#include <lua.h>
++#include <lauxlib.h>
+ 
+-#include <Lua/ldo.h>
+-#include <Lua/lfunc.h>
+-#include <Lua/lmem.h>
+-#include <Lua/lobject.h>
+-#include <Lua/lopcodes.h>
+-#include <Lua/lstring.h>
+-#include <Lua/lundump.h>
++#include <ldo.h>
++#include <lfunc.h>
++#include <lmem.h>
++#include <lobject.h>
++#include <lopcodes.h>
++#include <lstring.h>
++#include <lundump.h>
+ }
+ 
+ extern "C"

@@ -1,0 +1,11 @@
+diff -up o3de/cmake/LyAutoGen.cmake.DEBUG o3de/cmake/LyAutoGen.cmake
+--- o3de/cmake/LyAutoGen.cmake.DEBUG	2021-03-16 12:33:13.315718267 -0400
++++ o3de/cmake/LyAutoGen.cmake	2021-03-16 12:33:37.161836908 -0400
+@@ -31,6 +31,7 @@ function(ly_add_autogen)
+         execute_process(
+             COMMAND ${LY_PYTHON_CMD} "${CMAKE_SOURCE_DIR}/Code/Framework/AzAutoGen/AzAutoGen.py" "${CMAKE_BINARY_DIR}/Azcg/TemplateCache/" "${CMAKE_CURRENT_BINARY_DIR}/Azcg/Generated/" "${CMAKE_CURRENT_SOURCE_DIR}" "${AZCG_INPUTFILES}" "${ly_add_autogen_AUTOGEN_RULES}" "-n"
+             OUTPUT_VARIABLE AUTOGEN_OUTPUTS
++            COMMAND_ECHO STDOUT
+         )
+         string(STRIP "${AUTOGEN_OUTPUTS}" AUTOGEN_OUTPUTS)
+         set(AZCG_DEPENDENCIES ${AZCG_INPUTFILES})

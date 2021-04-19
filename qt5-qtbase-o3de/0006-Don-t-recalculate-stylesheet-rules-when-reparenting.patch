@@ -1,0 +1,108 @@
+From f1159b35d7604974a48013c2df37faf32f1b35bb Mon Sep 17 00:00:00 2001
+From: Sergio Martins <sergio.martins@kdab.com>
+Date: Mon, 15 Jan 2018 12:45:15 +0000
+Subject: [PATCH 06/32] Don't recalculate stylesheet rules when reparenting
+
+If total stylesheet didn't change.
+There are cases where the reparenting doesn't change the inherited
+stylesheet
+
+Particle editor now takes 2 seconds to open (previously 6, and
+previously 9 without the previous patches), on first run.
+
+On second run it takes 0 seconds to open, and 0 to close (previously 4
+to open on 2nd run, and 3 seconds to close).
+
+This will also benefit other editors, but haven't measured them.
+
+Task-Id: AMZN-1576
+Change-Id: Iadf194af7dd309aa847ea54a47f032eecd563dec
+Reviewed-on: https://codereview.kdab.com/53422
+Reviewed-by: Nicholas Vansickle <nvsickle@amazon.com>
+Reviewed-by: Alex Montgomery <alexmont@amazon.com>
+Reviewed-on: https://codereview.kdab.com/69420
+Reviewed-by: Aimini <daimini@amazon.com>
+
+# Conflicts:
+#	src/widgets/kernel/qwidget.cpp
+---
+ src/widgets/kernel/qwidget.cpp | 20 ++++++++++++++++++--
+ src/widgets/kernel/qwidget_p.h |  2 +-
+ 2 files changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/src/widgets/kernel/qwidget.cpp b/src/widgets/kernel/qwidget.cpp
+index 479d91be0e..6acde33515 100644
+--- a/src/widgets/kernel/qwidget.cpp
++++ b/src/widgets/kernel/qwidget.cpp
+@@ -2663,8 +2663,16 @@ void QWidgetPrivate::setStyle_helper(QStyle *newStyle, bool propagate)
+ #endif
+ }
+ 
++static QString completeStylesheet(const QWidget *w)
++{
++    if (!w)
++        return QString();
++
++    return w->styleSheet() + completeStylesheet(w->parentWidget());
++}
++
+ // Inherits style from the current parent and propagates it as necessary
+-void QWidgetPrivate::inheritStyle()
++void QWidgetPrivate::inheritStyle(bool accumulatedStylesheetChanged)
+ {
+ #ifndef QT_NO_STYLE_STYLESHEET
+     Q_Q(QWidget);
+@@ -2675,6 +2683,7 @@ void QWidgetPrivate::inheritStyle()
+ 
+     if (!q->styleSheet().isEmpty()) {
+         Q_ASSERT(proxy);
++        if (accumulatedStylesheetChanged)
+         proxy->repolish(q);
+         return;
+     }
+@@ -2691,6 +2700,8 @@ void QWidgetPrivate::inheritStyle()
+         else if (QStyleSheetStyle *newProxy = qt_styleSheet(parentStyle))
+             newProxy->ref();
+ 
++        // Only if stylesheet changed, or QStyle changed we repolish()
++        if (accumulatedStylesheetChanged || newStyle != (extra ? extra->style : nullptr))
+         setStyle_helper(newStyle, true);
+         return;
+     }
+@@ -10414,6 +10425,8 @@ void QWidget::setParent(QWidget *parent, Qt::WindowFlags f)
+     if (newParent && isAncestorOf(focusWidget()))
+         focusWidget()->clearFocus();
+ 
++    const QString oldStyleSheet = completeStylesheet(this);
++
+     d->setParent_sys(parent, f);
+ 
+     if (desktopWidget)
+@@ -10474,7 +10487,10 @@ void QWidget::setParent(QWidget *parent, Qt::WindowFlags f)
+             if (!testAttribute(Qt::WA_ForceUpdatesDisabled))
+                 d->setUpdatesEnabled_helper(parent ? parent->updatesEnabled() : true);
+         }
+-        d->inheritStyle();
++
++        // If the stylesheet didn't change, don't waste cpu recalculating stylesheet rules
++        const bool accumulatedStylesheetChanged = oldStyleSheet != completeStylesheet(this);
++        d->inheritStyle(accumulatedStylesheetChanged);
+ 
+         // send and post remaining QObject events
+         if (parent && d->sendChildEvents) {
+diff --git a/src/widgets/kernel/qwidget_p.h b/src/widgets/kernel/qwidget_p.h
+index 6aadfe13f7..e200c1bbca 100644
+--- a/src/widgets/kernel/qwidget_p.h
++++ b/src/widgets/kernel/qwidget_p.h
+@@ -327,7 +327,7 @@ public:
+     void resolveLocale();
+ 
+     void setStyle_helper(QStyle *newStyle, bool propagate);
+-    void inheritStyle();
++    void inheritStyle(bool accumulatedStylesheetChanged = true);
+ 
+     void setUpdatesEnabled_helper(bool );
+ 
+-- 
+2.28.0.windows.1
+

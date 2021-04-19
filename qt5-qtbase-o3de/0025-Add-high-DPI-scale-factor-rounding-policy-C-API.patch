@@ -1,0 +1,59 @@
+From 9cffe7c0a79d4cab49033c7668a297e8bface0e2 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Morten=20Johan=20S=C3=B8rvig?= <morten.sorvig@qt.io>
+Date: Sat, 7 Oct 2017 01:35:29 +0200
+Subject: [PATCH 25/32] Add high-DPI scale factor rounding policy C++ API
+
+This API enables tuning of how Qt rounds fractional scale factors, and
+corresponds to the QT_SCALE_FACTOR_ROUNDING_POLICY environment
+variable
+
+New API:
+	Qt::HighDPiScaleFactorRoundingPolicy
+	QGuiApplication::setHighDpiScaleFactorRoundingPolicy()
+	QGuiApplication::highDpiScaleFactorRoundingPolicy()
+
+Done-with: Friedemann Kleint <Friedemann.Kleint@qt.io>
+Task-number: QTBUG-53022
+Change-Id: Ic360f26a173caa757e4ebde35ce08a6b74290b7d
+Reviewed-by: Friedemann Kleint <Friedemann.Kleint@qt.io>
+Reviewed-on: https://codereview.kdab.com/c/amazon/qtbase/+/70228
+Reviewed-by: Alessandro Ambrosano <alessandro.ambrosano@kdab.com>
+
+# Conflicts:
+#	src/corelib/global/qnamespace.qdoc
+#	src/gui/kernel/qguiapplication.cpp
+---
+ src/corelib/global/qnamespace.h | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/src/corelib/global/qnamespace.h b/src/corelib/global/qnamespace.h
+index 6dafa0148e..f1d7a17104 100644
+--- a/src/corelib/global/qnamespace.h
++++ b/src/corelib/global/qnamespace.h
+@@ -1758,6 +1758,15 @@ public:
+         ChecksumItuV41
+     };
+ 
++    enum class HighDpiScaleFactorRoundingPolicy {
++        Unset,
++        Round,
++        Ceil,
++        Floor,
++        RoundPreferFloor,
++        PassThrough
++    };
++
+ #ifndef Q_QDOC
+     // NOTE: Generally, do not add QT_Q_ENUM if a corresponding Q_Q_FLAG exists.
+     QT_Q_ENUM(ScrollBarPolicy)
+@@ -1843,6 +1852,7 @@ public:
+     QT_Q_ENUM(MouseEventSource)
+     QT_Q_FLAG(MouseEventFlag)
+     QT_Q_ENUM(ChecksumType)
++    QT_Q_ENUM(HighDpiScaleFactorRoundingPolicy)
+     QT_Q_ENUM(TabFocusBehavior)
+ #endif // Q_DOC
+ 
+-- 
+2.28.0.windows.1
+

@@ -1,0 +1,136 @@
+From bdcfb4fd79d4317013f4f7ad02e2858a5dae69c5 Mon Sep 17 00:00:00 2001
+From: Sergio Martins <sergio.martins@kdab.com>
+Date: Fri, 11 May 2018 16:59:38 +0100
+Subject: [PATCH 12/32] Allow widgets to propagate their style to children
+
+Done by setting Qt::AA_PropagateStyleToChildren.
+
+A popular use case are applications that want to style a particular
+dialog differently.
+
+(Upstream wants a bigger refactoring and cleanup, which isn't suitable
+for 5.6, as it's risky, so commiting the simpler approach in 5.6)
+
+(In parallel, also trying an approach without changing Qt, means this
+commit might not end in the next Qt build)
+
+[ChangeLog][Widgets][Styles] Widgets can now propagate their
+style to children by setting Qt::AA_PropagateStyleToChildren.
+
+Change-Id: I5deb8796b2a33d6264d3fdd4335ceec63d7d1d39
+Reviewed-on: https://codereview.kdab.com/57962
+Reviewed-by: Nathan Collins <nathan.collins@kdab.com>
+Reviewed-by: Michael Hughes <mhughes@amazon.com>
+Reviewed-on: https://codereview.kdab.com/69426
+Reviewed-by: Aimini <daimini@amazon.com>
+---
+ src/corelib/global/qnamespace.h               |  4 ++--
+ src/corelib/global/qnamespace.qdoc            |  8 +++++---
+ src/widgets/kernel/qwidget.cpp                |  6 ++++++
+ .../auto/widgets/styles/qstyle/tst_qstyle.cpp | 20 +++++++++++++++++++
+ 4 files changed, 33 insertions(+), 5 deletions(-)
+
+diff --git a/src/corelib/global/qnamespace.h b/src/corelib/global/qnamespace.h
+index afcbb0e98d..1a29fc9587 100644
+--- a/src/corelib/global/qnamespace.h
++++ b/src/corelib/global/qnamespace.h
+@@ -553,8 +553,8 @@ public:
+         AA_DontShowShortcutsInContextMenus = 28,
+         AA_CompressTabletEvents = 29,
+         AA_DisableWindowContextHelpButton = 30, // ### Qt 6: remove me
+-        AA_DisableSessionManager = 31,
+-
++        AA_DisableSessionManager = 31,        AA_PropagateStyleToChildren = 32, /// ### Qt6: Make it a widget attribute instead of app. That implies harmonizing it with the stylesheet propagation machinery, which is welcome.
++                                          //           Ideally there should be no stylesheet-specific paths.
+         // Add new attributes before this line
+         AA_AttributeCount
+     };
+diff --git a/src/corelib/global/qnamespace.qdoc b/src/corelib/global/qnamespace.qdoc
+index dc49d87cf3..c34509b008 100644
+--- a/src/corelib/global/qnamespace.qdoc
++++ b/src/corelib/global/qnamespace.qdoc
+@@ -299,6 +299,8 @@
+            Currently supported on the Windows platform only.
+            This value was added in 5.15
+ 
++    \value AA_PropagateStyleToChildren When widgets don't have any style set they will use
++           their parent's style, instead of falling back to QApplication's style.
+     The following values are deprecated or obsolete:
+ 
+     \value AA_ImmediateWidgetCreation This attribute is no longer fully
+@@ -743,15 +745,15 @@
+     removed in Qt 6.} It is equivalent to SystemLocaleShortDate.
+ 
+     \value RFC2822Date \l{RFC 2822}, \l{RFC 850} and \l{RFC 1036} format:
+-    either \c{[ddd,] dd MMM yyyy [HH:mm[:ss]][ Â±tzoff]}
+-    or \c{ddd MMM dd[ HH:mm:ss] yyyy[ Â±tzoff]} are recognized for combined dates
++    either \c{[ddd,] dd MMM yyyy [HH:mm[:ss]][ ±tzoff]}
++    or \c{ddd MMM dd[ HH:mm:ss] yyyy[ ±tzoff]} are recognized for combined dates
+     and times, where \c{tzoff} is a timezone offset in \c{HHmm} format. For
+     dates and times separately, the same formats are matched and the unwanted
+     parts are ignored. In particular, note that a time is not recognized without
+     an accompanying date. When converting dates to string form,
+     format \c{dd MMM yyyy} is used, for times the format is \c{HH:mm:ss}. For
+     combined date and time, these are combined
+-    as \c{dd MMM yyyy HH:mm:ss Â±tzoff} (omitting the optional leading day of the
++    as \c{dd MMM yyyy HH:mm:ss ±tzoff} (omitting the optional leading day of the
+     week from the first format recognized).
+ 
+     \note For \c ISODate formats, each \c y, \c M and \c d represents a single
+diff --git a/src/widgets/kernel/qwidget.cpp b/src/widgets/kernel/qwidget.cpp
+index f995683ac9..f8d646d2c5 100644
+--- a/src/widgets/kernel/qwidget.cpp
++++ b/src/widgets/kernel/qwidget.cpp
+@@ -2574,6 +2574,12 @@ QStyle *QWidget::style() const
+ 
+     if (d->extra && d->extra->style)
+         return d->extra->style;
++
++    if (QApplication::testAttribute(Qt::AA_PropagateStyleToChildren)) {
++        if (auto parent = parentWidget())
++            return parent->style();
++    }
++
+     return QApplication::style();
+ }
+ 
+diff --git a/tests/auto/widgets/styles/qstyle/tst_qstyle.cpp b/tests/auto/widgets/styles/qstyle/tst_qstyle.cpp
+index 4cec54856f..f5e54495c4 100644
+--- a/tests/auto/widgets/styles/qstyle/tst_qstyle.cpp
++++ b/tests/auto/widgets/styles/qstyle/tst_qstyle.cpp
+@@ -93,6 +93,7 @@ private slots:
+ 
+     void testProxyCalled();
+     void testStyleOptionInit();
++    void testPropagateToChildren();
+ private:
+     bool testAllFunctions(QStyle *);
+     bool testScrollBarSubControls(const QStyle *style);
+@@ -720,5 +721,24 @@ void tst_QStyle::testStyleOptionInit()
+     }
+ }
+ 
++void tst_QStyle::testPropagateToChildren()
++{
++    QWidget w1;
++    QWidget w2(&w1);
++    QCOMPARE(w1.style(), qApp->style());
++    QCOMPARE(w2.style(), qApp->style());
++
++    qApp->setAttribute(Qt::AA_PropagateStyleToChildren);
++    CustomProxy s;
++    w1.setStyle(&s);
++
++    QCOMPARE(w1.style(), &s);
++    QCOMPARE(w2.style(), &s);
++
++    qApp->setAttribute(Qt::AA_PropagateStyleToChildren, false);
++    QCOMPARE(w1.style(), &s);
++    QCOMPARE(w2.style(), qApp->style());
++}
++
+ QTEST_MAIN(tst_QStyle)
+ #include "tst_qstyle.moc"
+-- 
+2.28.0.windows.1
+

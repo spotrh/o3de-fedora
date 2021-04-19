@@ -1,0 +1,395 @@
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/CMakeLists.txt.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/CMakeLists.txt
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/CMakeLists.txt.more-shared	2021-03-22 16:03:58.786434384 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/CMakeLists.txt	2021-03-22 16:03:17.530231004 -0400
+@@ -29,6 +29,8 @@ cmake_minimum_required(VERSION 3.7)
+ 
+ project(SamplesAndSDK C CXX)
+ 
++OPTION(PX_GENERATE_STATIC_LIBRARIES "Generate static libraries" OFF)
++
+ IF(NOT DEFINED CMAKEMODULES_VERSION)
+ 	SET(CMAKEMODULES_PATH $ENV{PM_CMakeModules_PATH} CACHE INTERNAL "Path to CMakeModules")
+ 	SET(CMAKEMODULES_NAME $ENV{PM_CMakeModules_NAME} CACHE INTERNAL "CMakeModules name")
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleBase.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleBase.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleBase.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleBase.cmake	2021-03-22 16:02:41.626054006 -0400
+@@ -29,6 +29,12 @@
+ # Build SampleBase
+ #
+ 
++IF(PX_GENERATE_STATIC_LIBRARIES)
++	SET(SAMPLEBASE_LIBTYPE STATIC)
++ELSE()
++	SET(SAMPLEBASE_LIBTYPE SHARED)
++ENDIF()
++
+ SET(SAMPLEBASE_COMPILE_DEFS
+ 	# Common to all configurations
+ 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleFramework.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleFramework.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleFramework.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleFramework.cmake	2021-03-22 16:02:41.627054011 -0400
+@@ -40,6 +40,12 @@ SET(SAMPLEFRAMEWORK_PLATFORM_OBJECT_FILE
+ 	$<TARGET_OBJECTS:FastXml>
+ )
+ 
++IF(PX_GENERATE_STATIC_LIBRARIES)
++	SET(SAMPLEFRAMEWORK_LIBTYPE STATIC)
++ELSE()
++	SET(SAMPLEFRAMEWORK_LIBTYPE SHARED)
++ENDIF()
++
+ SET(SAMPLEFRAMEWORK_COMPILE_DEFS
+ 	# Common to all configurations
+ 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SamplePlatform.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SamplePlatform.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SamplePlatform.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SamplePlatform.cmake	2021-03-22 16:02:41.627054011 -0400
+@@ -43,6 +43,12 @@ SET(SAMPLEPLATFORM_COMPILE_DEFS
+ 	$<$<CONFIG:release>:${PHYSX_LINUX_RELEASE_COMPILE_DEFS};>
+ )
+ 
++IF(PX_GENERATE_STATIC_LIBRARIES)
++	SET(SAMPLEPLATFORM_LIBTYPE STATIC)
++ELSE()
++	SET(SAMPLEPLATFORM_LIBTYPE SHARED)
++ENDIF()
++
+ 
+ SET(SAMPLEPLATFORM_PLATFORM_SOURCES
+ 	${PHYSX_ROOT_DIR}/samples/sampleframework/platform/src/linux/LinuxSamplePlatform.cpp
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleRenderer.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleRenderer.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleRenderer.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SampleRenderer.cmake	2021-03-22 16:02:41.627054011 -0400
+@@ -42,6 +42,12 @@ SET(SAMPLERENDERER_COMPILE_DEFS
+ 	$<$<CONFIG:release>:${PHYSX_LINUX_RELEASE_COMPILE_DEFS};>
+ )
+ 
++IF(PX_GENERATE_STATIC_LIBRARIES)
++	SET(SAMPLERENDERER_LIBTYPE STATIC)
++ELSEIF()
++	SET(SAMPLERENDERER_LIBTYPE SHARED)
++ENDIF()
++
+ SET(SAMPLE_NULLRENDERER_DIR ${PHYSX_ROOT_DIR}/samples/sampleframework/renderer/src/null)
+ SET(SAMPLERENDERER_NULLRENDERER_SOURCES
+ 	${SAMPLE_NULLRENDERER_DIR}/NULLRenderer.cpp
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SamplesToolkit.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SamplesToolkit.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SamplesToolkit.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/linux/SamplesToolkit.cmake	2021-03-22 16:02:41.627054011 -0400
+@@ -29,6 +29,12 @@
+ # Build PxToolkit
+ #
+ 
++IF(PX_GENERATE_STATIC_LIBRARIES)
++	SET(SAMPLETOOLKIT_LIBTYPE STATIC)
++ELSEIF()
++	SET(SAMPLETOOLKIT_LIBTYPE SHARED)
++ENDIF()
++
+ SET(SAMPLETOOLKIT_PLATFORM_SOURCE_FILES
+ )
+ 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleBase.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleBase.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleBase.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleBase.cmake	2021-03-22 16:02:41.627054011 -0400
+@@ -109,7 +109,7 @@ SET(SAMPLEBASE_FILES
+ 	${SAMPLEBASE_DIR}/wavefront.h
+ )
+ 
+-ADD_LIBRARY(SampleBase STATIC
++ADD_LIBRARY(SampleBase ${SAMPLEBASE_LIBTYPE}
+ 	${SAMPLEBASE_FILES}
+ )
+ 
+@@ -145,7 +145,7 @@ TARGET_COMPILE_DEFINITIONS(SampleBase
+ )
+ 
+ 
+-IF(NV_USE_GAMEWORKS_OUTPUT_DIRS)
++IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND SAMPLEBASE_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(SampleBase PROPERTIES 
+ 		COMPILE_PDB_NAME_DEBUG "SampleBase_static_${CMAKE_DEBUG_POSTFIX}"
+ 		COMPILE_PDB_NAME_CHECKED "SampleBase_static_${CMAKE_CHECKED_POSTFIX}"
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleFramework.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleFramework.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleFramework.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleFramework.cmake	2021-03-22 16:02:41.627054011 -0400
+@@ -75,7 +75,7 @@ SET(SAMPLEFRAMEWORK_FILES
+ 	${TARGA_SRC_DIR}/targa.cpp
+ )
+ 
+-ADD_LIBRARY(SampleFramework STATIC
++ADD_LIBRARY(SampleFramework ${SAMPLEFRAMEWORK_LIBTYPE}
+ 	${SAMPLEFRAMEWORK_PLATFORM_SOURCES}
+ 	
+ 	${SAMPLEFRAMEWORK_FILES}
+@@ -100,7 +100,7 @@ TARGET_COMPILE_DEFINITIONS(SampleFramewo
+ )
+ 
+ 
+-IF(NV_USE_GAMEWORKS_OUTPUT_DIRS)
++IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND SAMPLEFRAMEWORK_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(SampleFramework PROPERTIES 
+ 		COMPILE_PDB_NAME_DEBUG "SampleFramework_static_${CMAKE_DEBUG_POSTFIX}"
+ 		COMPILE_PDB_NAME_CHECKED "SampleFramework_static_${CMAKE_CHECKED_POSTFIX}"
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplePlatform.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplePlatform.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplePlatform.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplePlatform.cmake	2021-03-22 16:02:41.627054011 -0400
+@@ -42,7 +42,7 @@ SET(SAMPLEPLATFORM_FILES
+ 	${SAMPLEPLATFORM_DIR}/include/SamplePlatform.h
+ )
+ 
+-ADD_LIBRARY(SamplePlatform STATIC
++ADD_LIBRARY(SamplePlatform ${SAMPLEPLATFORM_LIBTYPE}
+ 	${SAMPLEPLATFORM_PLATFORM_SOURCES}
+ 	
+ 	${SAMPLEPLATFORM_FILES}
+@@ -65,7 +65,7 @@ TARGET_COMPILE_DEFINITIONS(SamplePlatfor
+ )
+ 
+ 
+-IF(NV_USE_GAMEWORKS_OUTPUT_DIRS)
++IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND SAMPLEPLATFORM_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(SamplePlatform PROPERTIES 
+ 		COMPILE_PDB_NAME_DEBUG "SamplePlatform_static_${CMAKE_DEBUG_POSTFIX}"
+ 		COMPILE_PDB_NAME_CHECKED "SamplePlatform_static_${CMAKE_CHECKED_POSTFIX}"
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleRenderer.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleRenderer.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleRenderer.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleRenderer.cmake	2021-03-22 16:02:41.628054016 -0400
+@@ -116,7 +116,7 @@ SET(SAMPLERENDERER_HEADERS
+ 	${SAMPLERENDERER_DIR}/include/RendererWindow.h
+ )
+ 
+-ADD_LIBRARY(SampleRenderer STATIC
++ADD_LIBRARY(SampleRenderer ${SAMPLERENDERER_LIBTYPE}
+ 	${SAMPLERENDERER_PLATFORM_SOURCES}
+ 
+ 	${SAMPLERENDERER_FILES}
+@@ -141,7 +141,7 @@ TARGET_COMPILE_DEFINITIONS(SampleRendere
+ )
+ 
+ 
+-IF(NV_USE_GAMEWORKS_OUTPUT_DIRS)
++IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND SAMPLERENDERER_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(SampleRenderer PROPERTIES 
+ 		COMPILE_PDB_NAME_DEBUG "SampleRenderer_static_${CMAKE_DEBUG_POSTFIX}"
+ 		COMPILE_PDB_NAME_CHECKED "SampleRenderer_static_${CMAKE_CHECKED_POSTFIX}"
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplesToolkit.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplesToolkit.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplesToolkit.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplesToolkit.cmake	2021-03-22 16:02:41.628054016 -0400
+@@ -55,7 +55,7 @@ SET(SAMPLETOOLKIT_HEADERS
+ 	${PXTOOLKIT_INCLUDE_DIR}/PxToolkit.h
+ )
+ 
+-ADD_LIBRARY(SampleToolkit STATIC 
++ADD_LIBRARY(SampleToolkit ${SAMPLETOOLKIT_LIBTYPE}
+ 	${SAMPLETOOLKIT_PLATFORM_SOURCE_FILES}
+ 	
+ 	${SAMPLETOOLKIT_FILES}
+@@ -79,7 +79,7 @@ TARGET_COMPILE_DEFINITIONS(SampleToolkit
+ TARGET_LINK_LIBRARIES(SampleToolkit PhysXFoundation PhysXExtensions)
+ 
+ 
+-IF(NV_USE_GAMEWORKS_OUTPUT_DIRS)
++IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND SAMPLETOOLKIT_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(SampleToolkit PROPERTIES 
+ 		COMPILE_PDB_NAME_DEBUG "SamplesToolkit_static_${CMAKE_DEBUG_POSTFIX}"
+ 		COMPILE_PDB_NAME_CHECKED "SamplesToolkit_static_${CMAKE_CHECKED_POSTFIX}"
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/CMakeLists.txt.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/CMakeLists.txt
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/CMakeLists.txt.more-shared	2021-03-22 16:03:31.082297812 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/CMakeLists.txt	2021-03-22 16:03:48.604384190 -0400
+@@ -28,6 +28,8 @@
+ cmake_minimum_required(VERSION 3.7)
+ project(Snippets C CXX)
+ 
++OPTION(PX_GENERATE_STATIC_LIBRARIES "Generate static libraries" OFF)
++
+ IF(NOT DEFINED CMAKEMODULES_VERSION)
+ 	SET(CMAKEMODULES_PATH $ENV{PM_CMakeModules_PATH} CACHE INTERNAL "Path to CMakeModules")
+ 	SET(CMAKEMODULES_NAME $ENV{PM_CMakeModules_NAME} CACHE INTERNAL "CMakeModules name")
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetRender.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetRender.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetRender.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetRender.cmake	2021-03-22 16:02:41.628054016 -0400
+@@ -41,6 +41,11 @@ SET(SNIPPETRENDER_COMPILE_DEFS
+ 	$<$<CONFIG:release>:${PHYSX_LINUX_RELEASE_COMPILE_DEFS};>
+ )
+ 
++IF(PX_GENERATE_STATIC_LIBRARIES)
++	SET(SNIPPETRENDER_LIBTYPE STATIC)
++ELSEIF()
++	SET(SNIPPETRENDER_LIBTYPE SHARED)
++ENDIF()
+ 
+ SET(SNIPPETRENDER_PLATFORM_INCLUDES
+ )
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetUtils.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetUtils.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetUtils.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetUtils.cmake	2021-03-22 16:02:41.628054016 -0400
+@@ -32,6 +32,11 @@
+ SET(SNIPPETUTILS_PLATFORM_INCLUDES
+ )
+ 
++IF(PX_GENERATE_STATIC_LIBRARIES)
++	SET(SNIPPETUTILS_LIBTYPE STATIC)
++ELSEIF()
++	SET(SNIPPETUTILS_LIBTYPE SHARED)
++ENDIF()
+ 
+ SET(SNIPPETUTILS_COMPILE_DEFS
+ 	# Common to all configurations
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetRender.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetRender.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetRender.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetRender.cmake	2021-03-22 16:02:41.628054016 -0400
+@@ -39,7 +39,7 @@ SET(SNIPPETRENDER_FILES
+ 	${PHYSX_ROOT_DIR}/snippets/snippetrender/SnippetRender.h
+ )
+ 
+-ADD_LIBRARY(SnippetRender STATIC
++ADD_LIBRARY(SnippetRender ${SNIPPETRENDER_LIBTYPE}
+ 	${SNIPPETRENDER_FILES}
+ 	
+ 	${SNIPPETRENDER_PLATFORM_FILES}
+@@ -55,7 +55,7 @@ TARGET_COMPILE_DEFINITIONS(SnippetRender
+ )
+ 
+ 
+-IF(NV_USE_GAMEWORKS_OUTPUT_DIRS)
++IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND SNIPPETRENDER_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(SnippetRender PROPERTIES 
+ 		COMPILE_PDB_NAME_DEBUG "SnippetRender_static_${CMAKE_DEBUG_POSTFIX}"
+ 		COMPILE_PDB_NAME_CHECKED "SnippetRender_static_${CMAKE_CHECKED_POSTFIX}"
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetUtils.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetUtils.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetUtils.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetUtils.cmake	2021-03-22 16:02:41.628054016 -0400
+@@ -37,7 +37,7 @@ SET(SNIPPETUTILS_FILES
+ 	${PHYSX_ROOT_DIR}/snippets/snippetutils/SnippetUtils.h
+ )
+ 
+-ADD_LIBRARY(SnippetUtils STATIC
++ADD_LIBRARY(SnippetUtils ${SNIPPETUTILS_LIBTYPE}
+ 	${SNIPPETUTILS_FILES}
+ )
+ 
+@@ -53,7 +53,7 @@ TARGET_COMPILE_DEFINITIONS(SnippetUtils
+ )
+ 
+ 
+-IF(NV_USE_GAMEWORKS_OUTPUT_DIRS)
++IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND SNIPPETUTILS_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(SnippetUtils PROPERTIES 
+ 		COMPILE_PDB_NAME_DEBUG "SnippetUtils_static_${CMAKE_DEBUG_POSTFIX}"
+ 		COMPILE_PDB_NAME_CHECKED "SnippetUtils_static_${CMAKE_CHECKED_POSTFIX}"
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXCharacterKinematic.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXCharacterKinematic.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXCharacterKinematic.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXCharacterKinematic.cmake	2021-03-22 16:02:41.628054016 -0400
+@@ -41,8 +41,11 @@ SET(PHYSXCHARACTERKINEMATICS_COMPILE_DEF
+ 	$<$<CONFIG:release>:${PHYSX_LINUX_RELEASE_COMPILE_DEFS};>
+ )
+ 
+-SET(PHYSXCHARACTERKINEMATIC_LIBTYPE STATIC)
+-
++IF(PX_GENERATE_STATIC_LIBRARIES)
++        SET(PHYSXCHARACTERKINEMATIC_LIBTYPE STATIC)
++ELSE()
++        SET(PHYSXCHARACTERKINEMATIC_LIBTYPE SHARED)
++ENDIF()
+ 
+ # enable -fPIC so we can link static libs with the editor
+ #SET_TARGET_PROPERTIES(PhysXCharacterKinematic PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXExtensions.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXExtensions.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXExtensions.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXExtensions.cmake	2021-03-22 16:02:41.628054016 -0400
+@@ -41,11 +41,23 @@ SET(PHYSXEXTENSIONS_PLATFORM_SRC_FILES
+ 	${PHYSXEXTENSIONS_PLATFORM_OBJECT_FILES}
+ )
+ 
++IF(PX_GENERATE_STATIC_LIBRARIES)
++        SET(PXEXTENSIONS_LIBTYPE_DEFS
++                PX_PHYSX_STATIC_LIB;
++        )
++        SET(PHYSXEXTENSIONS_LIBTYPE STATIC)
++ELSE()
++        SET(PXEXTENSIONS_LIBTYPE_DEFS
++                PX_PHYSX_FOUNDATION_EXPORTS;PX_PHYSX_COMMON_EXPORTS;
++        )
++        SET(PHYSXEXTENSIONS_LIBTYPE SHARED)
++ENDIF()
++
+ # Use generator expressions to set config specific preprocessor definitions
+ SET(PHYSXEXTENSIONS_COMPILE_DEFS
+ 
+ 	# Common to all configurations
+-	${PHYSX_LINUX_COMPILE_DEFS};PX_PHYSX_STATIC_LIB;
++	${PHYSX_LINUX_COMPILE_DEFS};${PXEXTENSIONS_LIBTYPE_DEFS}
+ 
+ 	$<$<CONFIG:debug>:${PHYSX_LINUX_DEBUG_COMPILE_DEFS};>
+ 	$<$<CONFIG:checked>:${PHYSX_LINUX_CHECKED_COMPILE_DEFS};>
+@@ -53,4 +65,3 @@ SET(PHYSXEXTENSIONS_COMPILE_DEFS
+ 	$<$<CONFIG:release>:${PHYSX_LINUX_RELEASE_COMPILE_DEFS};>
+ )
+ 
+-SET(PHYSXEXTENSIONS_LIBTYPE STATIC)
+\ No newline at end of file
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXPvdSDK.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXPvdSDK.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXPvdSDK.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXPvdSDK.cmake	2021-03-22 16:02:41.629054021 -0400
+@@ -29,12 +29,22 @@
+ # Build PhysXPvdSDK
+ #
+ 
+-SET(PHYSXPVDSDK_LIBTYPE STATIC)
++IF(PX_GENERATE_STATIC_LIBRARIES)
++        SET(PXPVDSDK_LIBTYPE_DEFS
++                PX_PHYSX_STATIC_LIB;
++        )
++        SET(PHYSXPVDSDK_LIBTYPE STATIC)
++ELSE()
++        SET(PXPVDSDK_LIBTYPE_DEFS
++                PX_PHYSX_FOUNDATION_EXPORTS;PX_PHYSX_COMMON_EXPORTS;
++        )
++        SET(PHYSXPVDSDK_LIBTYPE SHARED)
++ENDIF()
+ 
+ # Use generator expressions to set config specific preprocessor definitions
+ SET(PHYSXPVDSDK_COMPILE_DEFS 
+ 	# Common to all configurations
+-	${PHYSX_LINUX_COMPILE_DEFS};PX_PHYSX_STATIC_LIB;
++	${PHYSX_LINUX_COMPILE_DEFS};${PXPVDSDK_LIBTYPE_DEFS}
+ 
+ 	$<$<CONFIG:debug>:${PHYSX_LINUX_DEBUG_COMPILE_DEFS};>
+ 	$<$<CONFIG:checked>:${PHYSX_LINUX_CHECKED_COMPILE_DEFS};>
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXVehicle.cmake.more-shared PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXVehicle.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXVehicle.cmake.more-shared	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/PhysXVehicle.cmake	2021-03-22 16:02:41.629054021 -0400
+@@ -29,11 +29,23 @@
+ # Build PhysXVehicle
+ #
+ 
++IF(PX_GENERATE_STATIC_LIBRARIES)
++        SET(PXVEHICLE_LIBTYPE_DEFS
++                PX_PHYSX_STATIC_LIB;
++        )
++        SET(PHYSXVEHICLE_LIBTYPE STATIC)
++ELSE()
++        SET(PXVEHICLE_LIBTYPE_DEFS
++                PX_PHYSX_FOUNDATION_EXPORTS;PX_PHYSX_COMMON_EXPORTS;
++        )
++        SET(PHYSXVEHICLE_LIBTYPE SHARED)
++ENDIF()
++
+ # Use generator expressions to set config specific preprocessor definitions
+ SET(PHYSXVEHICLE_COMPILE_DEFS
+ 
+ 	# Common to all configurations
+-	${PHYSX_LINUX_COMPILE_DEFS};PX_PHYSX_STATIC_LIB
++	${PHYSX_LINUX_COMPILE_DEFS};${PXVEHICLE_LIBTYPE_DEFS}
+ 
+ 	$<$<CONFIG:debug>:${PHYSX_LINUX_DEBUG_COMPILE_DEFS};>
+ 	$<$<CONFIG:checked>:${PHYSX_LINUX_CHECKED_COMPILE_DEFS};>
+@@ -42,6 +54,3 @@ SET(PHYSXVEHICLE_COMPILE_DEFS
+ )
+ 
+ 
+-SET(PHYSXVEHICLE_LIBTYPE STATIC)
+-
+-

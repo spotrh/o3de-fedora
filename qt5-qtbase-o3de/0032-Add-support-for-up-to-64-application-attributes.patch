@@ -1,0 +1,53 @@
+From b9523e64a7168f82d0e87c331253a00d35fbdedc Mon Sep 17 00:00:00 2001
+From: Nicholas VanSickle <nvsickle@amazon.com>
+Date: Wed, 30 Sep 2020 20:23:38 -0700
+Subject: [PATCH 32/32] Add support for up to 64 application attributes
+
+---
+ src/corelib/kernel/qcoreapplication.cpp | 6 +++---
+ src/corelib/kernel/qcoreapplication_p.h | 4 ++--
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/src/corelib/kernel/qcoreapplication.cpp b/src/corelib/kernel/qcoreapplication.cpp
+index a97b68f372..36d12111ed 100644
+--- a/src/corelib/kernel/qcoreapplication.cpp
++++ b/src/corelib/kernel/qcoreapplication.cpp
+@@ -359,7 +359,7 @@ QAbstractEventDispatcher *QCoreApplicationPrivate::eventDispatcher = nullptr;
+ #endif // QT_NO_QOBJECT
+ 
+ QCoreApplication *QCoreApplication::self = nullptr;
+-uint QCoreApplicationPrivate::attribs =
++quint64 QCoreApplicationPrivate::attribs =
+     (1 << Qt::AA_SynthesizeMouseForUnhandledTouchEvents) |
+     (1 << Qt::AA_SynthesizeMouseForUnhandledTabletEvents);
+ 
+@@ -949,9 +949,9 @@ bool QCoreApplication::isSetuidAllowed()
+ void QCoreApplication::setAttribute(Qt::ApplicationAttribute attribute, bool on)
+ {
+     if (on)
+-        QCoreApplicationPrivate::attribs |= 1 << attribute;
++        QCoreApplicationPrivate::attribs |= 1ULL << attribute;
+     else
+-        QCoreApplicationPrivate::attribs &= ~(1 << attribute);
++        QCoreApplicationPrivate::attribs &= ~(1ULL << attribute);
+ #if defined(QT_NO_QOBJECT)
+     if (Q_UNLIKELY(qApp)) {
+ #else
+diff --git a/src/corelib/kernel/qcoreapplication_p.h b/src/corelib/kernel/qcoreapplication_p.h
+index 9d2fde619c..1c1a557e5e 100644
+--- a/src/corelib/kernel/qcoreapplication_p.h
++++ b/src/corelib/kernel/qcoreapplication_p.h
+@@ -186,8 +186,8 @@ public:
+ #endif
+ 
+     static bool setuidAllowed;
+-    static uint attribs;
+-    static inline bool testAttribute(uint flag) { return attribs & (1 << flag); }
++    static quint64 attribs;
++    static inline bool testAttribute(uint flag) { return attribs & (1ULL << flag); }
+     static int app_compile_version;
+ 
+     void processCommandLineArguments();
+-- 
+2.28.0.windows.1
+

@@ -1,0 +1,17 @@
+diff -up etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcLib/Etc/EtcImage.cpp.fix-leak etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcLib/Etc/EtcImage.cpp
+--- etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcLib/Etc/EtcImage.cpp.fix-leak	2021-03-19 13:54:07.496818454 -0400
++++ etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcLib/Etc/EtcImage.cpp	2021-03-19 13:54:24.962908176 -0400
+@@ -189,11 +189,11 @@ namespace Etc
+ 			m_pablock = nullptr;
+ 		}
+ 
+-		/*if (m_paucEncodingBits != nullptr)
++		if (m_paucEncodingBits != nullptr)
+ 		{
+ 			delete[] m_paucEncodingBits;
+ 			m_paucEncodingBits = nullptr;
+-		}*/
++		}
+ 	}
+ 
+ 	// ----------------------------------------------------------------------------------------------------

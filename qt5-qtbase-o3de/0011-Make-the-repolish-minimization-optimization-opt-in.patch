@@ -1,0 +1,131 @@
+From 3fe8bfe2df2c2cb0ba1a439c92efddf33384d747 Mon Sep 17 00:00:00 2001
+From: Sergio Martins <sergio.martins@kdab.com>
+Date: Wed, 28 Mar 2018 16:26:05 +0100
+Subject: [PATCH 11/32] Make the repolish minimization optimization opt-in
+
+Some widgets need the repolishing, because they use delayed reparenting
+and depend on css rules that contain their parent objectName
+
+Change-Id: Idcd7ac7bac6fabe81cb0a6d8b90d49fd243ff7ab
+Reviewed-on: https://codereview.kdab.com/56324
+Reviewed-by: Michael Hughes <mhughes@amazon.com>
+Reviewed-on: https://codereview.kdab.com/69425
+Reviewed-by: Chris Galvan <chgalvan@amazon.com>
+
+# Conflicts:
+#	src/widgets/kernel/qwidget.cpp
+---
+ src/widgets/kernel/qwidget.cpp | 16 +++++++++-------
+ src/widgets/kernel/qwidget_p.h |  2 +-
+ src/widgets/styles/qstyle.cpp  | 12 ++++++++++++
+ src/widgets/styles/qstyle.h    |  3 +++
+ 4 files changed, 25 insertions(+), 8 deletions(-)
+
+diff --git a/src/widgets/kernel/qwidget.cpp b/src/widgets/kernel/qwidget.cpp
+index 6acde33515..f995683ac9 100644
+--- a/src/widgets/kernel/qwidget.cpp
++++ b/src/widgets/kernel/qwidget.cpp
+@@ -2672,7 +2672,7 @@ static QString completeStylesheet(const QWidget *w)
+ }
+ 
+ // Inherits style from the current parent and propagates it as necessary
+-void QWidgetPrivate::inheritStyle(bool accumulatedStylesheetChanged)
++void QWidgetPrivate::inheritStyle(bool repolish)
+ {
+ #ifndef QT_NO_STYLE_STYLESHEET
+     Q_Q(QWidget);
+@@ -2683,7 +2683,7 @@ void QWidgetPrivate::inheritStyle(bool accumulatedStylesheetChanged)
+ 
+     if (!q->styleSheet().isEmpty()) {
+         Q_ASSERT(proxy);
+-        if (accumulatedStylesheetChanged)
++        if (repolish)
+         proxy->repolish(q);
+         return;
+     }
+@@ -2701,7 +2701,7 @@ void QWidgetPrivate::inheritStyle(bool accumulatedStylesheetChanged)
+             newProxy->ref();
+ 
+         // Only if stylesheet changed, or QStyle changed we repolish()
+-        if (accumulatedStylesheetChanged || newStyle != (extra ? extra->style : nullptr))
++        if (repolish || newStyle != (extra ? extra->style : nullptr))
+         setStyle_helper(newStyle, true);
+         return;
+     }
+@@ -10425,7 +10425,8 @@ void QWidget::setParent(QWidget *parent, Qt::WindowFlags f)
+     if (newParent && isAncestorOf(focusWidget()))
+         focusWidget()->clearFocus();
+ 
+-    const QString oldStyleSheet = completeStylesheet(this);
++    // (don't call completeStylesheet(this) when we're not using the polish optimization)
++    const QString oldStyleSheet = QStyle::minimizePolishOptimizationsEnabled() ? completeStylesheet(this) : QString();
+ 
+     d->setParent_sys(parent, f);
+ 
+@@ -10488,9 +10489,10 @@ void QWidget::setParent(QWidget *parent, Qt::WindowFlags f)
+                 d->setUpdatesEnabled_helper(parent ? parent->updatesEnabled() : true);
+         }
+ 
+-        // If the stylesheet didn't change, don't waste cpu recalculating stylesheet rules
+-        const bool accumulatedStylesheetChanged = oldStyleSheet != completeStylesheet(this);
+-        d->inheritStyle(accumulatedStylesheetChanged);
++        // If the stylesheet didn't change, don't waste cpu recalculating stylesheet rules.
++        // But only use this if useMinimizePolishOptimization is set. By default stylesheet rules will be recalculated.
++        const bool repolish = !QStyle::minimizePolishOptimizationsEnabled() || oldStyleSheet != completeStylesheet(this);
++        d->inheritStyle(repolish);
+ 
+         // send and post remaining QObject events
+         if (parent && d->sendChildEvents) {
+diff --git a/src/widgets/kernel/qwidget_p.h b/src/widgets/kernel/qwidget_p.h
+index e200c1bbca..ff341f0741 100644
+--- a/src/widgets/kernel/qwidget_p.h
++++ b/src/widgets/kernel/qwidget_p.h
+@@ -327,7 +327,7 @@ public:
+     void resolveLocale();
+ 
+     void setStyle_helper(QStyle *newStyle, bool propagate);
+-    void inheritStyle(bool accumulatedStylesheetChanged = true);
++    void inheritStyle(bool repolish = true);
+ 
+     void setUpdatesEnabled_helper(bool );
+ 
+diff --git a/src/widgets/styles/qstyle.cpp b/src/widgets/styles/qstyle.cpp
+index 7c4b45200d..011b16164d 100644
+--- a/src/widgets/styles/qstyle.cpp
++++ b/src/widgets/styles/qstyle.cpp
+@@ -2475,6 +2475,18 @@ bool QStylePrivate::useFullScreenForPopup()
+     return theme && theme->themeHint(QPlatformTheme::UseFullScreenForPopupMenu).toBool();
+ }
+ 
++static bool s_minimizePolishOptimizations = false;
++
++void QStyle::enableMinimizePolishOptimizations(bool enabled)
++{
++    s_minimizePolishOptimizations = enabled;
++}
++
++bool QStyle::minimizePolishOptimizationsEnabled()
++{
++    return s_minimizePolishOptimizations;
++}
++
+ QT_END_NAMESPACE
+ 
+ #include "moc_qstyle.cpp"
+diff --git a/src/widgets/styles/qstyle.h b/src/widgets/styles/qstyle.h
+index 09495aec0a..02ff0bf627 100644
+--- a/src/widgets/styles/qstyle.h
++++ b/src/widgets/styles/qstyle.h
+@@ -73,6 +73,9 @@ public:
+     QStyle();
+     virtual ~QStyle();
+ 
++    static void enableMinimizePolishOptimizations(bool enabled);
++    static bool minimizePolishOptimizationsEnabled();
++
+     virtual void polish(QWidget *widget);
+     virtual void unpolish(QWidget *widget);
+ 
+-- 
+2.28.0.windows.1
+

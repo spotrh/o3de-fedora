@@ -1,0 +1,8 @@
+diff -up etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcLib/CMakeLists.txt.soversion etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcLib/CMakeLists.txt
+--- etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcLib/CMakeLists.txt.soversion	2021-03-19 13:29:56.089336274 -0400
++++ etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcLib/CMakeLists.txt	2021-03-19 13:30:12.431420008 -0400
+@@ -22,3 +22,4 @@ file(GLOB SOURCES
+ 	${PROJECT_SOURCE_DIR}/Etc/*.cpp
+ 	${PROJECT_SOURCE_DIR}/EtcCodec/*.cpp)
+ ADD_LIBRARY(EtcLib ${SOURCES})
++set_target_properties(EtcLib PROPERTIES SOVERSION 0)

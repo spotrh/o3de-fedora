@@ -1,0 +1,37 @@
+From 471096842e424fda428afc40e75876655464888b Mon Sep 17 00:00:00 2001
+From: Nathan Collins <nathan.collins@kdab.com>
+Date: Wed, 15 Jan 2020 16:49:07 +0000
+Subject: [PATCH 22/32] Platform-specific arguments parse a comma-separated
+ list
+
+Whilst it is documented that platform-specific arguments can be supplied
+as acomma-separated list, in practise the arguments were never separated
+out. Add code to check for arguments and separate them by the comma
+character as documented.
+
+Change-Id: I82cc013fad5984ff45d3f95e095d07a762347528
+Task-Id: AMZN-1889
+Task-Id: LY-104311
+Reviewed-on: https://codereview.kdab.com/c/amazon/qtbase/+/74425
+Reviewed-by: Chris Galvan <chgalvan@amazon.com>
+---
+ src/gui/kernel/qguiapplication.cpp | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/src/gui/kernel/qguiapplication.cpp b/src/gui/kernel/qguiapplication.cpp
+index 239a78313c..ff6826b4d0 100644
+--- a/src/gui/kernel/qguiapplication.cpp
++++ b/src/gui/kernel/qguiapplication.cpp
+@@ -1215,6 +1215,9 @@ static void init_platform(const QString &pluginNamesWithArguments, const QString
+         // Split into platform name and arguments
+         QStringList arguments = pluginArgument.split(QLatin1Char(':'));
+         const QString name = arguments.takeFirst().toLower();
++        // Separate the comma separated arguments list, if it has been supplied
++        if (!arguments.isEmpty())
++            arguments = arguments.takeFirst().split(QLatin1Char(','));
+         QString argumentsKey = name;
+         argumentsKey[0] = argumentsKey.at(0).toUpper();
+         arguments.append(QLibraryInfo::platformPluginArguments(argumentsKey));
+-- 
+2.28.0.windows.1
+

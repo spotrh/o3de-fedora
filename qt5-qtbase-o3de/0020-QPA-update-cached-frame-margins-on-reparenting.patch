@@ -1,0 +1,33 @@
+From 579746bd2ab40c8f71b2f7d6c84bed5e9ea9f234 Mon Sep 17 00:00:00 2001
+From: Mauro Persano <mauro.persano@kdab.com>
+Date: Tue, 5 Nov 2019 10:19:32 -0300
+Subject: [PATCH 20/32] QPA: update cached frame margins on reparenting
+
+Platform window frame margins change when it's reparented, so make sure
+the cached margins are updated (this used to work on Qt 5.6 because
+frame margins weren't cached).
+
+Change-Id: Ie3404c7d1a0e7746dfcff2271b4340cc0586282e
+Task-Id: AMZN-1895
+Task-Id: LY-104521
+Reviewed-on: https://codereview.kdab.com/72424
+Reviewed-by: Chris Galvan <chgalvan@amazon.com>
+---
+ src/plugins/platforms/windows/qwindowswindow.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/plugins/platforms/windows/qwindowswindow.cpp b/src/plugins/platforms/windows/qwindowswindow.cpp
+index 6c6544aeab..9afa657396 100644
+--- a/src/plugins/platforms/windows/qwindowswindow.cpp
++++ b/src/plugins/platforms/windows/qwindowswindow.cpp
+@@ -1776,6 +1776,7 @@ void QWindowsWindow::setParent_sys(const QPlatformWindow *parent)
+             setDropSiteEnabled(false);
+             setWindowFlags_sys(window()->flags(), unsigned(isTopLevel ? WindowCreationData::ForceTopLevel : WindowCreationData::ForceChild));
+             updateDropSite(isTopLevel);
++            updateFullFrameMargins();
+         }
+     }
+ }
+-- 
+2.28.0.windows.1
+

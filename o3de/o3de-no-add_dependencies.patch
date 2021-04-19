@@ -1,0 +1,12 @@
+diff -up o3de/cmake/Dependencies.cmake.no-add_dependencies o3de/cmake/Dependencies.cmake
+--- o3de/cmake/Dependencies.cmake.no-add_dependencies	2021-03-29 16:52:16.209947239 -0400
++++ o3de/cmake/Dependencies.cmake	2021-03-29 16:52:24.269988282 -0400
+@@ -38,7 +38,7 @@ function(ly_add_dependencies TARGET)
+     if(TARGET ${TARGET})
+         # Target already created, add it
+         ly_parse_third_party_dependencies("${extra_function_args}")
+-        add_dependencies(${TARGET} ${extra_function_args})
++        # add_dependencies(${TARGET} ${extra_function_args})
+     else()
+         set_property(GLOBAL APPEND PROPERTY LY_DELAYED_DEPENDENCIES_${TARGET} ${extra_function_args})
+     endif()

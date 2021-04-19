@@ -1,0 +1,37 @@
+From fa5ca2bf19131d5191a6ce25d2b9d01fbbbe36ca Mon Sep 17 00:00:00 2001
+From: Nicholas VanSickle <nvsickle@amazon.com>
+Date: Wed, 30 Sep 2020 16:52:56 -0700
+Subject: [PATCH 31/32] Remove AA_ImmediateWidgetCreation
+
+---
+ src/widgets/kernel/qwidget.cpp | 7 -------
+ 1 file changed, 7 deletions(-)
+
+diff --git a/src/widgets/kernel/qwidget.cpp b/src/widgets/kernel/qwidget.cpp
+index b04fa4260f..4f7b321004 100644
+--- a/src/widgets/kernel/qwidget.cpp
++++ b/src/widgets/kernel/qwidget.cpp
+@@ -1058,9 +1058,6 @@ void QWidgetPrivate::init(QWidget *parentWidget, Qt::WindowFlags f)
+     if (++QWidgetPrivate::instanceCounter > QWidgetPrivate::maxInstances)
+         QWidgetPrivate::maxInstances = QWidgetPrivate::instanceCounter;
+ 
+-    if (QApplicationPrivate::testAttribute(Qt::AA_ImmediateWidgetCreation)) // ### fixme: Qt 6: Remove AA_ImmediateWidgetCreation.
+-        q->create();
+-
+     QEvent e(QEvent::Create);
+     QCoreApplication::sendEvent(q, &e);
+     QCoreApplication::postEvent(q, new QEvent(QEvent::PolishRequest));
+@@ -10474,10 +10471,6 @@ void QWidget::setParent(QWidget *parent, Qt::WindowFlags f)
+         oldPaintManager->moveStaticWidgets(this);
+     }
+ 
+-    // ### fixme: Qt 6: Remove AA_ImmediateWidgetCreation.
+-    if (QApplicationPrivate::testAttribute(Qt::AA_ImmediateWidgetCreation) && !testAttribute(Qt::WA_WState_Created))
+-        create();
+-
+     d->reparentFocusWidgets(oldtlw);
+     setAttribute(Qt::WA_Resized, resized);
+ 
+-- 
+2.28.0.windows.1
+

@@ -1,0 +1,23 @@
+diff -up qttools-everywhere-src-5.15.2/configure.json.linux qttools-everywhere-src-5.15.2/configure.json
+--- qttools-everywhere-src-5.15.2/configure.json.linux	2021-04-09 12:37:31.820156730 -0400
++++ qttools-everywhere-src-5.15.2/configure.json	2021-04-09 12:37:38.702379225 -0400
+@@ -79,7 +79,6 @@
+         "windeployqt": {
+             "label": "Windows deployment tool",
+             "purpose": "The Windows deployment tool is designed to automate the process of creating a deployable folder containing the Qt-related dependencies (libraries, QML imports, plugins, and translations) required to run the application from that folder. It creates a sandbox for Universal Windows Platform (UWP) or an installation tree for Windows desktop applications, which can be easily bundled into an installation package.",
+-            "condition": "config.win32 || config.winrt",
+             "output": [ "privateFeature" ]
+         },
+         "winrtrunner": {
+diff -up qttools-everywhere-src-5.15.2/src/src.pro.linux qttools-everywhere-src-5.15.2/src/src.pro
+--- qttools-everywhere-src-5.15.2/src/src.pro.linux	2020-10-22 13:11:38.000000000 -0400
++++ qttools-everywhere-src-5.15.2/src/src.pro	2021-04-09 12:34:59.205223165 -0400
+@@ -36,7 +36,7 @@ macos {
+ 
+ qtHaveModule(dbus): SUBDIRS += qdbus
+ 
+-win32|winrt:SUBDIRS += windeployqt
++SUBDIRS += windeployqt
+ winrt:SUBDIRS += winrtrunner
+ qtHaveModule(gui):!wasm:!android:!uikit:!qnx:!winrt: SUBDIRS += qtdiag
+ 

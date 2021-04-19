@@ -1,0 +1,201 @@
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleBase.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleBase.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleBase.cmake.soversion	2021-03-22 16:42:39.594887237 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleBase.cmake	2021-03-22 16:43:10.080037707 -0400
+@@ -144,6 +144,9 @@ TARGET_COMPILE_DEFINITIONS(SampleBase
+ 	PRIVATE ${SAMPLEBASE_COMPILE_DEFS}
+ )
+ 
++IF(SAMPLEBASE_LIBTYPE STREQUAL "SHARED")
++        SET_TARGET_PROPERTIES(SampleBase PROPERTIES SOVERSION 0)
++ENDIF()
+ 
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND SAMPLEBASE_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(SampleBase PROPERTIES 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleFramework.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleFramework.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleFramework.cmake.soversion	2021-03-22 16:43:16.609069933 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleFramework.cmake	2021-03-22 16:44:01.207290081 -0400
+@@ -99,6 +99,9 @@ TARGET_COMPILE_DEFINITIONS(SampleFramewo
+ 	PRIVATE ${SAMPLEFRAMEWORK_COMPILE_DEFS}
+ )
+ 
++IF(SAMPLEFRAMEWORK_LIBTYPE STREQUAL "SHARED")
++        SET_TARGET_PROPERTIES(SampleFramework PROPERTIES SOVERSION 0)
++ENDIF()
+ 
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND SAMPLEFRAMEWORK_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(SampleFramework PROPERTIES 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplePlatform.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplePlatform.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplePlatform.cmake.soversion	2021-03-22 16:44:11.804342388 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplePlatform.cmake	2021-03-22 16:44:36.639464973 -0400
+@@ -64,6 +64,9 @@ TARGET_COMPILE_DEFINITIONS(SamplePlatfor
+ 	PRIVATE ${SAMPLEPLATFORM_COMPILE_DEFS}
+ )
+ 
++IF(SAMPLEPLATFORM_LIBTYPE STREQUAL "SHARED")
++        SET_TARGET_PROPERTIES(SamplePlatform PROPERTIES SOVERSION 0)
++ENDIF()
+ 
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND SAMPLEPLATFORM_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(SamplePlatform PROPERTIES 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleRenderer.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleRenderer.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleRenderer.cmake.soversion	2021-03-22 16:44:43.597499318 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SampleRenderer.cmake	2021-03-22 16:45:13.470646769 -0400
+@@ -140,6 +140,9 @@ TARGET_COMPILE_DEFINITIONS(SampleRendere
+ 	PRIVATE ${SAMPLERENDERER_COMPILE_DEFS}
+ )
+ 
++IF(SAMPLERENDERER_LIBTYPE STREQUAL "SHARED")
++        SET_TARGET_PROPERTIES(SampleRenderer PROPERTIES SOVERSION 0)
++ENDIF()
+ 
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND SAMPLERENDERER_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(SampleRenderer PROPERTIES 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplesToolkit.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplesToolkit.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplesToolkit.cmake.soversion	2021-03-22 16:45:24.570701557 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/samples/compiler/cmake/SamplesToolkit.cmake	2021-03-22 16:47:31.167326435 -0400
+@@ -78,6 +78,9 @@ TARGET_COMPILE_DEFINITIONS(SampleToolkit
+ 
+ TARGET_LINK_LIBRARIES(SampleToolkit PhysXFoundation PhysXExtensions)
+ 
++IF(SAMPLETOOLKIT_LIBTYPE STREQUAL "SHARED")
++        SET_TARGET_PROPERTIES(SampleToolkit PROPERTIES SOVERSION 0)
++ENDIF()
+ 
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND SAMPLETOOLKIT_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(SampleToolkit PROPERTIES 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetRender.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetRender.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetRender.cmake.soversion	2021-03-22 16:47:45.511397237 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetRender.cmake	2021-03-22 16:49:08.495806837 -0400
+@@ -54,6 +54,9 @@ TARGET_COMPILE_DEFINITIONS(SnippetRender
+ 	PRIVATE ${SNIPPETRENDER_COMPILE_DEFS}
+ )
+ 
++IF(SNIPPETRENDER_LIBTYPE STREQUAL "SHARED")
++        SET_TARGET_PROPERTIES(SnippetRender PROPERTIES SOVERSION 0)
++ENDIF()
+ 
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND SNIPPETRENDER_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(SnippetRender PROPERTIES 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetUtils.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetUtils.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetUtils.cmake.soversion	2021-03-22 16:49:16.507846382 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/SnippetUtils.cmake	2021-03-22 16:49:41.211968316 -0400
+@@ -52,6 +52,9 @@ TARGET_COMPILE_DEFINITIONS(SnippetUtils
+ 	PRIVATE ${SNIPPETUTILS_COMPILE_DEFS}
+ )
+ 
++IF(SNIPPETUTILS_LIBTYPE STREQUAL "SHARED")
++        SET_TARGET_PROPERTIES(SnippetUtils PROPERTIES SOVERSION 0)
++ENDIF()
+ 
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND SNIPPETUTILS_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(SnippetUtils PROPERTIES 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXCharacterKinematic.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXCharacterKinematic.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXCharacterKinematic.cmake.soversion	2021-03-22 16:30:31.063291201 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXCharacterKinematic.cmake	2021-03-22 16:36:13.780982865 -0400
+@@ -111,6 +111,9 @@ SET_TARGET_PROPERTIES(PhysXCharacterKine
+ 	OUTPUT_NAME PhysXCharacterKinematic
+ )
+ 
++IF(PHYSXCHARACTERKINEMATIC_LIBTYPE STREQUAL "SHARED")
++        SET_TARGET_PROPERTIES(PhysXCharacterKinematic PROPERTIES SOVERSION 0)
++ENDIF()
+ 
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND PHYSXCHARACTERKINEMATIC_LIBTYPE STREQUAL "STATIC")	
+ 	SET_TARGET_PROPERTIES(PhysXCharacterKinematic PROPERTIES 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysX.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysX.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysX.cmake.soversion	2021-03-22 16:29:33.005004621 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysX.cmake	2021-03-22 16:30:16.455219086 -0400
+@@ -327,6 +327,10 @@ SET_TARGET_PROPERTIES(PhysX PROPERTIES
+ 
+ )
+ 
++IF(PHYSX_LIBTYPE STREQUAL "SHARED")
++	SET_TARGET_PROPERTIES(PhysX PROPERTIES SOVERSION 0)
++ENDIF()
++
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND PHYSX_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(PhysX PROPERTIES 
+ 		ARCHIVE_OUTPUT_NAME_DEBUG "PhysX_static"
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXCommon.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXCommon.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXCommon.cmake.soversion	2021-03-22 16:36:43.429129204 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXCommon.cmake	2021-03-22 16:37:04.772234556 -0400
+@@ -525,6 +525,10 @@ SET_TARGET_PROPERTIES(PhysXCommon PROPER
+ 	OUTPUT_NAME PhysXCommon
+ )
+ 
++IF(PHYSXCOMMON_LIBTYPE STREQUAL "SHARED")
++        SET_TARGET_PROPERTIES(PhysXCommon PROPERTIES SOVERSION 0)
++ENDIF()
++
+ 
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND PHYSXCOMMON_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(PhysXCommon PROPERTIES 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXCooking.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXCooking.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXCooking.cmake.soversion	2021-03-22 16:38:22.098616245 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXCooking.cmake	2021-03-22 16:38:49.130749672 -0400
+@@ -165,6 +165,9 @@ SET_TARGET_PROPERTIES(PhysXCooking PROPE
+ 	OUTPUT_NAME PhysXCooking
+ )
+ 
++IF(PHYSXCOOKING_LIBTYPE STREQUAL "SHARED")
++        SET_TARGET_PROPERTIES(PhysXCooking PROPERTIES SOVERSION 0)
++ENDIF()
+ 
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND PHYSXCOOKING_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(PhysXCooking PROPERTIES 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXExtensions.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXExtensions.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXExtensions.cmake.soversion	2021-03-22 16:38:56.022783691 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXExtensions.cmake	2021-03-22 16:39:24.004921807 -0400
+@@ -279,6 +279,9 @@ SET_TARGET_PROPERTIES(PhysXExtensions PR
+ 	OUTPUT_NAME PhysXExtensions
+ )
+ 
++IF(PHYSXEXTENSIONS_LIBTYPE STREQUAL "SHARED")
++        SET_TARGET_PROPERTIES(PhysXExtensions PROPERTIES SOVERSION 0)
++ENDIF()
+ 
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND PHYSXEXTENSIONS_LIBTYPE STREQUAL "STATIC")
+ 	SET_TARGET_PROPERTIES(PhysXExtensions PROPERTIES 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXFoundation.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXFoundation.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXFoundation.cmake.soversion	2021-03-22 16:40:16.795182372 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXFoundation.cmake	2021-03-22 16:40:50.593349215 -0400
+@@ -171,6 +171,10 @@ SET_TARGET_PROPERTIES(PhysXFoundation PR
+ 	OUTPUT_NAME PhysXFoundation
+ )
+ 
++IF(PHYSXFOUNDATION_LIBTYPE STREQUAL "SHARED")
++        SET_TARGET_PROPERTIES(PhysXFoundation PROPERTIES SOVERSION 0)
++ENDIF()
++
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND PHYSXFOUNDATION_LIBTYPE STREQUAL "STATIC")	
+ 	SET_TARGET_PROPERTIES(PhysXFoundation PROPERTIES 			
+ 		ARCHIVE_OUTPUT_NAME_DEBUG "PhysXFoundation_static"
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXPvdSDK.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXPvdSDK.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXPvdSDK.cmake.soversion	2021-03-22 16:41:01.185401498 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXPvdSDK.cmake	2021-03-22 16:41:46.358624470 -0400
+@@ -156,6 +156,10 @@ SET_TARGET_PROPERTIES(PhysXPvdSDK PROPER
+ 	OUTPUT_NAME PhysXPvdSDK
+ )
+ 
++IF(PHYSXPVDSDK_LIBTYPE STREQUAL "SHARED")
++        SET_TARGET_PROPERTIES(PhysXPvdSDK PROPERTIES SOVERSION 0)
++ENDIF()
++
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND PHYSXPVDSDK_LIBTYPE STREQUAL "STATIC")	
+ 	SET_TARGET_PROPERTIES(PhysXPvdSDK PROPERTIES 
+ 		ARCHIVE_OUTPUT_NAME_DEBUG "PhysXPvdSDK_static"
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXVehicle.cmake.soversion PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXVehicle.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXVehicle.cmake.soversion	2021-03-22 16:41:54.440664362 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/PhysXVehicle.cmake	2021-03-22 16:42:20.282791916 -0400
+@@ -134,7 +134,10 @@ TARGET_COMPILE_DEFINITIONS(PhysXVehicle
+ SET_TARGET_PROPERTIES(PhysXVehicle PROPERTIES
+ 	OUTPUT_NAME PhysXVehicle
+ )
+-	
++
++IF(PHYSXVEHICLE_LIBTYPE STREQUAL "SHARED")
++        SET_TARGET_PROPERTIES(PhysXVehicle PROPERTIES SOVERSION 0)
++ENDIF()
+ 
+ IF(NV_USE_GAMEWORKS_OUTPUT_DIRS AND PHYSXVEHICLE_LIBTYPE STREQUAL "STATIC")	
+ 	SET_TARGET_PROPERTIES(PhysXVehicle PROPERTIES 

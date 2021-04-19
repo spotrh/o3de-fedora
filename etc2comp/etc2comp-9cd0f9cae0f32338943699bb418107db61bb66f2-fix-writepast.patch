@@ -1,0 +1,12 @@
+diff -up etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcTool/EtcTool.cpp.fix-writepast etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcTool/EtcTool.cpp
+--- etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcTool/EtcTool.cpp.fix-writepast	2021-03-19 13:47:40.721819718 -0400
++++ etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcTool/EtcTool.cpp	2021-03-19 13:47:55.133894203 -0400
+@@ -651,7 +651,7 @@ bool Commands::ProcessCommandLineArgumen
+ 					if (pstrOutputFilename[c] == ETC_PATH_SLASH)
+ 					{
+ 						c++;
+-						ptrOutputDir = new char[c];
++						ptrOutputDir = new char[c+1];
+ 						strncpy(ptrOutputDir, pstrOutputFilename, c);
+ 						ptrOutputDir[c] = '\0';
+ 						CreateNewDir(ptrOutputDir);

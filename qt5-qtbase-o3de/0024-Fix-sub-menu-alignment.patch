@@ -1,0 +1,39 @@
+From 9c69badf3729f89018846c16835c937ffa57bbfd Mon Sep 17 00:00:00 2001
+From: Nathan Collins <nathan.collins@kdab.com>
+Date: Thu, 16 Jan 2020 14:40:52 +0000
+Subject: [PATCH 24/32] Fix sub-menu alignment
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+When positioning sub-menus the vertical PM_MenuVPlacementOffset is
+not required.
+
+Change-Id: I6e935429f2267fde4a16cbabc1b2c0f4dc7aa310
+Task-Id: AMZN-1968
+Task-Id: LY-105649
+Reviewed-on: https://codereview.kdab.com/c/amazon/qtbase/+/74481
+Reviewed-by: Miłosz Kosobucki <milosz.kosobucki@kdab.com>
+Reviewed-by: Chris Galvan <chgalvan@amazon.com>
+---
+ src/widgets/widgets/qmenu.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/widgets/widgets/qmenu.cpp b/src/widgets/widgets/qmenu.cpp
+index c8885d7992..77e2a8206e 100644
+--- a/src/widgets/widgets/qmenu.cpp
++++ b/src/widgets/widgets/qmenu.cpp
+@@ -2567,7 +2567,9 @@ void QMenuPrivate::popup(const QPoint &p, QAction *atAction, PositionFunction po
+     const int hPlacementOffset = q->style()->pixelMetric(QStyle::PM_MenuHPlacementOffset, nullptr, q);
+     const int vPlacementOffset = q->style()->pixelMetric(QStyle::PM_MenuVPlacementOffset, nullptr, q);
+     pos.rx() += q->isRightToLeft() ? -hPlacementOffset : hPlacementOffset;
+-    pos.ry() += vPlacementOffset;
++    // Vertical offset is already correct for submenus
++    if (!caused)
++        pos.ry() += vPlacementOffset;
+ 
+     q->setGeometry(QRect(pos, size));
+ #if QT_CONFIG(effects)
+-- 
+2.28.0.windows.1
+

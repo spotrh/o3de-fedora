@@ -1,0 +1,89 @@
+From eb1d3cd9f96653cc7bfb1d90ec17e311fa818675 Mon Sep 17 00:00:00 2001
+From: Mike Krus <mike.krus@kdab.com>
+Date: Fri, 8 Dec 2017 16:22:39 +0000
+Subject: [PATCH 05/32] Support QSslSocketBackendPrivate::verify on macOS
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This implements QSslSocketBackendPrivate::verify on macOS using
+native Security framework APIs. Given the lack on details
+on the native implementation and my own lack of knowledge on
+OpenSLL, I’m not sure they do the same thing.
+
+On my tests if works but I haven’t tested if with broken
+certificates.
+
+Should note that macOS appears to do more tests at handshake
+time then OpenSSL, in particular to the trustability of
+the certificates, so it’s unclear if those new tests would
+actually ever be needed (or if the program would reach a
+point where it could run them since the connection may have
+failed already).
+
+Task-Id: AMZN-1508
+Change-Id: Ia9146dff021f0b5071dfdf38b76fc144822f62c7
+Reviewed-on: https://codereview.kdab.com/52486
+Reviewed-by: Michael Hughes <mhughes@amazon.com>
+Reviewed-on: https://codereview.kdab.com/69419
+Reviewed-by: Chris Galvan <chgalvan@amazon.com>
+---
+ src/network/ssl/qsslsocket_mac.cpp | 41 ++++++++++++++++++++++++++----
+ 1 file changed, 36 insertions(+), 5 deletions(-)
+
+diff --git a/src/network/ssl/qsslsocket_mac.cpp b/src/network/ssl/qsslsocket_mac.cpp
+index 77e847e972..82f2ff72e7 100644
+--- a/src/network/ssl/qsslsocket_mac.cpp
++++ b/src/network/ssl/qsslsocket_mac.cpp
+@@ -628,12 +628,43 @@ void QSslSocketBackendPrivate::transmit()
+ 
+ QList<QSslError> (QSslSocketBackendPrivate::verify)(QList<QSslCertificate> certificateChain, const QString &hostName)
+ {
+-    Q_UNIMPLEMENTED();
+-    Q_UNUSED(certificateChain)
+-    Q_UNUSED(hostName)
+-
+     QList<QSslError> errors;
+-    errors << QSslError(QSslError::UnspecifiedError);
++    if (QSslCertificatePrivate::isBlacklisted(certificateChain[0])) {
++        QSslError error(QSslError::CertificateBlacklisted, certificateChain[0]);
++        errors << error;
++    }
++
++    // Check the certificate name against the hostname if one was specified
++    if ((!hostName.isEmpty()) && (!isMatchingHostname(certificateChain[0], hostName))) {
++        // No matches in common names or alternate names.
++        QSslError error(QSslError::HostNameMismatch, certificateChain[0]);
++        errors << error;
++    }
++
++    QCFType<CFMutableArrayRef> certArray = CFArrayCreateMutable(NULL, 0, &kCFTypeArrayCallBacks);
++    for (const QSslCertificate &cert : qAsConst(certificateChain)) {
++        QCFType<CFDataRef> certData = cert.d->derData.toCFData();
++        QCFType<SecCertificateRef> certRef = SecCertificateCreateWithData(NULL, certData);
++        CFArrayAppendValue(certArray, certRef);
++    }
++
++    QCFType<SecTrustRef> trust;
++    QCFType<SecPolicyRef> policy = SecPolicyCreateBasicX509();
++    OSStatus status = SecTrustCreateWithCertificates(certArray, policy, &trust);
++
++    switch (status) {
++    case errSecSuccess:
++        break;
++    default:
++        errors << QSslError(QSslError::UnspecifiedError);
++        break;
++    }
++
++    SecTrustResultType res = kSecTrustResultInvalid;
++    status = SecTrustEvaluate(trust, &res);
++    if (status != noErr) {
++        errors << QSslError(QSslError::UnspecifiedError);
++    }
+ 
+     return errors;
+ }
+-- 
+2.28.0.windows.1
+

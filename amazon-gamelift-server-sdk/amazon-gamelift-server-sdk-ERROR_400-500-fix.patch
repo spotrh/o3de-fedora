@@ -1,0 +1,29 @@
+diff -up GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/gamelift-server-sdk/source/aws/gamelift/server/AuxProxyMessageSender.cpp.400500fix GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/gamelift-server-sdk/source/aws/gamelift/server/AuxProxyMessageSender.cpp
+--- GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/gamelift-server-sdk/source/aws/gamelift/server/AuxProxyMessageSender.cpp.400500fix	2021-03-26 09:47:39.001762525 -0400
++++ GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/gamelift-server-sdk/source/aws/gamelift/server/AuxProxyMessageSender.cpp	2021-03-26 09:47:44.032787413 -0400
+@@ -295,10 +295,10 @@ void AuxProxyMessageSender::Send(google:
+ #ifdef GAMELIFT_USE_STD
+ GameLiftError AuxProxyMessageSender::From(pbuffer::GameLiftResponse& gameliftResponse) {
+     GameLiftError gameLiftError;
+-    if (gameliftResponse.status() == pbuffer::GameLiftResponse::ERROR_400) {
++    if (gameliftResponse.status() == pbuffer::GameLiftResponseStatus::ERROR_400) {
+         gameLiftError = GameLiftError(GAMELIFT_ERROR_TYPE::BAD_REQUEST_EXCEPTION, gameliftResponse.errormessage());
+     }
+-    else if (gameliftResponse.status() == pbuffer::GameLiftResponse::ERROR_500) {
++    else if (gameliftResponse.status() == pbuffer::GameLiftResponseStatus::ERROR_500) {
+         gameLiftError = GameLiftError(GAMELIFT_ERROR_TYPE::INTERNAL_SERVICE_EXCEPTION, gameliftResponse.errormessage());
+     }
+     else {
+@@ -310,10 +310,10 @@ GameLiftError AuxProxyMessageSender::Fro
+ #else
+ GameLiftError AuxProxyMessageSender::From(pbuffer::GameLiftResponse& gameliftResponse) {
+     GameLiftError gameLiftError;
+-    if (gameliftResponse.status() == pbuffer::GameLiftResponse::ERROR_400) {
++    if (gameliftResponse.status() == pbuffer::GameLiftResponseStatus::ERROR_400) {
+         gameLiftError = GameLiftError(GAMELIFT_ERROR_TYPE::BAD_REQUEST_EXCEPTION, gameliftResponse.errormessage().c_str());
+     }
+-    else if (gameliftResponse.status() == pbuffer::GameLiftResponse::ERROR_500) {
++    else if (gameliftResponse.status() == pbuffer::GameLiftResponseStatus::ERROR_500) {
+         gameLiftError = GameLiftError(GAMELIFT_ERROR_TYPE::INTERNAL_SERVICE_EXCEPTION, gameliftResponse.errormessage().c_str());
+     }
+     else {

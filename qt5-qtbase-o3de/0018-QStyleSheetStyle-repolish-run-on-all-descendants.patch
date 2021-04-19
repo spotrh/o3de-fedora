@@ -1,0 +1,68 @@
+From 2a868874bd448a415801d5a0b4a5a4014d928100 Mon Sep 17 00:00:00 2001
+From: Nathan Collins <nathan.collins@kdab.com>
+Date: Tue, 20 Aug 2019 12:12:15 +0100
+Subject: [PATCH 18/32] QStyleSheetStyle::repolish: run on all descendants
+
+QStyleSheetStyle::repolish was modified in
+21dcb96ddca357a6e8ace4b1c7252ec465e77727 to only modify direct
+children. This breaks many of our style sheets behaviour as they
+relied on repolish updating all descendants. This commit restores the
+original behaviour, whilst also fixing the bug the original commit
+intended to fix. Rather than building a list of all descendant widgets
+up front, we recursively repolish a widget then repolish its children.
+
+Change-Id: I13e378e4a6c3f6a1d2516d72c801b6b5219c8536
+Task-Id: AMZN-1814
+Task-Id: LY-99993
+Task-Id: AMZN-1812
+Task-Id: LY-99976
+Task-Id: AMZN-1815
+Task-Id: LY-99994
+Task-Id: AMZN-1820
+Task-Id: LY-100195
+Reviewed-on: https://codereview.kdab.com/69926
+Reviewed-by: Chris Galvan <chgalvan@amazon.com>
+---
+ src/widgets/styles/qstylesheetstyle.cpp | 19 ++++++++++++-------
+ 1 file changed, 12 insertions(+), 7 deletions(-)
+
+diff --git a/src/widgets/styles/qstylesheetstyle.cpp b/src/widgets/styles/qstylesheetstyle.cpp
+index 3bfbdfaf8d..99b831409c 100644
+--- a/src/widgets/styles/qstylesheetstyle.cpp
++++ b/src/widgets/styles/qstylesheetstyle.cpp
+@@ -2755,6 +2755,17 @@ static void updateObjects(const QList<const QObject *>& objects)
+     }
+ }
+ 
++static void repolishAllDescendants(QWidget *widget)
++{
++    styleSheetCaches->styleSheetCache.remove(widget);
++    updateObjects({widget});
++
++    for (auto child: qAsConst(widget->children())) {
++        if (auto childWidget = qobject_cast<QWidget*>(child))
++            repolishAllDescendants(childWidget);
++    }
++}
++
+ /////////////////////////////////////////////////////////////////////////////////////////
+ // The stylesheet style
+ int QStyleSheetStyle::numinstances = 0;
+@@ -2935,13 +2946,7 @@ void QStyleSheetStyle::polish(QPalette &pal)
+ 
+ void QStyleSheetStyle::repolish(QWidget *w)
+ {
+-    QList<const QObject *> children;
+-    children.reserve(w->children().size() + 1);
+-    for (auto child: qAsConst(w->children()))
+-        children.append(child);
+-    children.append(w);
+-    styleSheetCaches->styleSheetCache.remove(w);
+-    updateObjects(children);
++    repolishAllDescendants(w);
+ }
+ 
+ void QStyleSheetStyle::repolishGlobalSheet()
+-- 
+2.28.0.windows.1
+

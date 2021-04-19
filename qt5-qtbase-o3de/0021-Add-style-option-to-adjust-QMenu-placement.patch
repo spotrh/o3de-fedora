@@ -1,0 +1,82 @@
+From baed1956a70ec2467906ecd6dc84886ff276481c Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Mi=C5=82osz=20Kosobucki?= <milosz.kosobucki@kdab.com>
+Date: Fri, 20 Dec 2019 12:53:42 +0100
+Subject: [PATCH 21/32] Add style option to adjust QMenu placement
+
+This can be used to shift menu by some values to compensate for
+e.g. shadow outline.
+
+Task-Id: AMZN-1968
+Task-Id: LY-105649
+Change-Id: I58d2ca429f9f583e6c65dab7daa270e609435697
+Reviewed-on: https://codereview.kdab.com/c/amazon/qtbase/+/73845
+Reviewed-by: Nathan Collins <nathan.collins@kdab.com>
+Reviewed-by: Chris Galvan <chgalvan@amazon.com>
+---
+ src/widgets/styles/qcommonstyle.cpp | 2 ++
+ src/widgets/styles/qstyle.cpp       | 4 ++++
+ src/widgets/styles/qstyle.h         | 2 ++
+ src/widgets/widgets/qmenu.cpp       | 6 ++++++
+ 4 files changed, 14 insertions(+)
+
+diff --git a/src/widgets/styles/qcommonstyle.cpp b/src/widgets/styles/qcommonstyle.cpp
+index 658fcf705f..5413ef7480 100644
+--- a/src/widgets/styles/qcommonstyle.cpp
++++ b/src/widgets/styles/qcommonstyle.cpp
+@@ -4749,6 +4749,8 @@ int QCommonStyle::pixelMetric(PixelMetric m, const QStyleOption *opt, const QWid
+     case PM_MenuDesktopFrameWidth:
+     case PM_MenuHMargin:
+     case PM_MenuVMargin:
++    case PM_MenuHPlacementOffset:
++    case PM_MenuVPlacementOffset:
+         ret = 0;
+         break;
+ 
+diff --git a/src/widgets/styles/qstyle.cpp b/src/widgets/styles/qstyle.cpp
+index 011b16164d..bc23786ae4 100644
+--- a/src/widgets/styles/qstyle.cpp
++++ b/src/widgets/styles/qstyle.cpp
+@@ -1450,6 +1450,10 @@ void QStyle::drawItemPixmap(QPainter *painter, const QRect &rect, int alignment,
+     \value PM_MenuScrollerHeight  Height of the scroller area in a QMenu.
+     \value PM_MenuTearoffHeight  Height of a tear off area in a QMenu.
+     \value PM_MenuDesktopFrameWidth The frame width for the menu on the desktop.
++    \value PM_MenuHPlacementOffset Horizontal offset to move the actual painting
++        area of the menu by. To compensate for e.g. shadow outline.
++    \value PM_MenuVPlacementOffset Vertical offset to move the actual painting
++        area of the menu by. To compensate for e.g. shadow outline.
+ 
+     \omitvalue PM_DialogButtonsSeparator
+     \omitvalue PM_DialogButtonsButtonWidth
+diff --git a/src/widgets/styles/qstyle.h b/src/widgets/styles/qstyle.h
+index 02ff0bf627..92a7e9213e 100644
+--- a/src/widgets/styles/qstyle.h
++++ b/src/widgets/styles/qstyle.h
+@@ -502,6 +502,8 @@ public:
+         PM_MenuPanelWidth,
+         PM_MenuTearoffHeight,
+         PM_MenuDesktopFrameWidth,
++        PM_MenuHPlacementOffset,
++        PM_MenuVPlacementOffset,
+ 
+         PM_MenuBarPanelWidth,
+         PM_MenuBarItemSpacing,
+diff --git a/src/widgets/widgets/qmenu.cpp b/src/widgets/widgets/qmenu.cpp
+index ab933c987f..c8885d7992 100644
+--- a/src/widgets/widgets/qmenu.cpp
++++ b/src/widgets/widgets/qmenu.cpp
+@@ -2563,6 +2563,12 @@ void QMenuPrivate::popup(const QPoint &p, QAction *atAction, PositionFunction po
+             }
+         }
+     }
++
++    const int hPlacementOffset = q->style()->pixelMetric(QStyle::PM_MenuHPlacementOffset, nullptr, q);
++    const int vPlacementOffset = q->style()->pixelMetric(QStyle::PM_MenuVPlacementOffset, nullptr, q);
++    pos.rx() += q->isRightToLeft() ? -hPlacementOffset : hPlacementOffset;
++    pos.ry() += vPlacementOffset;
++
+     q->setGeometry(QRect(pos, size));
+ #if QT_CONFIG(effects)
+     int hGuess = q->isRightToLeft() ? QEffects::LeftScroll : QEffects::RightScroll;
+-- 
+2.28.0.windows.1
+

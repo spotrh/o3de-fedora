@@ -1,0 +1,11 @@
+diff -up NvCloth-8e100cca5888d09f40f4721cc433f284b1841e65/NvCloth/compiler/cmake/linux/NvCloth.cmake.soversion NvCloth-8e100cca5888d09f40f4721cc433f284b1841e65/NvCloth/compiler/cmake/linux/NvCloth.cmake
+--- NvCloth-8e100cca5888d09f40f4721cc433f284b1841e65/NvCloth/compiler/cmake/linux/NvCloth.cmake.soversion	2021-03-18 17:16:30.586366611 -0400
++++ NvCloth-8e100cca5888d09f40f4721cc433f284b1841e65/NvCloth/compiler/cmake/linux/NvCloth.cmake	2021-03-18 17:16:41.440425364 -0400
+@@ -137,6 +137,7 @@ SET_TARGET_PROPERTIES(NvCloth PROPERTIES
+ 	LINK_FLAGS_CHECKED ""
+ 	LINK_FLAGS_PROFILE ""
+ 	LINK_FLAGS_RELEASE ""
++	SOVERSION 0
+ )
+ 
+ # enable -fPIC so we can link static libs with the editor

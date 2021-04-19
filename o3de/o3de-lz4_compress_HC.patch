@@ -1,0 +1,24 @@
+diff -up o3de/Code/Tools/RC/ResourceCompilerABC/GeomCacheBlockCompressor.cpp.lz4-compress-hc o3de/Code/Tools/RC/ResourceCompilerABC/GeomCacheBlockCompressor.cpp
+--- o3de/Code/Tools/RC/ResourceCompilerABC/GeomCacheBlockCompressor.cpp.lz4-compress-hc	2021-04-11 18:37:27.710662994 -0400
++++ o3de/Code/Tools/RC/ResourceCompilerABC/GeomCacheBlockCompressor.cpp	2021-04-11 18:38:59.211349231 -0400
+@@ -85,7 +85,7 @@ bool GeomCacheLZ4HCBlockCompressor::Comp
+     output.resize(maxCompressedSize);
+ 
+     // Compress
+-    int compressedSize = LZ4_compressHC(input.data(), output.data(), uncompressedSize);
++    int compressedSize = LZ4_compress_HC(input.data(), output.data(), uncompressedSize, LZ4_compressBound(uncompressedSize), 0);
+ 
+     if (compressedSize == 0)
+     {
+diff -up o3de/Gems/MultiplayerCompression/Code/Source/LZ4Compressor.cpp.lz4-compress-hc o3de/Gems/MultiplayerCompression/Code/Source/LZ4Compressor.cpp
+--- o3de/Gems/MultiplayerCompression/Code/Source/LZ4Compressor.cpp.lz4-compress-hc	2021-04-11 18:39:24.297537380 -0400
++++ o3de/Gems/MultiplayerCompression/Code/Source/LZ4Compressor.cpp	2021-04-11 18:41:52.345647709 -0400
+@@ -60,7 +60,7 @@ namespace MultiplayerCompression
+         AZ_Warning("Multiplayer Compressor", compDataSize >= compWorstCaseSize, "Outbuffer size (%lu B) passed to Compress() is less than estimated worst case (%lu B)", compDataSize, compWorstCaseSize);
+ 
+         // Note that this returns a non-negative int so we are narrowing into a size_t here
+-        compSize = LZ4_compressHC(reinterpret_cast<const char*>(uncompData), reinterpret_cast<char*>(compData), uncompSize);
++        compSize = LZ4_compress_HC(reinterpret_cast<const char*>(uncompData), reinterpret_cast<char*>(compData), uncompSize, compWorstCaseSize, 0);
+ 
+         if (compSize == 0)
+         {

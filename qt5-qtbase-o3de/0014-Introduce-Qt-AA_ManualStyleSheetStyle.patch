@@ -1,0 +1,134 @@
+From acfb9c7b107c7fa892d865f1dd6d03abde79a99f Mon Sep 17 00:00:00 2001
+From: Sergio Martins <sergio.martins@kdab.com>
+Date: Fri, 8 Jun 2018 12:58:02 +0100
+Subject: [PATCH 14/32] Introduce Qt::AA_ManualStyleSheetStyle
+
+This disables the automatic creation of QStyleSheetStyle and gives
+the user absolute control. User can now create the QStyleSheetStyle
+himself and chain it how he likes with other proxies.
+
+Without this attribute QWidget::setStyleSheet() would create internal
+QStyleSheetStyles which not only had different chaining than desired but
+also make it impossible to use different stylesheets in different
+dialogs. They would always use the qApp global sheet.
+
+This replaces the older patch that allowed proxying style sheets which
+isn't enough due to the new set of requirements.
+
+It's also a simpler patch and it's in line with upstream plans for Qt6.
+
+Change-Id: I62a5bd91c781beddca6981a7a41d33401f69846e
+Reviewed-on: https://codereview.kdab.com/58745
+Reviewed-by: Michael Hughes <mhughes@amazon.com>
+Reviewed-on: https://codereview.kdab.com/69428
+Reviewed-by: Chris Galvan <chgalvan@amazon.com>
+
+# Conflicts:
+#	src/corelib/global/qnamespace.h
+#	src/widgets/kernel/qwidget.cpp
+---
+ src/corelib/global/qnamespace.h     |  4 +++-
+ src/widgets/kernel/qapplication.cpp |  4 ++--
+ src/widgets/kernel/qwidget.cpp      | 26 +++++++++++++++++++++++---
+ 3 files changed, 28 insertions(+), 6 deletions(-)
+
+diff --git a/src/corelib/global/qnamespace.h b/src/corelib/global/qnamespace.h
+index 1a29fc9587..e39007f861 100644
+--- a/src/corelib/global/qnamespace.h
++++ b/src/corelib/global/qnamespace.h
+@@ -553,8 +553,10 @@ public:
+         AA_DontShowShortcutsInContextMenus = 28,
+         AA_CompressTabletEvents = 29,
+         AA_DisableWindowContextHelpButton = 30, // ### Qt 6: remove me
+-        AA_DisableSessionManager = 31,        AA_PropagateStyleToChildren = 32, /// ### Qt6: Make it a widget attribute instead of app. That implies harmonizing it with the stylesheet propagation machinery, which is welcome.
++        AA_DisableSessionManager = 31,
++        AA_PropagateStyleToChildren = 32, /// ### Qt6: Make it a widget attribute instead of app. That implies harmonizing it with the stylesheet propagation machinery, which is welcome.
+                                           //           Ideally there should be no stylesheet-specific paths.
++        AA_ManualStyleSheetStyle = 33, // QStyleSheetStyle is not created automatically, instead it's controled by user.
+         // Add new attributes before this line
+         AA_AttributeCount
+     };
+diff --git a/src/widgets/kernel/qapplication.cpp b/src/widgets/kernel/qapplication.cpp
+index c5223b3431..5436e00cce 100644
+--- a/src/widgets/kernel/qapplication.cpp
++++ b/src/widgets/kernel/qapplication.cpp
+@@ -944,7 +944,7 @@ void QApplication::setStyleSheet(const QString& styleSheet)
+         setStyle(styleSheetStyle->base);
+     } else if (styleSheetStyle) { // style sheet update, just repolish
+         styleSheetStyle->setGlobalSheet(styleSheet);
+-    } else { // stylesheet set the first time
++    } else if (!qApp->testAttribute(Qt::AA_ManualStyleSheetStyle)) { // stylesheet set the first time
+         QStyleSheetStyle *newStyleSheetStyle = new QStyleSheetStyle(QApplicationPrivate::app_style, styleSheet);
+         QApplicationPrivate::app_style->setParent(newStyleSheetStyle);
+         setStyle(newStyleSheetStyle);
+@@ -1046,7 +1046,7 @@ void QApplication::setStyle(QStyle *style)
+     QStyle *old = QApplicationPrivate::app_style; // save
+ 
+ #ifndef QT_NO_STYLE_STYLESHEET
+-    if (!QApplicationPrivate::styleSheet.isEmpty() && !qt_styleSheet(style)) {
++    if (!QApplicationPrivate::styleSheet.isEmpty() && !qt_styleSheet(style) && !qApp->testAttribute(Qt::AA_ManualStyleSheetStyle)) {
+         // we have a stylesheet already and a new style is being set
+         QStyleSheetStyle *newStyleSheetStyle = new QStyleSheetStyle(style);
+         style->setParent(newStyleSheetStyle);
+diff --git a/src/widgets/kernel/qwidget.cpp b/src/widgets/kernel/qwidget.cpp
+index f8d646d2c5..b04fa4260f 100644
+--- a/src/widgets/kernel/qwidget.cpp
++++ b/src/widgets/kernel/qwidget.cpp
+@@ -70,6 +70,7 @@
+ #endif
+ #include "qdebug.h"
+ #include "private/qstylesheetstyle_p.h"
++#include "qproxystyle.h"
+ #include "private/qstyle_p.h"
+ #include "qfileinfo.h"
+ #include "qscopeguard.h"
+@@ -2532,6 +2533,19 @@ QString QWidget::styleSheet() const
+     return d->extra->styleSheet;
+ }
+ 
++static QStyleSheetStyle* styleSheetStyle(QStyle *style)
++{
++    if (!style)
++        return nullptr;
++
++    if (auto s = qobject_cast<QStyleSheetStyle*>(style))
++        return s;
++
++    if (auto proxy = qobject_cast<QProxyStyle*>(style))
++        return styleSheetStyle(proxy->baseStyle());
++    return nullptr;
++}
++
+ void QWidget::setStyleSheet(const QString& styleSheet)
+ {
+     Q_D(QWidget);
+@@ -2539,8 +2553,15 @@ void QWidget::setStyleSheet(const QString& styleSheet)
+         return;
+     d->createExtra();
+ 
+-    QStyleSheetStyle *proxy = qt_styleSheet(d->extra->style);
+     d->extra->styleSheet = styleSheet;
++    if (qApp->testAttribute(Qt::AA_ManualStyleSheetStyle)) {
++        QStyleSheetStyle *sheetStyle = styleSheetStyle(style());
++        if (sheetStyle)
++            sheetStyle->repolish(this);
++        return;
++    }
++
++    QStyleSheetStyle *proxy = qt_styleSheet(d->extra->style);
+     if (styleSheet.isEmpty()) { // stylesheet removed
+         if (!proxy)
+             return;
+@@ -2688,8 +2709,7 @@ void QWidgetPrivate::inheritStyle(bool repolish)
+     QStyleSheetStyle *proxy = qt_styleSheet(extraStyle);
+ 
+     if (!q->styleSheet().isEmpty()) {
+-        Q_ASSERT(proxy);
+-        if (repolish)
++        if (repolish && proxy)
+         proxy->repolish(q);
+         return;
+     }
+-- 
+2.28.0.windows.1
+

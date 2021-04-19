@@ -1,0 +1,42 @@
+From b721cd8856134adaba78e32fb9ebf866e3dae947 Mon Sep 17 00:00:00 2001
+From: Sergio Martins <sergio.martins@kdab.com>
+Date: Wed, 21 Jun 2017 17:52:10 +0100
+Subject: [PATCH 03/32] Fix QEvent::globalPos() being different than
+ QCursor::pos()
+
+When native screens aren't contiguous and when using native widgets (winId()).
+
+fromNativePixels() has two code-paths, only one of them takes the origin into account.
+Doesn't make much sense to use the second path, maybe for local coords, but for local
+coords we should always take the origin into account.
+
+Change-Id: I925bcefcdab5c6ccb3a5b761938e28a4b635fb0d
+Reviewed-on: https://codereview.kdab.com/69417
+Reviewed-by: Aimini <daimini@amazon.com>
+
+# Conflicts:
+#	src/gui/kernel/qwindowsysteminterface.cpp
+---
+ src/gui/kernel/qwindowsysteminterface.cpp | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/src/gui/kernel/qwindowsysteminterface.cpp b/src/gui/kernel/qwindowsysteminterface.cpp
+index 90541eb314..6ba473c604 100644
+--- a/src/gui/kernel/qwindowsysteminterface.cpp
++++ b/src/gui/kernel/qwindowsysteminterface.cpp
+@@ -377,7 +377,11 @@ QT_DEFINE_QPA_EVENT_HANDLER(bool, handleMouseEvent, QWindow *window, const QPoin
+ QT_DEFINE_QPA_EVENT_HANDLER(bool, handleMouseEvent, QWindow *window, ulong timestamp, const QPointF &local, const QPointF &global, Qt::MouseButtons b,
+                                               Qt::KeyboardModifiers mods, Qt::MouseEventSource source)
+ {
+-    return handleMouseEvent<Delivery>(window, timestamp, local, global, b, Qt::NoButton, QEvent::None, mods, source);
++    QScreen *screen = window->screen();
++    const QPointF nativeGlobalPixels = screen ? QHighDpi::fromNativePixels(global, screen)
++                                              : QHighDpi::fromNativePixels(global, window);
++
++    return handleMouseEvent<Delivery>(window, timestamp, local, nativeGlobalPixels, b, Qt::NoButton, QEvent::None, mods, source);
+ }
+ 
+ bool QWindowSystemInterface::handleFrameStrutMouseEvent(QWindow *window, const QPointF &local, const QPointF &global, Qt::MouseButtons b,
+-- 
+2.28.0.windows.1
+

@@ -1,0 +1,12 @@
+diff -up s2n-tls-1.0.1/CMakeLists.txt.shared-version s2n-tls-1.0.1/CMakeLists.txt
+--- s2n-tls-1.0.1/CMakeLists.txt.shared-version	2021-03-17 14:21:06.446657679 -0400
++++ s2n-tls-1.0.1/CMakeLists.txt	2021-03-17 14:21:14.948697525 -0400
+@@ -188,7 +188,7 @@ file(GLOB S2N_SRC
+ )
+ 
+ add_library(${PROJECT_NAME} ${S2N_HEADERS} ${S2N_SRC})
+-set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C)
++set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE C SOVERSION 0)
+ 
+ set(CMAKE_C_FLAGS_DEBUGOPT "")
+ 

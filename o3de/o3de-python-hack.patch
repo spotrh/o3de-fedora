@@ -1,0 +1,13 @@
+diff -up o3de/Gems/EditorPythonBindings/Code/CMakeLists.txt.python-hack o3de/Gems/EditorPythonBindings/Code/CMakeLists.txt
+--- o3de/Gems/EditorPythonBindings/Code/CMakeLists.txt.python-hack	2021-03-29 16:11:05.945367112 -0400
++++ o3de/Gems/EditorPythonBindings/Code/CMakeLists.txt	2021-03-29 16:16:21.906976159 -0400
+@@ -14,7 +14,8 @@ if(NOT PAL_TRAIT_BUILD_HOST_TOOLS)
+ endif()
+ 
+ # This will set python_package_name to whatever the package 'Python' is associated with
+-ly_get_package_association(Python python_package_name)
++#ly_get_package_association(Python python_package_name)
++set(python_package_name python${Python_VERSION})
+ if (NOT python_package_name)
+     set(python_package_name "python-no-package-assocation-found")
+     message(WARNING "Python was not found in the package assocation list.  Did someone call ly_associate_package(xxxxxxx Python) ?")

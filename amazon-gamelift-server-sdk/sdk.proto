@@ -1,0 +1,179 @@
+syntax = "proto2";
+package com.amazon.whitewater.auxproxy.pbuffer;
+
+option java_package = "com.amazonaws.services.gamelift";
+option java_outer_classname = "Sdk";
+
+/////////////////////////
+// ===== Status ====== //
+/////////////////////////
+
+enum GameLiftResponseStatus {
+  OK = 0;
+  ERROR_400 = 1;
+  ERROR_500 = 2;
+  UNRECOGNIZED = -1;
+}
+
+message GameLiftResponse {
+   optional GameLiftResponseStatus status = 1;
+   optional string responseData = 2;
+   optional string errorMessage = 3;
+}
+
+/////////////////////////
+// ===== Models ====== //
+/////////////////////////
+
+message GameProperty {
+   optional string key = 1;
+   optional string value = 2;
+}
+
+message GameSession {
+   optional string gameSessionId = 1;
+   optional string fleetId = 2;
+   optional string name = 3;
+   optional int32 maxPlayers = 4 [default = 0];
+   optional bool joinable = 5 [default = false];
+   repeated GameProperty gameProperties = 6;
+   optional int32 port = 7 [default = 0];
+   optional string ipAddress = 8;
+   optional string gameSessionData = 9;
+   optional string matchmakerData = 10;
+   optional string dnsName = 11;
+}
+
+message AttributeValue {
+   optional int32 type = 1 [default = 0];
+   optional string S = 2;
+   optional double N = 3 [default = 0];
+   repeated string SL = 4;
+   map<string, double> SDM = 5;
+}
+
+message Player {
+   optional string playerId = 1;
+   map<string, AttributeValue> playerAttributes = 2;
+   optional string team = 3;
+   map<string, int32> latencyInMs = 4;
+}
+
+message PlayerSession {
+   optional string playerSessionId = 1;
+   optional string playerId = 2;
+   optional string gameSessionId = 3;
+   optional string fleetId = 4;
+   optional string ipAddress = 5;
+   optional string status = 6;
+   optional int64 creationTime = 7 [default = 0];
+   optional int64 terminationTime = 8 [default = 0];
+   optional int32 port = 9 [default = 0];
+   optional string playerData = 10;
+   optional string dnsName = 11;
+}
+
+///////////////////////////
+// ===== Messages ====== //
+///////////////////////////
+
+message UpdateGameSession {
+   optional GameSession gameSession = 1;
+   optional string updateReason = 2;
+   optional string backfillTicketId = 3;
+}
+
+message TerminateProcess {
+   optional int64 terminationTime = 1 [default = 0];
+}
+
+message ActivateGameSession {
+   optional GameSession gameSession = 1;
+}
+
+///////////////////////////
+// ===== Requests ====== //
+///////////////////////////
+
+message ProcessReady {
+   repeated string logPathsToUpload = 1;
+   optional int32 port = 2 [default = 0];
+}
+
+message ProcessEnding {
+
+}
+
+message ReportHealth {
+   required bool healthStatus = 1;
+}
+
+message GameSessionActivate {
+   optional string gameSessionId = 1;
+   optional int32 maxPlayers = 2 [default = 0];
+}
+
+message GameSessionTerminate {
+   optional string gameSessionId = 1;
+}
+
+message UpdatePlayerSessionCreationPolicy {
+   optional string gameSessionId = 1;
+   optional string newPlayerSessionCreationPolicy = 2;
+}
+
+message AcceptPlayerSession {
+   optional string gameSessionId = 1;
+   optional string playerSessionId = 2;
+}
+
+message RemovePlayerSession {
+   optional string gameSessionId = 1;
+   optional string playerSessionId = 2;
+}
+
+message DescribePlayerSessionsRequest {
+   optional string gameSessionId = 1;
+   optional string playerId = 2;
+   optional string playerSessionId = 3;
+   optional string playerSessionStatusFilter = 4;
+   optional string nextToken = 5;
+   optional int32 limit = 6 [default = 0];
+}
+
+message BackfillMatchmakingRequest {
+   optional string ticketId = 1;
+   optional string gameSessionArn = 2;
+   optional string matchmakingConfigurationArn = 3;
+   repeated Player players = 4;
+}
+
+message StopMatchmakingRequest {
+   optional string ticketId = 1;
+   optional string gameSessionArn = 2;
+   optional string matchmakingConfigurationArn = 3;
+}
+
+message GetInstanceCertificate {
+
+}
+
+////////////////////////////
+// ===== Responses ====== //
+////////////////////////////
+
+message BackfillMatchmakingResponse {
+   optional string ticketId = 1;
+}
+
+message DescribePlayerSessionsResponse {
+   optional string nextToken = 1;
+   repeated PlayerSession playerSessions = 2;
+}
+
+message GetInstanceCertificateResponse {
+   optional string certificatePath = 1;
+   optional string certificateChainPath = 2;
+   optional string privateKeyPath = 3;
+   optional string hostName = 4;
+}

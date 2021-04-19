@@ -1,0 +1,68 @@
+From d506cbd4f6162eb3857a86ead643d96307e71150 Mon Sep 17 00:00:00 2001
+From: Filipe Azevedo <filipe.azevedo@kdab.com>
+Date: Mon, 19 Feb 2018 11:18:58 +0100
+Subject: [PATCH 09/32] Add a QPalette color role for placeholder texts
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This allow to customize easily placeholders in QLineEdit by example.
+
+Change-Id: I9ba8162a04a0193397768e368042c7bdd9e9c616
+Reviewed-on: https://codereview.kdab.com/54643
+Reviewed-by: Michael Hughes <mhughes@amazon.com>
+Reviewed-by: Sérgio Martins <sergio@kdab.com>
+Reviewed-on: https://codereview.kdab.com/69423
+Reviewed-by: Aimini <daimini@amazon.com>
+---
+ src/gui/kernel/qpalette.cpp | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/src/gui/kernel/qpalette.cpp b/src/gui/kernel/qpalette.cpp
+index 397c50f3dc..f789491042 100644
+--- a/src/gui/kernel/qpalette.cpp
++++ b/src/gui/kernel/qpalette.cpp
+@@ -1098,17 +1098,22 @@ void QPalette::setColorGroup(ColorGroup cg, const QBrush &windowText, const QBru
+     QBrush mid_light = QBrush(qt_mix_colors(button.color(), light.color()));
+     QColor toolTipBase(255, 255, 220);
+     QColor toolTipText(0, 0, 0);
++    // Continue to support default behavior
++    QColor placeholderText(text.color());
++    placeholderText.setAlpha(128);
+ 
+     setColorGroup(cg, windowText, button, light, dark, mid, text, bright_text, base,
+                   alt_base, window, mid_light, text,
+                   QBrush(Qt::black), QBrush(Qt::darkBlue), QBrush(Qt::white),
+                   QBrush(Qt::blue), QBrush(Qt::magenta), QBrush(toolTipBase),
+                   QBrush(toolTipText));
++    setBrush(cg, PlaceholderText, QBrush(placeholderText));
+ 
+     data.resolve_mask &= ~(1 << Highlight);
+     data.resolve_mask &= ~(1 << HighlightedText);
+     data.resolve_mask &= ~(1 << LinkVisited);
+     data.resolve_mask &= ~(1 << Link);
++    data.resolve_mask &= ~(1 << PlaceholderText);
+ }
+ 
+ 
+@@ -1177,6 +1182,8 @@ Q_GUI_EXPORT QPalette qt_fusionPalette()
+     QColor button = backGround;
+     QColor shadow = dark.darker(135);
+     QColor disabledShadow = shadow.lighter(150);
++    QColor placeholderText(text);
++    placeholderText.setAlpha(128);
+ 
+     QPalette fusionPalette(Qt::black,backGround,light,dark,mid,text,base);
+     fusionPalette.setBrush(QPalette::Midlight, midLight);
+@@ -1194,6 +1201,8 @@ Q_GUI_EXPORT QPalette qt_fusionPalette()
+     fusionPalette.setBrush(QPalette::Active, QPalette::Highlight, QColor(48, 140, 198));
+     fusionPalette.setBrush(QPalette::Inactive, QPalette::Highlight, QColor(48, 140, 198));
+     fusionPalette.setBrush(QPalette::Disabled, QPalette::Highlight, QColor(145, 145, 145));
++
++    fusionPalette.setColor(QPalette::PlaceholderText, placeholderText);
+     return fusionPalette;
+ }
+ 
+-- 
+2.28.0.windows.1
+

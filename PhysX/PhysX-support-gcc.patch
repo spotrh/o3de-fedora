@@ -1,0 +1,117 @@
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/externals/cmakemodules/GetCompilerAndPlatform.cmake.gcc PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/externals/cmakemodules/GetCompilerAndPlatform.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/externals/cmakemodules/GetCompilerAndPlatform.cmake.gcc	2021-03-19 16:47:45.447191711 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/externals/cmakemodules/GetCompilerAndPlatform.cmake	2021-03-19 16:49:21.020684207 -0400
+@@ -117,10 +117,10 @@ FUNCTION (GetPlatformBinName PLATFORM_BI
+ 	ELSEIF(TARGET_BUILD_PLATFORM STREQUAL "android")		
+ 		SET(RETVAL "android.${ANDROID_ABI}.fp-soft")		
+ 	ELSEIF(TARGET_BUILD_PLATFORM STREQUAL "linux")
+-		IF (${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "x86_64-unknown-linux-gnu" OR ${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "x86_64-linux-gnu")
+-			SET(RETVAL "linux.clang")	
+-		ELSEIF(${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-unknown-linux-gnueabi" OR ${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu")
+-			SET(RETVAL "linux.aarch64")	
++		IF (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
++			SET(RETVAL "linux.clang")
++		ELSEIF(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
++			SET(RETVAL "linux.gcc")
+ 		ENDIF()
+ 	ENDIF()
+ 
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/buildtools/presets/public/linux-gcc.xml.gcc PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/buildtools/presets/public/linux-gcc.xml
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/buildtools/presets/public/linux-gcc.xml.gcc	2021-03-19 16:47:45.447191711 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/buildtools/presets/public/linux-gcc.xml	2021-03-19 16:47:45.447191711 -0400
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="utf-8"?>
++<preset name="linux" comment="Linux gcc PhysX SDK general settings">
++  <platform targetPlatform="linux" compiler="gcc" />
++  <CMakeSwitches>
++    <cmakeSwitch name="PX_BUILDSNIPPETS" value="True" comment="Generate the snippets" />
++    <cmakeSwitch name="PX_BUILDPUBLICSAMPLES" value="True" comment="Generate the samples" />
++    <cmakeSwitch name="PX_GENERATE_STATIC_LIBRARIES" value="False" comment="Generate static libs" />    
++    <cmakeSwitch name="SUPPRESS_SUFFIX" value="True" comment="Suppress the bitsize suffix" />
++    <cmakeSwitch name="NV_APPEND_CONFIG_NAME" value="False" comment="Append the config name" />
++  </CMakeSwitches>
++  <CMakeParams>
++    <cmakeParam name="CMAKE_INSTALL_PREFIX" value="install/linux/PhysX" comment="Install path relative to PhysX SDK root" />
++  </CMakeParams>
++</preset>
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/CMakeLists.txt.gcc PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/CMakeLists.txt
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/CMakeLists.txt.gcc	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/CMakeLists.txt	2021-03-19 16:47:45.447191711 -0400
+@@ -53,7 +53,7 @@ SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_
+ # Include all of the projects
+ SET(PLATFORM_SNIPPETS_LIST Convert LoadCollection)
+ 
+-IF(${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu")
++IF(${CMAKE_CXX_COMPILER_ID} MATCHES "^ARM.*" OR ${CMAKE_CXX_COMPILER} MATCHES "arm")
+ 	SET(SNIPPET_RENDER_ENABLED 0)
+ ELSE()
+ 	SET(SNIPPET_RENDER_ENABLED 1)
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetTemplate.cmake.gcc PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetTemplate.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetTemplate.cmake.gcc	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetTemplate.cmake	2021-03-19 16:47:45.448191716 -0400
+@@ -29,7 +29,7 @@
+ # Build Snippet linux template
+ #
+ 
+-IF(${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu")
++IF(${CMAKE_CXX_COMPILER_ID} MATCHES "^ARM.*" OR ${CMAKE_CXX_COMPILER} MATCHES "arm")
+ 	SET(SNIPPET_COMPILE_DEFS
+ 		# Common to all configurations
+ 
+@@ -71,7 +71,7 @@ IF(${SNIPPET_NAME} STREQUAL "Articulatio
+ 	)
+ ENDIF()
+ 
+-IF(${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu")
++IF(${CMAKE_CXX_COMPILER_ID} MATCHES "^ARM.*" OR ${CMAKE_CXX_COMPILER} MATCHES "arm")
+ 	SET(SNIPPET_PLATFORM_LINKED_LIBS
+ 		rt pthread dl
+ 	)
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetVehicleTemplate.cmake.gcc PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetVehicleTemplate.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetVehicleTemplate.cmake.gcc	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/snippets/compiler/cmake/linux/SnippetVehicleTemplate.cmake	2021-03-19 16:47:45.448191716 -0400
+@@ -29,7 +29,7 @@
+ # Build SnippetVehicle linux template
+ #
+ 
+-IF(${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu")
++IF(${CMAKE_CXX_COMPILER_ID} MATCHES "^ARM.*" OR ${CMAKE_CXX_COMPILER} MATCHES "arm")
+ 	SET(SNIPPET_COMPILE_DEFS
+ 		# Common to all configurations
+ 
+@@ -61,7 +61,7 @@ SET(SNIPPET_PLATFORM_INCLUDES
+ 
+ )
+ 
+-IF(${CMAKE_LIBRARY_ARCHITECTURE} STREQUAL "aarch64-linux-gnu")
++IF(${CMAKE_CXX_COMPILER_ID} MATCHES "^ARM.*" OR ${CMAKE_CXX_COMPILER} MATCHES "arm")
+ 	SET(SNIPPET_PLATFORM_LINKED_LIBS
+ 		rt pthread dl
+ 	)
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/CMakeLists.txt.gcc PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/CMakeLists.txt
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/CMakeLists.txt.gcc	2019-08-13 14:08:10.000000000 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/physx/source/compiler/cmake/linux/CMakeLists.txt	2021-03-19 16:47:45.448191716 -0400
+@@ -33,9 +33,9 @@ SET(GCC_WARNINGS "-Wall -Werror -Wno-inv
+ 
+ IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+ 	# using Clang	  
+-	SET(PHYSX_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-rtti -fno-exceptions -ffunction-sections -fdata-sections -fstrict-aliasing ${CLANG_WARNINGS}" CACHE INTERAL "PhysX CXX")
++	SET(PHYSX_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-rtti -fno-exceptions -ffunction-sections -fdata-sections -fstrict-aliasing ${CLANG_WARNINGS}" CACHE INTERNAL "PhysX CXX")
+ ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+-	SET(PHYSX_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-rtti -fno-exceptions -ffunction-sections -fdata-sections -fno-strict-aliasing ${GCC_WARNINGS}" CACHE INTERAL "PhysX CXX")
++	SET(PHYSX_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-rtti -fno-exceptions -ffunction-sections -fdata-sections -fno-strict-aliasing ${GCC_WARNINGS}" CACHE INTERNAL "PhysX CXX")
+ ENDIF()
+ 
+ # Build debug info for all configurations
+diff -up PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/externals/cmakemodules/NvidiaBuildOptions.cmake.no-suffix PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/externals/cmakemodules/NvidiaBuildOptions.cmake
+--- PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/externals/cmakemodules/NvidiaBuildOptions.cmake.no-suffix	2021-03-23 12:11:27.626090581 -0400
++++ PhysX-ae80dede0546d652040ae6260a810e53e20a06fa/externals/cmakemodules/NvidiaBuildOptions.cmake	2021-03-23 12:11:32.886117158 -0400
+@@ -201,7 +201,7 @@ IF(NV_APPEND_CONFIG_NAME)
+ 	SET(CMAKE_CHECKED_POSTFIX "CHECKED_${LIBPATH_SUFFIX}")
+ 	SET(CMAKE_RELEASE_POSTFIX "_${LIBPATH_SUFFIX}")
+ ELSE()
+-	IF (DEFINED PX_OUTPUT_ARCH)  # platforms with fixed arch like ps4 dont need to have arch defined, then dont add bitness
++	IF (DEFINED PX_OUTPUT_ARCH AND NOT SUPPRESS_SUFFIX)  # platforms with fixed arch like ps4 dont need to have arch defined, then dont add bitness
+ 		SET(CMAKE_DEBUG_POSTFIX "_${LIBPATH_SUFFIX}")
+ 		SET(CMAKE_PROFILE_POSTFIX "_${LIBPATH_SUFFIX}")
+ 		SET(CMAKE_CHECKED_POSTFIX "_${LIBPATH_SUFFIX}")

@@ -1,0 +1,35 @@
+From 9167d3a6f272a6cdac06bc3f1ec6e59c72cc83ff Mon Sep 17 00:00:00 2001
+From: Christoph Schleifenbaum <christoph.schleifenbaum@kdab.com>
+Date: Sat, 13 Jan 2018 10:54:52 +0100
+Subject: [PATCH 08/32] Break infinite recursion when processing key events
+
+As described in QTBUG-47648
+
+Change-Id: I9a2d6a1b9cbc63ca28a189ebfbcf34ef68a76c5b
+Task-Id: AMZN-1569
+Reviewed-on: https://codereview.kdab.com/53379
+Reviewed-by: Michael Hughes <mhughes@amazon.com>
+Reviewed-on: https://codereview.kdab.com/69422
+Reviewed-by: Aimini <daimini@amazon.com>
+---
+ src/plugins/platforms/cocoa/qcocoansmenu.mm | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/plugins/platforms/cocoa/qcocoansmenu.mm b/src/plugins/platforms/cocoa/qcocoansmenu.mm
+index c51460282a..b483c808f1 100644
+--- a/src/plugins/platforms/cocoa/qcocoansmenu.mm
++++ b/src/plugins/platforms/cocoa/qcocoansmenu.mm
+@@ -272,7 +272,9 @@ static NSString *qt_mac_removePrivateUnicode(NSString *string)
+             accel_ev.ignore();
+             QCoreApplication::sendEvent(object, &accel_ev);
+             if (accel_ev.isAccepted()) {
+-                [[NSApp keyWindow] sendEvent:event];
++                QKeyEvent keypress_ev(QEvent::KeyPress, (keyCode & (~Qt::KeyboardModifierMask)),
++                               Qt::KeyboardModifiers(modifiers & Qt::KeyboardModifierMask));
++                QCoreApplication::sendEvent(object, &keypress_ev);
+                 *target = nil;
+                 *action = nil;
+                 return YES;
+-- 
+2.28.0.windows.1
+

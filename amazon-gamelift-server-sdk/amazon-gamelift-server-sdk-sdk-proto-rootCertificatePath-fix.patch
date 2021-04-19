@@ -1,0 +1,9 @@
+diff -up GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/sdk.proto.rootcertpathfix GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/sdk.proto
+--- GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/sdk.proto.rootcertpathfix	2021-03-26 09:41:01.837797706 -0400
++++ GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/sdk.proto	2021-03-26 09:41:27.967926970 -0400
+@@ -176,4 +176,5 @@ message GetInstanceCertificateResponse {
+    optional string certificateChainPath = 2;
+    optional string privateKeyPath = 3;
+    optional string hostName = 4;
++   optional string rootCertificatePath = 5;
+ }

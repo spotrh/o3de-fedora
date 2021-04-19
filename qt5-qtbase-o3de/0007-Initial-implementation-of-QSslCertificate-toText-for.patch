@@ -1,0 +1,263 @@
+From 42c28598c1aebb0e850978ab215dcc86beb224f3 Mon Sep 17 00:00:00 2001
+From: Mike Krus <mike.krus@kdab.com>
+Date: Thu, 11 Jan 2018 14:34:12 +0000
+Subject: [PATCH 07/32] Initial implementation of QSslCertificate::toText() for
+ macOS
+
+Prints partial information extracted from the SSL certificate using
+native APIs. These return a dictionary of requested details but much
+of the formatting of the values in undocumented so it's hard to get at.
+
+Change-Id: Iada2cb4d15200791e17915ebea1c2a9f56aa4f80
+Reviewed-on: https://codereview.kdab.com/53301
+Reviewed-by: Michael Hughes <mhughes@amazon.com>
+Reviewed-on: https://codereview.kdab.com/69421
+Reviewed-by: Chris Galvan <chgalvan@amazon.com>
+---
+ src/network/ssl/qsslcertificate_qt.cpp | 219 +++++++++++++++++++++++++
+ 1 file changed, 219 insertions(+)
+
+diff --git a/src/network/ssl/qsslcertificate_qt.cpp b/src/network/ssl/qsslcertificate_qt.cpp
+index 8b5035ad96..d6a2ebacc6 100644
+--- a/src/network/ssl/qsslcertificate_qt.cpp
++++ b/src/network/ssl/qsslcertificate_qt.cpp
+@@ -53,6 +53,12 @@
+ #include <QtCore/qendian.h>
+ #include <QtNetwork/qhostaddress.h>
+ 
++#ifdef Q_OS_MACOS
++#include <QtCore/private/qcore_mac_p.h>
++#include <CoreServices/CoreServices.h>
++#include <QTimeZone>
++#endif
++
+ QT_BEGIN_NAMESPACE
+ 
+ bool QSslCertificate::operator==(const QSslCertificate &other) const
+@@ -194,10 +200,223 @@ QByteArray QSslCertificate::toDer() const
+     return d->derData;
+ }
+ 
++#ifdef Q_OS_MACOS
++static CFStringRef stringFromArray(CFArrayRef array, CFStringRef key)
++{
++    if(!array)
++        return nullptr;
++
++    QString out;
++    for (CFIndex n = 0 ; n < CFArrayGetCount(array); n++) {
++        CFDictionaryRef dict = (CFDictionaryRef)CFArrayGetValueAtIndex(array, n);
++        if (CFGetTypeID(dict) != CFDictionaryGetTypeID())
++            continue;
++        CFTypeRef dictkey = CFDictionaryGetValue(dict, kSecPropertyKeyLabel);
++        if (!CFEqual(dictkey, key))
++            continue;
++        CFStringRef str = (CFStringRef) CFDictionaryGetValue(dict, kSecPropertyKeyValue);
++        return str;
++    }
++
++    return nullptr;
++}
++
++static QString stringFromArrayWithKeys(CFArrayRef array, QList<CFStringRef> keys, QStringList labels)
++{
++    if(!array)
++        return {};
++
++    QStringList out;
++    for(int i = 0; i < keys.size();  i++) {
++        CFStringRef str = stringFromArray(array, keys[i]);
++        out << QString(QLatin1Literal("%1=%2")).arg(labels[i], QString::fromCFString(str));
++    }
++    return out.join(QLatin1Literal(", "));
++}
++
++static QString extractDateTime(CFDictionaryRef vals, CFTypeRef dateTimeRef)
++{
++    CFNumberRef validityNotBeforeRef = (CFNumberRef)CFDictionaryGetValue((CFDictionaryRef)CFDictionaryGetValue(vals, dateTimeRef), kSecPropertyKeyValue);
++    CFAbsoluteTime validityNotBefore;
++    CFNumberGetValue(validityNotBeforeRef, kCFNumberDoubleType, &validityNotBefore);
++
++    static CFTimeZoneRef zoneSystem = CFTimeZoneCopySystem();
++    CFGregorianDate validityNotBeforeGregorianDate = CFAbsoluteTimeGetGregorianDate(validityNotBefore, zoneSystem);
++
++    QDate qd(validityNotBeforeGregorianDate.year, validityNotBeforeGregorianDate.month, validityNotBeforeGregorianDate.day);
++
++    QString buffer = QString(QLatin1Literal("%1 %2 %3:%4:%5 %6 GMT"))
++            .arg(qd.toString(QLatin1Literal("MMM")))
++            .arg(QString::number(qd.day()), 2, QLatin1Char(' '))
++            .arg(validityNotBeforeGregorianDate.hour, 2, 10, QLatin1Char('0'))
++            .arg(validityNotBeforeGregorianDate.minute, 2, 10, QLatin1Char('0'))
++            .arg((int) validityNotBeforeGregorianDate.second, 2, 10, QLatin1Char('0'))
++            .arg(qd.year());
++    return buffer;
++}
++
++static QString stringFromCertificate(SecCertificateRef certificateRef)
++{
++   if (certificateRef == NULL)
++       return {};
++
++    QMap<QString, QString> algorithMap({
++                    {QLatin1Literal("1.2.840.10040.4.3"), QLatin1Literal("sha1DSA")},
++                    {QLatin1Literal("1.2.840.10045.4.1"), QLatin1Literal("ecdsa-with-SHA1")},
++                    {QLatin1Literal("1.2.840.10045.4.2"), QLatin1Literal("ecdsa-with-Recommended")},
++                    {QLatin1Literal("1.2.840.10045.4.3.2"), QLatin1Literal("ecdsa-with-SHA256")},
++                    {QLatin1Literal("1.2.840.10045.4.3.3"), QLatin1Literal("ecdsa-with-SHA384")},
++                    {QLatin1Literal("1.2.840.10045.4.3.4"), QLatin1Literal("ecdsa-with-SHA512")},
++                    {QLatin1Literal("1.2.840.10045.4.3"), QLatin1Literal("ecdsa-with-SHA2")},
++                    {QLatin1Literal("1.2.840.113549.1.1.10"), QLatin1Literal("rsassa-pss")},
++                    {QLatin1Literal("1.2.840.113549.1.1.11"), QLatin1Literal("sha256WithRSAEncryption")},
++                    {QLatin1Literal("1.2.840.113549.1.1.12"), QLatin1Literal("sha384WithRSAEncryption")},
++                    {QLatin1Literal("1.2.840.113549.1.1.13"), QLatin1Literal("sha512WithRSAEncryption")},
++                    {QLatin1Literal("1.2.840.113549.1.1.2"), QLatin1Literal("md2WithRSAEncryption")},
++                    {QLatin1Literal("1.2.840.113549.1.1.3"), QLatin1Literal("md4withRSAEncryption")},
++                    {QLatin1Literal("1.2.840.113549.1.1.4"), QLatin1Literal("md5WithRSAEncryption")},
++                    {QLatin1Literal("1.2.840.113549.1.1.5"), QLatin1Literal("sha1-with-rsa-signature")},
++                    {QLatin1Literal("1.2.840.113549.2.5"), QLatin1Literal("md5")},
++                    {QLatin1Literal("1.3.14.3.2.13"), QLatin1Literal("dsaWithSHA")},
++                    {QLatin1Literal("1.3.14.3.2.15"), QLatin1Literal("shaWithRSASignature")},
++                    {QLatin1Literal("1.3.14.3.2.2"), QLatin1Literal("md4WithRSA")},
++                    {QLatin1Literal("1.3.14.3.2.26"), QLatin1Literal("hashAlgorithmIdentifier")},
++                    {QLatin1Literal("1.3.14.3.2.27"), QLatin1Literal("dsaWithSHA1")},
++                    {QLatin1Literal("1.3.14.3.2.29"), QLatin1Literal("sha-1WithRSAEncryption")},
++                    {QLatin1Literal("1.3.14.3.2.3"), QLatin1Literal("md5WithRSA")},
++                    {QLatin1Literal("1.3.14.3.2.4"), QLatin1Literal("md4WithRSAEncryption")},
++                    {QLatin1Literal("1.3.14.7.2.3.1"), QLatin1Literal("md2WithRsa")},
++                    {QLatin1Literal("2.16.840.1.101.2.1.1.19"), QLatin1Literal("mosaicUpdatedSig")},
++                    {QLatin1Literal("2.16.840.1.101.3.4.2.1"), QLatin1Literal("sha256NoSign")},
++                    {QLatin1Literal("2.16.840.1.101.3.4.2.2"), QLatin1Literal("sha384NoSign")},
++                    {QLatin1Literal("2.16.840.1.101.3.4.2.3"), QLatin1Literal("sha512NoSign")},
++    });
++    QMap<QString, QString> publicKeyMap({
++                    {QLatin1Literal("1.2.840.10040.4.1"), QLatin1Literal("dsa")},
++                    {QLatin1Literal("1.2.840.10045.2.1"), QLatin1Literal("id-ecPublicKey")},
++                    {QLatin1Literal("1.2.840.10045.3.1.7"), QLatin1Literal("prime256v1")},
++                    {QLatin1Literal("1.2.840.10046.2.1"), QLatin1Literal("dhpublicnumber")},
++                    {QLatin1Literal("1.2.840.113549.1.1.1"), QLatin1Literal("rsaEncryption")},
++                    {QLatin1Literal("1.2.840.113549.1.1.10"), QLatin1Literal("rsaEncryption")},
++                    {QLatin1Literal("1.2.840.113549.1.1.7"), QLatin1Literal("id-RSAES-OAEP")},
++                    {QLatin1Literal("1.2.840.113549.1.3.1"), QLatin1Literal("dhKeyAgreement")},
++                    {QLatin1Literal("1.2.840.113549.1.9.16.3.5"), QLatin1Literal("alg-ESDH")},
++                    {QLatin1Literal("1.3.132.0.34"), QLatin1Literal("ansip384r1")},
++                    {QLatin1Literal("1.3.132.0.35"), QLatin1Literal("ansip521r1")},
++                    {QLatin1Literal("1.3.133.16.840.63.0.2"), QLatin1Literal("dhSinglePass-stdDH-sha1kdf-scheme")},
++                    {QLatin1Literal("1.3.14.3.2.12"), QLatin1Literal("dsa")},
++                    {QLatin1Literal("1.3.14.3.2.22"), QLatin1Literal("rsa-key-transportpong ")},
++                    {QLatin1Literal("1.3.6.1.5.5.7.6.2"), QLatin1Literal("noSignature")},
++                    {QLatin1Literal("2.16.840.1.101.2.1.1.20"), QLatin1Literal("mosaicKMandUpdSig")},
++    });
++
++    CFStringRef commonNameRef;
++    OSStatus status;
++    if ((status = SecCertificateCopyCommonName(certificateRef, &commonNameRef)) != errSecSuccess) {
++//        NSLog(@"Could not extract name from cert: %@",
++//              SecCopyErrorMessageString(status, NULL));
++        return QLatin1Literal("Unreadable cert");
++    };
++
++    CFErrorRef error;
++
++    QList<CFStringRef> idKeys = { kSecOIDCountryName, kSecOIDStateProvinceName, kSecOIDLocalityName,
++                                  kSecOIDOrganizationName, kSecOIDOrganizationalUnitName, kSecOIDCommonName };
++    QStringList idLabels = { QLatin1Literal("C"), QLatin1Literal("ST"), QLatin1Literal("L"),
++                             QLatin1Literal("O"), QLatin1Literal("OU"), QLatin1Literal("CN") };
++
++    QVector<CFStringRef> keys = { kSecOIDX509V1SubjectName, kSecOIDX509V1IssuerName,
++                                  kSecOIDX509V1SerialNumber, kSecOIDX509V1Signature, kSecOIDX509V1Version,
++                                  kSecOIDX509V1ValidityNotAfter, kSecOIDX509V1ValidityNotBefore,
++                                  kSecOIDX509V1Version, kSecOIDX509V1SubjectPublicKey,
++                                  kSecOIDX509V1SubjectPublicKeyAlgorithm,
++                                  kSecOIDX509V1SignatureAlgorithm };
++    CFArrayRef keySelection = CFArrayCreate(NULL, (const void**)keys.constData(), keys.size(), &kCFTypeArrayCallBacks);
++
++    CFDictionaryRef vals = SecCertificateCopyValues(certificateRef, keySelection, &error);
++
++    int version = CFStringGetIntValue((CFStringRef) CFDictionaryGetValue((CFDictionaryRef) CFDictionaryGetValue(vals, kSecOIDX509V1Version), kSecPropertyKeyValue));
++    QString versionString = version == 3 ? QLatin1Literal("0x2") : QLatin1Literal("0x0");   // hard coded, don't know how to read
++    QString validityNotBefore = extractDateTime(vals, kSecOIDX509V1ValidityNotBefore);
++    QString validityNotAfter = extractDateTime(vals, kSecOIDX509V1ValidityNotAfter);
++    QString serialNumber = QString::fromCFString((CFStringRef)CFDictionaryGetValue((CFDictionaryRef)CFDictionaryGetValue(vals, kSecOIDX509V1SerialNumber), kSecPropertyKeyValue));
++    serialNumber = serialNumber.toLower().replace(QLatin1Char(' '), QLatin1Char(':'));
++
++    QString signatureAlgorithm;
++    {
++        CFDictionaryRef dict = (CFDictionaryRef)CFDictionaryGetValue(vals, kSecOIDX509V1SignatureAlgorithm);
++        CFArrayRef values = (CFArrayRef) CFDictionaryGetValue(dict, kSecPropertyKeyValue);
++        signatureAlgorithm = QString::fromCFString(stringFromArray(values, QString(QLatin1Literal("Algorithm")).toCFString()));
++        if (algorithMap.contains(signatureAlgorithm))
++            signatureAlgorithm = algorithMap[signatureAlgorithm];
++    }
++
++    QString subjectDetails;
++    {
++        CFDictionaryRef dict = (CFDictionaryRef)CFDictionaryGetValue(vals, kSecOIDX509V1SubjectName);
++        CFArrayRef values = (CFArrayRef) CFDictionaryGetValue(dict, kSecPropertyKeyValue);
++        subjectDetails += stringFromArrayWithKeys(values, idKeys, idLabels);
++    }
++
++    QString pkAlgorithm;
++    {
++        CFDictionaryRef dict = (CFDictionaryRef)CFDictionaryGetValue(vals, kSecOIDX509V1SubjectPublicKeyAlgorithm);
++        CFArrayRef values = (CFArrayRef) CFDictionaryGetValue(dict, kSecPropertyKeyValue);
++        pkAlgorithm = QString::fromCFString(stringFromArray(values, QString(QLatin1Literal("Algorithm")).toCFString()));
++        if (publicKeyMap.contains(pkAlgorithm))
++            pkAlgorithm = publicKeyMap[pkAlgorithm];
++    }
++
++    QString issuerDetails;
++    {
++        CFDictionaryRef dict = (CFDictionaryRef)CFDictionaryGetValue(vals, kSecOIDX509V1IssuerName);
++        CFArrayRef values = (CFArrayRef) CFDictionaryGetValue(dict, kSecPropertyKeyValue);
++        issuerDetails += stringFromArrayWithKeys(values, idKeys, idLabels);
++    }
++
++    QLatin1Literal format = QLatin1Literal(R"*(
++Certificate:
++    Data:
++        Version: %1 (%2)
++        Serial Number:
++            %3
++    Signature Algorithm: %4
++        Issuer: %5
++        Validity
++            Not Before: %6
++            Not After : %7
++        Subject: %8
++        Subject Public Key Info:
++            Public Key Algorithm: %9
++)*");
++    QString longDesc = QString(format).arg(QString::number(version), versionString,
++                                           serialNumber,
++                                           signatureAlgorithm,
++                                           issuerDetails,
++                                           validityNotBefore,
++                                           validityNotAfter,
++                                           subjectDetails,
++                                           pkAlgorithm);
++
++    CFRelease(vals);
++    CFRelease(commonNameRef);
++    CFRelease(keySelection);
++
++    return longDesc;
++}
++#endif
++
+ QString QSslCertificate::toText() const
+ {
++#ifdef Q_OS_MACOS
++    QCFType<CFDataRef> certData = d->derData.toCFData();
++    QCFType<SecCertificateRef> certRef = SecCertificateCreateWithData(NULL, certData);
++
++    return stringFromCertificate(certRef);
++#else
+     Q_UNIMPLEMENTED();
+     return QString();
++#endif
+ }
+ 
+ void QSslCertificatePrivate::init(const QByteArray &data, QSsl::EncodingFormat format)
+-- 
+2.28.0.windows.1
+

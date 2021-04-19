@@ -1,0 +1,26 @@
+diff -up o3de/python/get_python.sh.silence o3de/python/get_python.sh
+--- o3de/python/get_python.sh.silence	2021-04-10 14:42:42.622352185 -0400
++++ o3de/python/get_python.sh	2021-04-10 14:43:17.516494891 -0400
+@@ -32,7 +32,7 @@ cd $DIR
+ ./python.sh --version > /dev/null
+ python_exitcode=$?
+ if [ $python_exitcode == 0 ]; then
+-    echo get_python.sh: Python is already downloaded: $(./python.sh --version)
++    # echo get_python.sh: Python is already downloaded: $(./python.sh --version)
+     $DIR/pip.sh install -r $DIR/requirements.txt --quiet --disable-pip-version-check
+     exit 0
+ fi
+diff -up o3de/Tools/Python/python3.sh.silence o3de/Tools/Python/python3.sh
+--- o3de/Tools/Python/python3.sh.silence	2021-03-26 15:57:46.000000000 -0400
++++ o3de/Tools/Python/python3.sh	2021-04-10 14:42:42.622352185 -0400
+@@ -21,8 +21,8 @@ while [ -h "$SOURCE" ]; do
+ done
+ DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+ 
+-echo "WARNING:  Using deprecated python3.sh in $DIR - please update your scripts"
+-echo "          to use python.sh in the python subfolder of the root instead."
++# echo "WARNING:  Using deprecated python3.sh in $DIR - please update your scripts"
++# echo "          to use python.sh in the python subfolder of the root instead."
+ 
+ # we fetch python pre-emptively because the prior legacy system had
+ # python pre-installed...

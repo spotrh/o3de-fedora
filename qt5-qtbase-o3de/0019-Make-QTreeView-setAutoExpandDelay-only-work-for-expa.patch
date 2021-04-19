@@ -1,0 +1,44 @@
+From 28fb88fcb3b50548f45a63f1ba48dcf25031fecc Mon Sep 17 00:00:00 2001
+From: Sergio Martins <sergio.martins@kdab.com>
+Date: Fri, 4 Oct 2019 13:50:06 +0100
+Subject: [PATCH 19/32] Make QTreeView::setAutoExpandDelay() only work for
+ expansion
+
+Collapsing on hovering is a weird behaviour and it's not what's
+desired. It's also not what the function name indicates.
+
+Change-Id: I32721d4dbe94a2da4217f981306378ce76303e67
+Task-Id: AMZN-1880
+Reviewed-on: https://codereview.kdab.com/71224
+Reviewed-by: Nathan Collins <nathan.collins@kdab.com>
+Reviewed-by: Aimini <daimini@amazon.com>
+---
+ src/widgets/itemviews/qtreeview.cpp | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/src/widgets/itemviews/qtreeview.cpp b/src/widgets/itemviews/qtreeview.cpp
+index 361b44c083..2350d3b6c7 100644
+--- a/src/widgets/itemviews/qtreeview.cpp
++++ b/src/widgets/itemviews/qtreeview.cpp
+@@ -344,7 +344,7 @@ void QTreeView::setHeader(QHeaderView *header)
+   \since 4.3
+ 
+   This property holds the amount of time in milliseconds that the user must wait over
+-  a node before that node will automatically open or close.  If the time is
++  a node before that node will automatically open.  If the time is
+   set to less then 0 then it will not be activated.
+ 
+   By default, this property has a value of -1, meaning that auto-expansion is disabled.
+@@ -1264,7 +1264,8 @@ void QTreeView::timerEvent(QTimerEvent *event)
+         if (state() == QAbstractItemView::DraggingState
+             && d->viewport->rect().contains(pos)) {
+             QModelIndex index = indexAt(pos);
+-            setExpanded(index, !isExpanded(index));
++            if (!isExpanded(index))
++                setExpanded(index, true);
+         }
+         d->openTimer.stop();
+     }
+-- 
+2.28.0.windows.1
+

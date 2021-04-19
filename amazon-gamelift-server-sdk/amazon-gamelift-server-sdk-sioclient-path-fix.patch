@@ -1,0 +1,12 @@
+diff -up GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/gamelift-server-sdk/include/aws/gamelift/internal/network/Network.h.pathfix GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/gamelift-server-sdk/include/aws/gamelift/internal/network/Network.h
+--- GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/gamelift-server-sdk/include/aws/gamelift/internal/network/Network.h.pathfix	2021-03-25 17:46:47.164698880 -0400
++++ GameLift_12_22_2020/GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1/gamelift-server-sdk/include/aws/gamelift/internal/network/Network.h	2021-03-25 17:46:59.569763324 -0400
+@@ -13,7 +13,7 @@
+ #include <aws/gamelift/internal/network/AuxProxyMessageHandler.h>
+ #include <aws/gamelift/internal/network/AuxProxyMessageSender.h>
+ #include <aws/gamelift/server/protocols/sdk.pb.h>
+-#include <sioclient/sio_client.h>
++#include <sio_client.h>
+ #include <condition_variable>
+ 
+ namespace Aws

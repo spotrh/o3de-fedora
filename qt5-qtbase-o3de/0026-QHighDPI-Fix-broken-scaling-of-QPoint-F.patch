@@ -1,0 +1,41 @@
+From 56df2bb5f0b76c59bfead9ab1c9bc04adeea59d0 Mon Sep 17 00:00:00 2001
+From: Friedemann Kleint <Friedemann.Kleint@qt.io>
+Date: Wed, 31 Jul 2019 10:23:39 +0200
+Subject: [PATCH 26/32] QHighDPI: Fix broken scaling of QPoint(F)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+For some reason, the overload resolution of the
+High DPI scale() functions introduced by
+b6ded193ee64ffe67df6d22e7a23aa1ea9e02ec7 chose the
+wrong overloads for QPointF and/or QPoint; it fell
+back to the generic template intended for qreal,
+QSize, etc, ignoring the origin. Remove the
+template and spell out all overloads.
+
+Fixes: QTBUG-77255
+Change-Id: I5661f16f7326f65156f646f430f5a0c71d5302d2
+Reviewed-by: Tor Arne Vestbø <tor.arne.vestbo@qt.io>
+Reviewed-on: https://codereview.kdab.com/c/amazon/qtbase/+/75427
+Reviewed-by: Alessandro Ambrosano <alessandro.ambrosano@kdab.com>
+---
+ src/gui/kernel/qhighdpiscaling.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/gui/kernel/qhighdpiscaling.cpp b/src/gui/kernel/qhighdpiscaling.cpp
+index 9bbf2773a9..88b2eeeac5 100644
+--- a/src/gui/kernel/qhighdpiscaling.cpp
++++ b/src/gui/kernel/qhighdpiscaling.cpp
+@@ -487,7 +487,7 @@ void QHighDpiScaling::initHighDpiScaling()
+ 
+     m_pixelDensityScalingActive = false; //set in updateHighDpiScaling below
+ 
+-    m_active = m_globalScalingActive || m_usePixelDensity;
++    m_active = m_globalScalingActive || m_screenFactorSet || m_usePixelDensity;
+ }
+ 
+ void QHighDpiScaling::updateHighDpiScaling()
+-- 
+2.28.0.windows.1
+

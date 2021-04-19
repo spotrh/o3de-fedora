@@ -1,0 +1,21 @@
+diff -up etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/CMakeLists.txt.pthreads etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/CMakeLists.txt
+--- etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/CMakeLists.txt.pthreads	2021-03-19 13:37:36.528697589 -0400
++++ etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/CMakeLists.txt	2021-03-19 13:38:24.875947427 -0400
+@@ -15,6 +15,9 @@
+ cmake_minimum_required(VERSION 2.8.9)
+ project(EtcTest)
+ 
++set(THREADS_PREFER_PTHREAD_FLAG ON)
++find_package(Threads REQUIRED)
++
+ set (CMAKE_CXX_STANDARD 11)
+ IF (APPLE)
+ 	set (CMAKE_CXX_FLAGS "-I/usr/include/i386-linux-gnu/c++/4.8 -I/usr/include/c++/4.8 -std=c++11 -g3 -Wall -O3")
+diff -up etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcLib/CMakeLists.txt.pthreads etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcLib/CMakeLists.txt
+--- etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcLib/CMakeLists.txt.pthreads	2021-03-19 13:38:55.000103114 -0400
++++ etc2comp-9cd0f9cae0f32338943699bb418107db61bb66f2/EtcLib/CMakeLists.txt	2021-03-19 13:39:03.166145318 -0400
+@@ -23,3 +23,4 @@ file(GLOB SOURCES
+ 	${PROJECT_SOURCE_DIR}/EtcCodec/*.cpp)
+ ADD_LIBRARY(EtcLib ${SOURCES})
+ set_target_properties(EtcLib PROPERTIES SOVERSION 0)
++target_link_libraries(EtcLib PRIVATE Threads::Threads)

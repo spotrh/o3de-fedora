@@ -1,0 +1,59 @@
+From 8e5b43a6c8b1ea19181249601f4a32c083768198 Mon Sep 17 00:00:00 2001
+From: Sergio Martins <sergio.martins@kdab.com>
+Date: Fri, 3 Feb 2017 16:57:48 +0000
+Subject: [PATCH 02/32] Allow to prepend instead of append when adding dock
+ widget
+
+Change-Id: I06205444d2f782c8d4091987126679e637a7858a
+Reviewed-on: https://codereview.kdab.com/69416
+Reviewed-by: Aimini <daimini@amazon.com>
+---
+ src/widgets/widgets/qdockarealayout.cpp | 25 ++++++++++++++++++++++---
+ 1 file changed, 22 insertions(+), 3 deletions(-)
+
+diff --git a/src/widgets/widgets/qdockarealayout.cpp b/src/widgets/widgets/qdockarealayout.cpp
+index 87f4519dd6..af01d26ae2 100644
+--- a/src/widgets/widgets/qdockarealayout.cpp
++++ b/src/widgets/widgets/qdockarealayout.cpp
+@@ -3086,7 +3086,16 @@ void QDockAreaLayout::addDockWidget(QInternal::DockPosition pos, QDockWidget *do
+         info.o = orientation;
+ 
+         QDockAreaLayoutItem new_item(dockWidgetItem);
+-        info.item_list.append(new_item);
++
++        if (pos == QInternal::LeftDock || pos == QInternal::TopDock)
++        {
++            info.item_list.prepend(new_item);
++        }
++        else
++        {
++            info.item_list.append(new_item);
++        }
++
+ #if QT_CONFIG(tabbar)
+         if (info.tabbed && !new_item.skip()) {
+             info.updateTabBar();
+@@ -3100,8 +3109,18 @@ void QDockAreaLayout::addDockWidget(QInternal::DockPosition pos, QDockWidget *do
+         int tbshape = 0;
+ #endif
+         QDockAreaLayoutInfo new_info(&sep, pos, orientation, tbshape, mainWindow);
+-        new_info.item_list.append(QDockAreaLayoutItem(new QDockAreaLayoutInfo(info)));
+-        new_info.item_list.append(QDockAreaLayoutItem(dockWidgetItem));
++
++        if (pos == QInternal::LeftDock || pos == QInternal::TopDock)
++        {
++            new_info.item_list.append(QDockAreaLayoutItem(dockWidgetItem));
++            new_info.item_list.append(QDockAreaLayoutItem(new QDockAreaLayoutInfo(info)));
++        }
++        else
++        {
++            new_info.item_list.append(QDockAreaLayoutItem(new QDockAreaLayoutInfo(info)));
++            new_info.item_list.append(QDockAreaLayoutItem(dockWidgetItem));
++        }
++
+         info = new_info;
+     }
+ 
+-- 
+2.28.0.windows.1
+
