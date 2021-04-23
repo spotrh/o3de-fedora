@@ -3,7 +3,7 @@
 
 Name:		NvCloth
 Version:	1.0.0
-Release:	1.git%{shortcommit}%{?dist}
+Release:	2.git%{shortcommit}%{?dist}
 Summary:	Cloth solver library
 # Look ma, I found a new license.
 # Nvidia Source Code License (1-Way Commercial)
@@ -51,6 +51,9 @@ pushd %{buildroot}%{_libdir}
 	ldconfig -v -n .
 	ln -s libNvCloth.so.0 libNvCloth.so
 popd
+pushd PxShared
+	cp -a include/foundation %{buildroot}%{_includedir}
+popd
 
 %files
 %license NvCloth/license.txt
@@ -58,10 +61,14 @@ popd
 %{_libdir}/libNvCloth.so.0*
 
 %files devel
+%{_includedir}/foundation
 %{_includedir}/NvCloth
 %{_libdir}/libNvCloth.so
 
 %changelog
+* Fri Apr 23 2021 Tom Callaway <spot@fedoraproject.org> - 1.0.0-2.git8e100cc
+- add foundation headers
+
 * Thu Mar 18 2021 Tom Callaway <spot@fedoraproject.org> - 1.0.0-1.git8e100cc
 - initial package
 
