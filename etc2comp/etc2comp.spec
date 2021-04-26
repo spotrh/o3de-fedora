@@ -4,7 +4,7 @@
 Name:		etc2comp
 # Date of last commit, there is no version
 Version:	20170424
-Release:	1.git%{shortcommit}%{?dist}
+Release:	2.git%{shortcommit}%{?dist}
 Summary:	Texture to ETC2 compressor
 # third_party/lodepng is Zlib
 License:	ASL 2.0 and zlib
@@ -55,7 +55,7 @@ sed -i 's/\r$//' README.md
 
 %install
 mkdir -p %{buildroot}%{_includedir}
-cp -a EtcLib/Etc/*.h %{buildroot}%{_includedir}
+cp -a EtcLib/Etc/*.h EtcLib/EtcCodec/*.h EtcTool/*.h %{buildroot}%{_includedir}
 mkdir -p %{buildroot}%{_libdir}
 install -m0755 %{_vpath_builddir}/EtcLib/libEtcLib.so.0 %{buildroot}%{_libdir}
 pushd %{buildroot}%{_libdir}
@@ -80,9 +80,32 @@ chrpath --delete %{buildroot}%{_bindir}/EtcTool
 %{_includedir}/EtcFilter.h
 %{_includedir}/EtcImage.h
 %{_includedir}/EtcMath.h
+%{_includedir}/EtcAnalysis.h
+%{_includedir}/EtcBlock4x4.h
+%{_includedir}/EtcBlock4x4Encoding.h
+%{_includedir}/EtcBlock4x4EncodingBits.h
+%{_includedir}/EtcBlock4x4Encoding_ETC1.h
+%{_includedir}/EtcBlock4x4Encoding_R11.h
+%{_includedir}/EtcBlock4x4Encoding_RG11.h
+%{_includedir}/EtcBlock4x4Encoding_RGB8.h
+%{_includedir}/EtcBlock4x4Encoding_RGB8A1.h
+%{_includedir}/EtcBlock4x4Encoding_RGBA8.h
+%{_includedir}/EtcComparison.h
+%{_includedir}/EtcDifferentialTrys.h
+%{_includedir}/EtcErrorMetric.h
+%{_includedir}/EtcFile.h
+%{_includedir}/EtcFileHeader.h
+%{_includedir}/EtcIndividualTrys.h
+%{_includedir}/EtcMemTest.h
+%{_includedir}/EtcSortedBlockList.h
+%{_includedir}/EtcSourceImage.h
+%{_includedir}/EtcTool.h
 %{_libdir}/libEtcLib.so
 
 %changelog
+* Mon Apr 26 2021 Tom Callaway <spot@fedoraproject.org> - 20170424-2.git9cd0f9c
+- package up all headers (except lodepng.h)
+
 * Fri Mar 19 2021 Tom Callaway <spot@fedoraproject.org> - 20170424-1.git9cd0f9c
 - initial package
 
