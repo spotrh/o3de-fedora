@@ -1,6 +1,6 @@
 diff -up o3de/cmake/3rdParty/Findalembic.cmake.system o3de/cmake/3rdParty/Findalembic.cmake
---- o3de/cmake/3rdParty/Findalembic.cmake.system	2021-04-13 16:55:23.706270911 -0400
-+++ o3de/cmake/3rdParty/Findalembic.cmake	2021-04-13 16:55:23.706270911 -0400
+--- o3de/cmake/3rdParty/Findalembic.cmake.system	2021-04-23 15:36:04.128116962 -0400
++++ o3de/cmake/3rdParty/Findalembic.cmake	2021-04-23 15:36:04.128116962 -0400
 @@ -0,0 +1,26 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -29,8 +29,8 @@ diff -up o3de/cmake/3rdParty/Findalembic.cmake.system o3de/cmake/3rdParty/Findal
 +
 +mark_as_advanced(alembic_INCLUDE_DIR alembic_LIBRARY)
 diff -up o3de/cmake/3rdParty/Findassimplib.cmake.system o3de/cmake/3rdParty/Findassimplib.cmake
---- o3de/cmake/3rdParty/Findassimplib.cmake.system	2021-04-13 16:55:23.706270911 -0400
-+++ o3de/cmake/3rdParty/Findassimplib.cmake	2021-04-13 16:55:23.706270911 -0400
+--- o3de/cmake/3rdParty/Findassimplib.cmake.system	2021-04-23 15:36:04.128116962 -0400
++++ o3de/cmake/3rdParty/Findassimplib.cmake	2021-04-23 15:36:04.128116962 -0400
 @@ -0,0 +1,11 @@
 +find_library(assimplib_LIBRARY assimp)
 +
@@ -44,8 +44,8 @@ diff -up o3de/cmake/3rdParty/Findassimplib.cmake.system o3de/cmake/3rdParty/Find
 +
 +mark_as_advanced(assimplib_LIBRARY)
 diff -up o3de/cmake/3rdParty/FindASTCEncoder.cmake.system o3de/cmake/3rdParty/FindASTCEncoder.cmake
---- o3de/cmake/3rdParty/FindASTCEncoder.cmake.system	2021-04-13 16:55:23.707270919 -0400
-+++ o3de/cmake/3rdParty/FindASTCEncoder.cmake	2021-04-13 16:55:23.707270919 -0400
+--- o3de/cmake/3rdParty/FindASTCEncoder.cmake.system	2021-04-23 15:36:04.128116962 -0400
++++ o3de/cmake/3rdParty/FindASTCEncoder.cmake	2021-04-23 15:36:04.128116962 -0400
 @@ -0,0 +1,17 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -66,7 +66,7 @@ diff -up o3de/cmake/3rdParty/FindASTCEncoder.cmake.system o3de/cmake/3rdParty/Fi
 +endif()
 diff -up o3de/cmake/3rdParty/FindAWSGameLiftServerSDK.cmake.system o3de/cmake/3rdParty/FindAWSGameLiftServerSDK.cmake
 --- o3de/cmake/3rdParty/FindAWSGameLiftServerSDK.cmake.system	2021-04-11 19:45:51.000000000 -0400
-+++ o3de/cmake/3rdParty/FindAWSGameLiftServerSDK.cmake	2021-04-13 16:55:23.707270919 -0400
++++ o3de/cmake/3rdParty/FindAWSGameLiftServerSDK.cmake	2021-04-23 15:36:04.128116962 -0400
 @@ -8,13 +8,29 @@
  # remove or modify any license notices. This file is distributed on an "AS IS" BASIS,
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -108,8 +108,8 @@ diff -up o3de/cmake/3rdParty/FindAWSGameLiftServerSDK.cmake.system o3de/cmake/3r
 +  set_property(TARGET 3rdParty::AWSGameLiftServerSDK APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${AWSGameLiftServerSDK_LIBRARY}")
 +endif (NOT AWSGameLiftServerSDK_FOUND)
 diff -up o3de/cmake/3rdParty/FindAWSNativeSDKChecksums.cmake.system o3de/cmake/3rdParty/FindAWSNativeSDKChecksums.cmake
---- o3de/cmake/3rdParty/FindAWSNativeSDKChecksums.cmake.system	2021-04-13 16:55:23.707270919 -0400
-+++ o3de/cmake/3rdParty/FindAWSNativeSDKChecksums.cmake	2021-04-13 16:55:23.707270919 -0400
+--- o3de/cmake/3rdParty/FindAWSNativeSDKChecksums.cmake.system	2021-04-23 15:36:04.128116962 -0400
++++ o3de/cmake/3rdParty/FindAWSNativeSDKChecksums.cmake	2021-04-23 15:36:04.128116962 -0400
 @@ -0,0 +1,24 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -136,8 +136,8 @@ diff -up o3de/cmake/3rdParty/FindAWSNativeSDKChecksums.cmake.system o3de/cmake/3
 +   set_property(TARGET 3rdParty::AWSNativeSDKChecksums APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${AWSNativeSDKChecksums_LIBRARY}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindAWSNativeSDKCognito.cmake.system o3de/cmake/3rdParty/FindAWSNativeSDKCognito.cmake
---- o3de/cmake/3rdParty/FindAWSNativeSDKCognito.cmake.system	2021-04-13 19:38:32.813282360 -0400
-+++ o3de/cmake/3rdParty/FindAWSNativeSDKCognito.cmake	2021-04-13 19:38:20.189193162 -0400
+--- o3de/cmake/3rdParty/FindAWSNativeSDKCognito.cmake.system	2021-04-23 15:36:04.128116962 -0400
++++ o3de/cmake/3rdParty/FindAWSNativeSDKCognito.cmake	2021-04-23 15:36:04.128116962 -0400
 @@ -0,0 +1,27 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -167,8 +167,8 @@ diff -up o3de/cmake/3rdParty/FindAWSNativeSDKCognito.cmake.system o3de/cmake/3rd
 +   set_property(TARGET 3rdParty::AWSNativeSDKCognito APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${AWSNativeSDKCognito_LIBRARIES}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindAWSNativeSDKCommon.cmake.system o3de/cmake/3rdParty/FindAWSNativeSDKCommon.cmake
---- o3de/cmake/3rdParty/FindAWSNativeSDKCommon.cmake.system	2021-04-13 16:55:23.707270919 -0400
-+++ o3de/cmake/3rdParty/FindAWSNativeSDKCommon.cmake	2021-04-13 16:55:23.707270919 -0400
+--- o3de/cmake/3rdParty/FindAWSNativeSDKCommon.cmake.system	2021-04-23 15:36:04.128116962 -0400
++++ o3de/cmake/3rdParty/FindAWSNativeSDKCommon.cmake	2021-04-23 15:36:04.128116962 -0400
 @@ -0,0 +1,24 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -195,8 +195,8 @@ diff -up o3de/cmake/3rdParty/FindAWSNativeSDKCommon.cmake.system o3de/cmake/3rdP
 +   set_property(TARGET 3rdParty::AWSNativeSDKCommon APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${AWSNativeSDKCommon_LIBRARY}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindAWSNativeSDKCore.cmake.system o3de/cmake/3rdParty/FindAWSNativeSDKCore.cmake
---- o3de/cmake/3rdParty/FindAWSNativeSDKCore.cmake.system	2021-04-13 16:55:23.707270919 -0400
-+++ o3de/cmake/3rdParty/FindAWSNativeSDKCore.cmake	2021-04-13 16:55:23.707270919 -0400
+--- o3de/cmake/3rdParty/FindAWSNativeSDKCore.cmake.system	2021-04-23 15:36:04.128116962 -0400
++++ o3de/cmake/3rdParty/FindAWSNativeSDKCore.cmake	2021-04-23 15:36:04.128116962 -0400
 @@ -0,0 +1,24 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -223,8 +223,8 @@ diff -up o3de/cmake/3rdParty/FindAWSNativeSDKCore.cmake.system o3de/cmake/3rdPar
 +   set_property(TARGET 3rdParty::AWSNativeSDKCore APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${AWSNativeSDKCore_LIBRARY}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindAWSNativeSDKDynamoDB.cmake.system o3de/cmake/3rdParty/FindAWSNativeSDKDynamoDB.cmake
---- o3de/cmake/3rdParty/FindAWSNativeSDKDynamoDB.cmake.system	2021-04-13 16:55:23.707270919 -0400
-+++ o3de/cmake/3rdParty/FindAWSNativeSDKDynamoDB.cmake	2021-04-13 16:55:23.707270919 -0400
+--- o3de/cmake/3rdParty/FindAWSNativeSDKDynamoDB.cmake.system	2021-04-23 15:36:04.128116962 -0400
++++ o3de/cmake/3rdParty/FindAWSNativeSDKDynamoDB.cmake	2021-04-23 15:36:04.128116962 -0400
 @@ -0,0 +1,24 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -251,8 +251,8 @@ diff -up o3de/cmake/3rdParty/FindAWSNativeSDKDynamoDB.cmake.system o3de/cmake/3r
 +   set_property(TARGET 3rdParty::AWSNativeSDKDynamoDB APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${AWSNativeSDKDynamoDB_LIBRARY}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindAWSNativeSDKEventStream.cmake.system o3de/cmake/3rdParty/FindAWSNativeSDKEventStream.cmake
---- o3de/cmake/3rdParty/FindAWSNativeSDKEventStream.cmake.system	2021-04-13 16:55:23.707270919 -0400
-+++ o3de/cmake/3rdParty/FindAWSNativeSDKEventStream.cmake	2021-04-13 16:55:23.707270919 -0400
+--- o3de/cmake/3rdParty/FindAWSNativeSDKEventStream.cmake.system	2021-04-23 15:36:04.129116979 -0400
++++ o3de/cmake/3rdParty/FindAWSNativeSDKEventStream.cmake	2021-04-23 15:36:04.129116979 -0400
 @@ -0,0 +1,24 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -279,8 +279,8 @@ diff -up o3de/cmake/3rdParty/FindAWSNativeSDKEventStream.cmake.system o3de/cmake
 +   set_property(TARGET 3rdParty::AWSNativeSDKEventStream APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${AWSNativeSDKEventStream_LIBRARY}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindAWSNativeSDKGameLift.cmake.system o3de/cmake/3rdParty/FindAWSNativeSDKGameLift.cmake
---- o3de/cmake/3rdParty/FindAWSNativeSDKGameLift.cmake.system	2021-04-13 16:55:23.707270919 -0400
-+++ o3de/cmake/3rdParty/FindAWSNativeSDKGameLift.cmake	2021-04-13 16:55:23.707270919 -0400
+--- o3de/cmake/3rdParty/FindAWSNativeSDKGameLift.cmake.system	2021-04-23 15:36:04.129116979 -0400
++++ o3de/cmake/3rdParty/FindAWSNativeSDKGameLift.cmake	2021-04-23 15:36:04.129116979 -0400
 @@ -0,0 +1,24 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -307,8 +307,8 @@ diff -up o3de/cmake/3rdParty/FindAWSNativeSDKGameLift.cmake.system o3de/cmake/3r
 +   set_property(TARGET 3rdParty::AWSNativeSDKGameLift APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${AWSNativeSDKGameLift_LIBRARY}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindAWSNativeSDKIdentityManagement.cmake.system o3de/cmake/3rdParty/FindAWSNativeSDKIdentityManagement.cmake
---- o3de/cmake/3rdParty/FindAWSNativeSDKIdentityManagement.cmake.system	2021-04-13 19:49:31.947060630 -0400
-+++ o3de/cmake/3rdParty/FindAWSNativeSDKIdentityManagement.cmake	2021-04-13 19:49:05.354866859 -0400
+--- o3de/cmake/3rdParty/FindAWSNativeSDKIdentityManagement.cmake.system	2021-04-23 15:36:04.129116979 -0400
++++ o3de/cmake/3rdParty/FindAWSNativeSDKIdentityManagement.cmake	2021-04-23 15:36:04.129116979 -0400
 @@ -0,0 +1,24 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -335,8 +335,8 @@ diff -up o3de/cmake/3rdParty/FindAWSNativeSDKIdentityManagement.cmake.system o3d
 +   set_property(TARGET 3rdParty::AWSNativeSDKIdentityManagement APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${AWSNativeSDKIdentityManagement_LIBRARY}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindAWSNativeSDKLambda.cmake.system o3de/cmake/3rdParty/FindAWSNativeSDKLambda.cmake
---- o3de/cmake/3rdParty/FindAWSNativeSDKLambda.cmake.system	2021-04-13 16:55:23.707270919 -0400
-+++ o3de/cmake/3rdParty/FindAWSNativeSDKLambda.cmake	2021-04-13 16:55:23.707270919 -0400
+--- o3de/cmake/3rdParty/FindAWSNativeSDKLambda.cmake.system	2021-04-23 15:36:04.129116979 -0400
++++ o3de/cmake/3rdParty/FindAWSNativeSDKLambda.cmake	2021-04-23 15:36:04.129116979 -0400
 @@ -0,0 +1,24 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -363,8 +363,8 @@ diff -up o3de/cmake/3rdParty/FindAWSNativeSDKLambda.cmake.system o3de/cmake/3rdP
 +   set_property(TARGET 3rdParty::AWSNativeSDKLambda APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${AWSNativeSDKLambda_LIBRARY}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindAWSNativeSDKS3.cmake.system o3de/cmake/3rdParty/FindAWSNativeSDKS3.cmake
---- o3de/cmake/3rdParty/FindAWSNativeSDKS3.cmake.system	2021-04-13 16:55:23.707270919 -0400
-+++ o3de/cmake/3rdParty/FindAWSNativeSDKS3.cmake	2021-04-13 16:55:23.707270919 -0400
+--- o3de/cmake/3rdParty/FindAWSNativeSDKS3.cmake.system	2021-04-23 15:36:04.129116979 -0400
++++ o3de/cmake/3rdParty/FindAWSNativeSDKS3.cmake	2021-04-23 15:36:04.129116979 -0400
 @@ -0,0 +1,24 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -391,8 +391,8 @@ diff -up o3de/cmake/3rdParty/FindAWSNativeSDKS3.cmake.system o3de/cmake/3rdParty
 +   set_property(TARGET 3rdParty::AWSNativeSDKS3 APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${AWSNativeSDKS3_LIBRARY}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindAWSNativeSDKSTS.cmake.system o3de/cmake/3rdParty/FindAWSNativeSDKSTS.cmake
---- o3de/cmake/3rdParty/FindAWSNativeSDKSTS.cmake.system	2021-04-13 16:55:23.707270919 -0400
-+++ o3de/cmake/3rdParty/FindAWSNativeSDKSTS.cmake	2021-04-13 16:55:23.707270919 -0400
+--- o3de/cmake/3rdParty/FindAWSNativeSDKSTS.cmake.system	2021-04-23 15:36:04.129116979 -0400
++++ o3de/cmake/3rdParty/FindAWSNativeSDKSTS.cmake	2021-04-23 15:36:04.129116979 -0400
 @@ -0,0 +1,24 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -419,8 +419,8 @@ diff -up o3de/cmake/3rdParty/FindAWSNativeSDKSTS.cmake.system o3de/cmake/3rdPart
 +   set_property(TARGET 3rdParty::AWSNativeSDKSTS APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${AWSNativeSDKSTS_LIBRARY}")
 +endif()
 diff -up o3de/cmake/3rdParty/Findcityhash.cmake.system o3de/cmake/3rdParty/Findcityhash.cmake
---- o3de/cmake/3rdParty/Findcityhash.cmake.system	2021-04-13 16:55:23.669270613 -0400
-+++ o3de/cmake/3rdParty/Findcityhash.cmake	2021-04-13 16:55:23.708270927 -0400
+--- o3de/cmake/3rdParty/Findcityhash.cmake.system	2021-04-23 15:36:04.084116228 -0400
++++ o3de/cmake/3rdParty/Findcityhash.cmake	2021-04-23 15:36:04.129116979 -0400
 @@ -0,0 +1,20 @@
 +find_path(cityhash_INCLUDE_DIR "city.h")
 +find_library(cityhash_LIBRARY cityhash)
@@ -444,7 +444,7 @@ diff -up o3de/cmake/3rdParty/Findcityhash.cmake.system o3de/cmake/3rdParty/Findc
 +mark_as_advanced(cityhash_INCLUDE_DIR cityhash_LIBRARY)
 diff -up o3de/cmake/3rdParty/Findcivetweb.cmake.system o3de/cmake/3rdParty/Findcivetweb.cmake
 --- o3de/cmake/3rdParty/Findcivetweb.cmake.system	2021-04-11 19:45:51.000000000 -0400
-+++ o3de/cmake/3rdParty/Findcivetweb.cmake	2021-04-13 16:55:23.708270927 -0400
++++ o3de/cmake/3rdParty/Findcivetweb.cmake	2021-04-23 15:36:04.129116979 -0400
 @@ -9,8 +9,25 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  #
@@ -478,7 +478,7 @@ diff -up o3de/cmake/3rdParty/Findcivetweb.cmake.system o3de/cmake/3rdParty/Findc
 +mark_as_advanced(civetweb_INCLUDE_DIR civetweb_LIBRARY)
 diff -up o3de/cmake/3rdParty/Finddyad.cmake.system o3de/cmake/3rdParty/Finddyad.cmake
 --- o3de/cmake/3rdParty/Finddyad.cmake.system	2021-04-11 19:45:51.000000000 -0400
-+++ o3de/cmake/3rdParty/Finddyad.cmake	2021-04-13 16:55:23.708270927 -0400
++++ o3de/cmake/3rdParty/Finddyad.cmake	2021-04-23 15:36:04.129116979 -0400
 @@ -9,8 +9,24 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  #
@@ -511,7 +511,7 @@ diff -up o3de/cmake/3rdParty/Finddyad.cmake.system o3de/cmake/3rdParty/Finddyad.
 +mark_as_advanced(dyad_INCLUDE_DIR dyad_LIBRARY)
 diff -up o3de/cmake/3rdParty/Findetc2comp.cmake.system o3de/cmake/3rdParty/Findetc2comp.cmake
 --- o3de/cmake/3rdParty/Findetc2comp.cmake.system	2021-04-11 19:45:51.000000000 -0400
-+++ o3de/cmake/3rdParty/Findetc2comp.cmake	2021-04-13 16:55:23.708270927 -0400
++++ o3de/cmake/3rdParty/Findetc2comp.cmake	2021-04-23 15:36:04.129116979 -0400
 @@ -9,10 +9,26 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  #
@@ -547,8 +547,8 @@ diff -up o3de/cmake/3rdParty/Findetc2comp.cmake.system o3de/cmake/3rdParty/Finde
 +
 +mark_as_advanced(etc2comp_INCLUDE_DIR etc2comp_LIBRARY)
 diff -up o3de/cmake/3rdParty/Findexpat.cmake.system o3de/cmake/3rdParty/Findexpat.cmake
---- o3de/cmake/3rdParty/Findexpat.cmake.system	2021-04-13 16:55:23.708270927 -0400
-+++ o3de/cmake/3rdParty/Findexpat.cmake	2021-04-13 16:55:23.708270927 -0400
+--- o3de/cmake/3rdParty/Findexpat.cmake.system	2021-04-23 15:36:04.129116979 -0400
++++ o3de/cmake/3rdParty/Findexpat.cmake	2021-04-23 15:36:04.129116979 -0400
 @@ -0,0 +1,105 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -657,7 +657,7 @@ diff -up o3de/cmake/3rdParty/Findexpat.cmake.system o3de/cmake/3rdParty/Findexpa
 +endif()
 diff -up o3de/cmake/3rdParty/FindFbxSdk.cmake.system o3de/cmake/3rdParty/FindFbxSdk.cmake
 --- o3de/cmake/3rdParty/FindFbxSdk.cmake.system	2021-04-11 19:45:51.000000000 -0400
-+++ o3de/cmake/3rdParty/FindFbxSdk.cmake	2021-04-13 16:55:23.708270927 -0400
++++ o3de/cmake/3rdParty/FindFbxSdk.cmake	2021-04-23 15:36:04.130116996 -0400
 @@ -9,8 +9,25 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  #
@@ -690,8 +690,8 @@ diff -up o3de/cmake/3rdParty/FindFbxSdk.cmake.system o3de/cmake/3rdParty/FindFbx
 +
 +mark_as_advanced(FbxSdk_INCLUDE_DIR FbxSdk_LIBRARY)
 diff -up o3de/cmake/3rdParty/FindFFMPEG.cmake.system o3de/cmake/3rdParty/FindFFMPEG.cmake
---- o3de/cmake/3rdParty/FindFFMPEG.cmake.system	2021-04-13 16:55:23.708270927 -0400
-+++ o3de/cmake/3rdParty/FindFFMPEG.cmake	2021-04-13 16:55:23.708270927 -0400
+--- o3de/cmake/3rdParty/FindFFMPEG.cmake.system	2021-04-23 15:36:04.130116996 -0400
++++ o3de/cmake/3rdParty/FindFFMPEG.cmake	2021-04-23 15:36:04.130116996 -0400
 @@ -0,0 +1,38 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -733,7 +733,7 @@ diff -up o3de/cmake/3rdParty/FindFFMPEG.cmake.system o3de/cmake/3rdParty/FindFFM
 +mark_as_advanced(FFMPEG_INCLUDE_DIR FFMPEG_AVCODEC_LIBRARY FFMPEG_AVFORMAT_LIBRARY FFMPEG_AVUTIL_LIBRARY FFMPEG_SWSCALE_LIBRARY FFMPEG_LIBRARIES)
 diff -up o3de/cmake/3rdParty/FindFreeType2.cmake.system o3de/cmake/3rdParty/FindFreeType2.cmake
 --- o3de/cmake/3rdParty/FindFreeType2.cmake.system	2021-04-11 19:45:51.000000000 -0400
-+++ o3de/cmake/3rdParty/FindFreeType2.cmake	2021-04-13 16:55:23.708270927 -0400
++++ o3de/cmake/3rdParty/FindFreeType2.cmake	2021-04-23 15:36:04.130116996 -0400
 @@ -9,8 +9,216 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  #
@@ -956,8 +956,8 @@ diff -up o3de/cmake/3rdParty/FindFreeType2.cmake.system o3de/cmake/3rdParty/Find
 +endif()
 +
 diff -up o3de/cmake/3rdParty/FindGoogleBenchmark.cmake.system o3de/cmake/3rdParty/FindGoogleBenchmark.cmake
---- o3de/cmake/3rdParty/FindGoogleBenchmark.cmake.system	2021-04-13 16:55:23.708270927 -0400
-+++ o3de/cmake/3rdParty/FindGoogleBenchmark.cmake	2021-04-13 16:55:23.708270927 -0400
+--- o3de/cmake/3rdParty/FindGoogleBenchmark.cmake.system	2021-04-23 15:36:04.130116996 -0400
++++ o3de/cmake/3rdParty/FindGoogleBenchmark.cmake	2021-04-23 15:36:04.130116996 -0400
 @@ -0,0 +1,24 @@
 +find_path(GoogleBenchmark_INCLUDE_DIR NAMES "benchmark/benchmark.h")
 +find_library(GoogleBenchmark_LIBRARY NAMES benchmark)
@@ -984,8 +984,8 @@ diff -up o3de/cmake/3rdParty/FindGoogleBenchmark.cmake.system o3de/cmake/3rdPart
 +
 +mark_as_advanced(GoogleBenchmark_INCLUDE_DIR GoogleBenchmark_LIBRARY)
 diff -up o3de/cmake/3rdParty/Findgoogletest.cmake.system o3de/cmake/3rdParty/Findgoogletest.cmake
---- o3de/cmake/3rdParty/Findgoogletest.cmake.system	2021-04-13 16:55:23.709270935 -0400
-+++ o3de/cmake/3rdParty/Findgoogletest.cmake	2021-04-13 16:55:23.709270935 -0400
+--- o3de/cmake/3rdParty/Findgoogletest.cmake.system	2021-04-23 15:36:04.130116996 -0400
++++ o3de/cmake/3rdParty/Findgoogletest.cmake	2021-04-23 15:36:04.130116996 -0400
 @@ -0,0 +1,22 @@
 +find_path(googletest_INCLUDE_DIR NAMES "gtest/gtest.h")
 +find_library(googletest_LIBRARY NAMES gtest)
@@ -1010,8 +1010,8 @@ diff -up o3de/cmake/3rdParty/Findgoogletest.cmake.system o3de/cmake/3rdParty/Fin
 +  set_property(TARGET 3rdParty::googletest APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${googletest_LIBRARIES}")
 +endif()
 diff -up o3de/cmake/3rdParty/Findhdf5.cmake.system o3de/cmake/3rdParty/Findhdf5.cmake
---- o3de/cmake/3rdParty/Findhdf5.cmake.system	2021-04-13 16:55:23.709270935 -0400
-+++ o3de/cmake/3rdParty/Findhdf5.cmake	2021-04-13 16:55:23.709270935 -0400
+--- o3de/cmake/3rdParty/Findhdf5.cmake.system	2021-04-23 15:36:04.130116996 -0400
++++ o3de/cmake/3rdParty/Findhdf5.cmake	2021-04-23 15:36:04.130116996 -0400
 @@ -0,0 +1,13 @@
 +find_path(hdf5_INCLUDE_DIR "hdf5.h")
 +find_library(hdf5_LIBRARY hdf5)
@@ -1027,8 +1027,8 @@ diff -up o3de/cmake/3rdParty/Findhdf5.cmake.system o3de/cmake/3rdParty/Findhdf5.
 +  set_property(TARGET 3rdParty::hdf5 APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${hdf5_LIBRARY}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindLibBSD.cmake.system o3de/cmake/3rdParty/FindLibBSD.cmake
---- o3de/cmake/3rdParty/FindLibBSD.cmake.system	2021-04-13 16:55:23.709270935 -0400
-+++ o3de/cmake/3rdParty/FindLibBSD.cmake	2021-04-13 16:55:23.709270935 -0400
+--- o3de/cmake/3rdParty/FindLibBSD.cmake.system	2021-04-23 15:36:04.130116996 -0400
++++ o3de/cmake/3rdParty/FindLibBSD.cmake	2021-04-23 15:36:04.130116996 -0400
 @@ -0,0 +1,36 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -1067,8 +1067,8 @@ diff -up o3de/cmake/3rdParty/FindLibBSD.cmake.system o3de/cmake/3rdParty/FindLib
 +  target_compile_definitions(3rdParty::LibBSD INTERFACE LIBBSD_OVERLAY)
 +endif()
 diff -up o3de/cmake/3rdParty/Findlibsamplerate.cmake.system o3de/cmake/3rdParty/Findlibsamplerate.cmake
---- o3de/cmake/3rdParty/Findlibsamplerate.cmake.system	2021-04-13 16:55:23.709270935 -0400
-+++ o3de/cmake/3rdParty/Findlibsamplerate.cmake	2021-04-13 16:55:23.709270935 -0400
+--- o3de/cmake/3rdParty/Findlibsamplerate.cmake.system	2021-04-23 15:36:04.130116996 -0400
++++ o3de/cmake/3rdParty/Findlibsamplerate.cmake	2021-04-23 15:36:04.130116996 -0400
 @@ -0,0 +1,26 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -1097,8 +1097,8 @@ diff -up o3de/cmake/3rdParty/Findlibsamplerate.cmake.system o3de/cmake/3rdParty/
 +  set_property(TARGET 3rdParty::libsamplerate APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${libsamplerate_LIBRARIES}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindLua.cmake.system o3de/cmake/3rdParty/FindLua.cmake
---- o3de/cmake/3rdParty/FindLua.cmake.system	2021-04-13 16:55:23.709270935 -0400
-+++ o3de/cmake/3rdParty/FindLua.cmake	2021-04-13 16:55:23.709270935 -0400
+--- o3de/cmake/3rdParty/FindLua.cmake.system	2021-04-23 15:36:04.130116996 -0400
++++ o3de/cmake/3rdParty/FindLua.cmake	2021-04-23 15:36:04.130116996 -0400
 @@ -0,0 +1,244 @@
 +# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 +# file Copyright.txt or https://cmake.org/licensing for details.
@@ -1345,8 +1345,8 @@ diff -up o3de/cmake/3rdParty/FindLua.cmake.system o3de/cmake/3rdParty/FindLua.cm
 +  set_property(TARGET 3rdParty::Lua APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${LUA_LIBRARIES}")
 +endif()
 diff -up o3de/cmake/3rdParty/Findlux_core.cmake.system o3de/cmake/3rdParty/Findlux_core.cmake
---- o3de/cmake/3rdParty/Findlux_core.cmake.system	2021-04-13 16:55:23.709270935 -0400
-+++ o3de/cmake/3rdParty/Findlux_core.cmake	2021-04-13 16:55:23.709270935 -0400
+--- o3de/cmake/3rdParty/Findlux_core.cmake.system	2021-04-23 15:36:04.130116996 -0400
++++ o3de/cmake/3rdParty/Findlux_core.cmake	2021-04-23 15:36:04.130116996 -0400
 @@ -0,0 +1,32 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -1381,8 +1381,8 @@ diff -up o3de/cmake/3rdParty/Findlux_core.cmake.system o3de/cmake/3rdParty/Findl
 +
 +mark_as_advanced(lux_core_INCLUDE_DIR)
 diff -up o3de/cmake/3rdParty/FindLZ4.cmake.system o3de/cmake/3rdParty/FindLZ4.cmake
---- o3de/cmake/3rdParty/FindLZ4.cmake.system	2021-04-13 16:55:23.709270935 -0400
-+++ o3de/cmake/3rdParty/FindLZ4.cmake	2021-04-13 16:55:23.709270935 -0400
+--- o3de/cmake/3rdParty/FindLZ4.cmake.system	2021-04-23 15:36:04.130116996 -0400
++++ o3de/cmake/3rdParty/FindLZ4.cmake	2021-04-23 15:36:04.130116996 -0400
 @@ -0,0 +1,41 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -1426,8 +1426,8 @@ diff -up o3de/cmake/3rdParty/FindLZ4.cmake.system o3de/cmake/3rdParty/FindLZ4.cm
 +
 +mark_as_advanced(LZ4_INCLUDE_DIR LZ4_LIBRARY)
 diff -up o3de/cmake/3rdParty/FindLZSSHO.cmake.system o3de/cmake/3rdParty/FindLZSSHO.cmake
---- o3de/cmake/3rdParty/FindLZSSHO.cmake.system	2021-04-13 16:55:23.709270935 -0400
-+++ o3de/cmake/3rdParty/FindLZSSHO.cmake	2021-04-13 16:55:23.709270935 -0400
+--- o3de/cmake/3rdParty/FindLZSSHO.cmake.system	2021-04-23 15:36:04.131117013 -0400
++++ o3de/cmake/3rdParty/FindLZSSHO.cmake	2021-04-23 15:36:04.131117013 -0400
 @@ -0,0 +1,34 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -1464,8 +1464,8 @@ diff -up o3de/cmake/3rdParty/FindLZSSHO.cmake.system o3de/cmake/3rdParty/FindLZS
 +  set_property(TARGET 3rdParty::LZSSHO APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${LZSSHO_LIBRARY}")
 +endif()
 diff -up o3de/cmake/3rdParty/Findmikktspace.cmake.system o3de/cmake/3rdParty/Findmikktspace.cmake
---- o3de/cmake/3rdParty/Findmikktspace.cmake.system	2021-04-13 16:55:23.709270935 -0400
-+++ o3de/cmake/3rdParty/Findmikktspace.cmake	2021-04-13 16:55:23.709270935 -0400
+--- o3de/cmake/3rdParty/Findmikktspace.cmake.system	2021-04-23 15:36:04.131117013 -0400
++++ o3de/cmake/3rdParty/Findmikktspace.cmake	2021-04-23 15:36:04.131117013 -0400
 @@ -0,0 +1,76 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -1544,8 +1544,8 @@ diff -up o3de/cmake/3rdParty/Findmikktspace.cmake.system o3de/cmake/3rdParty/Fin
 +  set_property(TARGET 3rdParty::mikktspace APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${MIKKTSPACE_LIBRARIES}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindNvCloth.cmake.system o3de/cmake/3rdParty/FindNvCloth.cmake
---- o3de/cmake/3rdParty/FindNvCloth.cmake.system	2021-04-13 16:55:23.709270935 -0400
-+++ o3de/cmake/3rdParty/FindNvCloth.cmake	2021-04-13 16:55:23.709270935 -0400
+--- o3de/cmake/3rdParty/FindNvCloth.cmake.system	2021-04-23 15:36:04.131117013 -0400
++++ o3de/cmake/3rdParty/FindNvCloth.cmake	2021-04-23 15:36:04.131117013 -0400
 @@ -0,0 +1,26 @@
 +find_path(NvCloth_INCLUDE_DIR NAMES "NvCloth/Cloth.h")
 +find_library(NvCloth_LIBRARY NAMES NvCloth)
@@ -1574,8 +1574,8 @@ diff -up o3de/cmake/3rdParty/FindNvCloth.cmake.system o3de/cmake/3rdParty/FindNv
 +
 +mark_as_advanced(NvCloth_INCLUDE_DIR NvCloth_LIBRARY)
 diff -up o3de/cmake/3rdParty/FindOpenEXR.cmake.system o3de/cmake/3rdParty/FindOpenEXR.cmake
---- o3de/cmake/3rdParty/FindOpenEXR.cmake.system	2021-04-13 16:55:23.709270935 -0400
-+++ o3de/cmake/3rdParty/FindOpenEXR.cmake	2021-04-13 16:55:23.709270935 -0400
+--- o3de/cmake/3rdParty/FindOpenEXR.cmake.system	2021-04-23 15:36:04.131117013 -0400
++++ o3de/cmake/3rdParty/FindOpenEXR.cmake	2021-04-23 15:36:04.131117013 -0400
 @@ -0,0 +1,26 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -1600,12 +1600,12 @@ diff -up o3de/cmake/3rdParty/FindOpenEXR.cmake.system o3de/cmake/3rdParty/FindOp
 +
 +if (OpenEXR_FOUND)
 +  add_library(3rdParty::OpenEXR INTERFACE IMPORTED GLOBAL)
-+  ly_target_include_system_directories(TARGET 3rdParty::OpenEXR INTERFACE ${OpenEXR_INCLUDE_DIR})
-+  set_property(TARGET 3rdParty::OpenEXR APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${OpenEXR_LIBRARY}")
++  ly_target_include_system_directories(TARGET 3rdParty::OpenEXR INTERFACE ${OpenEXR_INCLUDE_DIRS})
++  set_property(TARGET 3rdParty::OpenEXR APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${OpenEXR_LIBRARIES}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindOpenSSL.cmake.system o3de/cmake/3rdParty/FindOpenSSL.cmake
 --- o3de/cmake/3rdParty/FindOpenSSL.cmake.system	2021-04-11 19:45:51.000000000 -0400
-+++ o3de/cmake/3rdParty/FindOpenSSL.cmake	2021-04-13 16:55:23.710270944 -0400
++++ o3de/cmake/3rdParty/FindOpenSSL.cmake	2021-04-23 15:36:04.131117013 -0400
 @@ -1,17 +1,603 @@
 -#
 -# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -2227,8 +2227,8 @@ diff -up o3de/cmake/3rdParty/FindOpenSSL.cmake.system o3de/cmake/3rdParty/FindOp
 +  set_property(TARGET 3rdParty::OpenSSL APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${OPENSSL_LIBRARIES}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindPhysX.cmake.system o3de/cmake/3rdParty/FindPhysX.cmake
---- o3de/cmake/3rdParty/FindPhysX.cmake.system	2021-04-13 16:55:23.710270944 -0400
-+++ o3de/cmake/3rdParty/FindPhysX.cmake	2021-04-13 16:55:23.710270944 -0400
+--- o3de/cmake/3rdParty/FindPhysX.cmake.system	2021-04-23 15:36:04.131117013 -0400
++++ o3de/cmake/3rdParty/FindPhysX.cmake	2021-04-23 15:36:04.131117013 -0400
 @@ -0,0 +1,35 @@
 +find_path(PhysX_INCLUDE_DIR NAMES "PxPhysicsAPI.h" PATH_SUFFIXES "PhysX")
 +find_library(PhysX_LIBRARY NAMES PhysX)
@@ -2266,8 +2266,8 @@ diff -up o3de/cmake/3rdParty/FindPhysX.cmake.system o3de/cmake/3rdParty/FindPhys
 +
 +mark_as_advanced(PhysX_INCLUDE_DIR PhysX_LIBRARIES)
 diff -up o3de/cmake/3rdParty/Findpoly2tri.cmake.system o3de/cmake/3rdParty/Findpoly2tri.cmake
---- o3de/cmake/3rdParty/Findpoly2tri.cmake.system	2021-04-13 16:55:23.710270944 -0400
-+++ o3de/cmake/3rdParty/Findpoly2tri.cmake	2021-04-13 16:55:23.710270944 -0400
+--- o3de/cmake/3rdParty/Findpoly2tri.cmake.system	2021-04-23 15:36:04.131117013 -0400
++++ o3de/cmake/3rdParty/Findpoly2tri.cmake	2021-04-23 15:36:04.131117013 -0400
 @@ -0,0 +1,22 @@
 +find_path(poly2tri_INCLUDE_DIR NAMES "poly2tri.h" PATH_SUFFIXES "poly2tri")
 +find_library(poly2tri_LIBRARY NAMES poly2tri)
@@ -2292,10 +2292,10 @@ diff -up o3de/cmake/3rdParty/Findpoly2tri.cmake.system o3de/cmake/3rdParty/Findp
 +
 +mark_as_advanced(poly2tri_INCLUDE_DIR poly2tri_LIBRARY)
 diff -up o3de/cmake/3rdParty/FindPVRTexTool.cmake.system o3de/cmake/3rdParty/FindPVRTexTool.cmake
---- o3de/cmake/3rdParty/FindPVRTexTool.cmake.system	2021-04-13 16:55:23.710270944 -0400
-+++ o3de/cmake/3rdParty/FindPVRTexTool.cmake	2021-04-13 16:55:23.710270944 -0400
+--- o3de/cmake/3rdParty/FindPVRTexTool.cmake.system	2021-04-23 15:36:04.131117013 -0400
++++ o3de/cmake/3rdParty/FindPVRTexTool.cmake	2021-04-23 15:36:04.131117013 -0400
 @@ -0,0 +1,21 @@
-+find_path(PVRTexTool_INCLUDE_DIR NAMES "PVRTexLib.h")
++find_path(PVRTexTool_INCLUDE_DIR NAMES "PVRTexture.h")
 +find_library(PVRTexTool_LIBRARY NAMES PVRTexLib)
 +
 +include(FindPackageHandleStandardArgs)
@@ -2306,7 +2306,7 @@ diff -up o3de/cmake/3rdParty/FindPVRTexTool.cmake.system o3de/cmake/3rdParty/Fin
 +if (NOT PVRTexTool_FOUND)
 +  ly_add_external_target(
 +      NAME PVRTexTool
-+      VERSION 2016_r1.1
++      VERSION 2020_r1
 +      INCLUDE_DIRECTORIES Include
 +  )
 +else()
@@ -2317,8 +2317,8 @@ diff -up o3de/cmake/3rdParty/FindPVRTexTool.cmake.system o3de/cmake/3rdParty/Fin
 +
 +mark_as_advanced(PVRTexTool_INCLUDE_DIR PVRTexTool_LIBRARY)
 diff -up o3de/cmake/3rdParty/Findpybind11.cmake.system o3de/cmake/3rdParty/Findpybind11.cmake
---- o3de/cmake/3rdParty/Findpybind11.cmake.system	2021-04-13 16:55:23.710270944 -0400
-+++ o3de/cmake/3rdParty/Findpybind11.cmake	2021-04-13 16:55:23.710270944 -0400
+--- o3de/cmake/3rdParty/Findpybind11.cmake.system	2021-04-23 15:36:04.131117013 -0400
++++ o3de/cmake/3rdParty/Findpybind11.cmake	2021-04-23 15:36:04.131117013 -0400
 @@ -0,0 +1,11 @@
 +find_path(pybind11_INCLUDE_DIR "pybind11/pybind11.h")
 +
@@ -2332,8 +2332,8 @@ diff -up o3de/cmake/3rdParty/Findpybind11.cmake.system o3de/cmake/3rdParty/Findp
 +  ly_target_include_system_directories(TARGET 3rdParty::pybind11 INTERFACE ${pybind11_INCLUDE_DIR})
 +endif()
 diff -up o3de/cmake/3rdParty/FindPython/Support.cmake.system o3de/cmake/3rdParty/FindPython/Support.cmake
---- o3de/cmake/3rdParty/FindPython/Support.cmake.system	2021-04-13 16:55:23.711270952 -0400
-+++ o3de/cmake/3rdParty/FindPython/Support.cmake	2021-04-13 16:55:23.711270952 -0400
+--- o3de/cmake/3rdParty/FindPython/Support.cmake.system	2021-04-23 15:36:04.132117029 -0400
++++ o3de/cmake/3rdParty/FindPython/Support.cmake	2021-04-23 15:36:04.132117029 -0400
 @@ -0,0 +1,3182 @@
 +# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 +# file Copyright.txt or https://cmake.org/licensing for details.
@@ -5518,8 +5518,8 @@ diff -up o3de/cmake/3rdParty/FindPython/Support.cmake.system o3de/cmake/3rdParty
 +
 +cmake_policy(POP)
 diff -up o3de/cmake/3rdParty/FindRapidJSON.cmake.system o3de/cmake/3rdParty/FindRapidJSON.cmake
---- o3de/cmake/3rdParty/FindRapidJSON.cmake.system	2021-04-13 16:55:23.711270952 -0400
-+++ o3de/cmake/3rdParty/FindRapidJSON.cmake	2021-04-13 16:55:23.711270952 -0400
+--- o3de/cmake/3rdParty/FindRapidJSON.cmake.system	2021-04-23 15:36:04.132117029 -0400
++++ o3de/cmake/3rdParty/FindRapidJSON.cmake	2021-04-23 15:36:04.132117029 -0400
 @@ -0,0 +1,19 @@
 +find_path(RapidJSON_INCLUDE_DIR "rapidjson/rapidjson.h")
 +
@@ -5541,8 +5541,8 @@ diff -up o3de/cmake/3rdParty/FindRapidJSON.cmake.system o3de/cmake/3rdParty/Find
 +
 +mark_as_advanced(RapidJSON_INCLUDE_DIR)
 diff -up o3de/cmake/3rdParty/FindRapidXML.cmake.system o3de/cmake/3rdParty/FindRapidXML.cmake
---- o3de/cmake/3rdParty/FindRapidXML.cmake.system	2021-04-13 16:55:23.711270952 -0400
-+++ o3de/cmake/3rdParty/FindRapidXML.cmake	2021-04-13 16:55:23.711270952 -0400
+--- o3de/cmake/3rdParty/FindRapidXML.cmake.system	2021-04-23 15:36:04.133117046 -0400
++++ o3de/cmake/3rdParty/FindRapidXML.cmake	2021-04-23 15:36:04.133117046 -0400
 @@ -0,0 +1,6 @@
 +ly_add_external_target(
 +    NAME RapidXML
@@ -5551,8 +5551,8 @@ diff -up o3de/cmake/3rdParty/FindRapidXML.cmake.system o3de/cmake/3rdParty/FindR
 +    INCLUDE_DIRECTORIES include
 +)
 diff -up o3de/cmake/3rdParty/FindSQLite3.cmake.system o3de/cmake/3rdParty/FindSQLite3.cmake
---- o3de/cmake/3rdParty/FindSQLite3.cmake.system	2021-04-13 16:55:23.711270952 -0400
-+++ o3de/cmake/3rdParty/FindSQLite3.cmake	2021-04-13 16:55:23.711270952 -0400
+--- o3de/cmake/3rdParty/FindSQLite3.cmake.system	2021-04-23 15:36:04.133117046 -0400
++++ o3de/cmake/3rdParty/FindSQLite3.cmake	2021-04-23 15:36:04.133117046 -0400
 @@ -0,0 +1,72 @@
 +# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 +# file Copyright.txt or https://cmake.org/licensing for details.
@@ -5627,8 +5627,8 @@ diff -up o3de/cmake/3rdParty/FindSQLite3.cmake.system o3de/cmake/3rdParty/FindSQ
 +  set_property(TARGET 3rdParty::SQLite3 APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${SQLite3_LIBRARY}")
 +endif()
 diff -up o3de/cmake/3rdParty/Findsquish-ccr.cmake.system o3de/cmake/3rdParty/Findsquish-ccr.cmake
---- o3de/cmake/3rdParty/Findsquish-ccr.cmake.system	2021-04-13 16:55:23.711270952 -0400
-+++ o3de/cmake/3rdParty/Findsquish-ccr.cmake	2021-04-13 16:55:23.711270952 -0400
+--- o3de/cmake/3rdParty/Findsquish-ccr.cmake.system	2021-04-23 15:36:04.133117046 -0400
++++ o3de/cmake/3rdParty/Findsquish-ccr.cmake	2021-04-23 15:36:04.133117046 -0400
 @@ -0,0 +1,26 @@
 +#
 +# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
@@ -5658,7 +5658,7 @@ diff -up o3de/cmake/3rdParty/Findsquish-ccr.cmake.system o3de/cmake/3rdParty/Fin
 +endif()
 diff -up o3de/cmake/3rdParty/Findtiff.cmake.system o3de/cmake/3rdParty/Findtiff.cmake
 --- o3de/cmake/3rdParty/Findtiff.cmake.system	2021-04-11 19:45:51.000000000 -0400
-+++ o3de/cmake/3rdParty/Findtiff.cmake	2021-04-13 16:55:23.711270952 -0400
++++ o3de/cmake/3rdParty/Findtiff.cmake	2021-04-23 15:36:04.133117046 -0400
 @@ -9,8 +9,123 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  #
@@ -5789,8 +5789,8 @@ diff -up o3de/cmake/3rdParty/Findtiff.cmake.system o3de/cmake/3rdParty/Findtiff.
 +  target_compile_definitions(3rdParty::tiff INTERFACE TIFF_DISABLE_DEPRECATED)
 +endif()
 diff -up o3de/cmake/3rdParty/Findunwind.cmake.system o3de/cmake/3rdParty/Findunwind.cmake
---- o3de/cmake/3rdParty/Findunwind.cmake.system	2021-04-13 16:55:23.711270952 -0400
-+++ o3de/cmake/3rdParty/Findunwind.cmake	2021-04-13 16:55:23.711270952 -0400
+--- o3de/cmake/3rdParty/Findunwind.cmake.system	2021-04-23 15:36:04.133117046 -0400
++++ o3de/cmake/3rdParty/Findunwind.cmake	2021-04-23 15:36:04.133117046 -0400
 @@ -0,0 +1,21 @@
 +find_package(PkgConfig)
 +pkg_check_modules(unwind QUIET libunwind)
@@ -5814,8 +5814,8 @@ diff -up o3de/cmake/3rdParty/Findunwind.cmake.system o3de/cmake/3rdParty/Findunw
 +
 +mark_as_advanced(unwind_LIBRARIES)
 diff -up o3de/cmake/3rdParty/Findv-hacd.cmake.system o3de/cmake/3rdParty/Findv-hacd.cmake
---- o3de/cmake/3rdParty/Findv-hacd.cmake.system	2021-04-13 16:55:23.712270960 -0400
-+++ o3de/cmake/3rdParty/Findv-hacd.cmake	2021-04-13 16:55:23.712270960 -0400
+--- o3de/cmake/3rdParty/Findv-hacd.cmake.system	2021-04-23 15:36:04.133117046 -0400
++++ o3de/cmake/3rdParty/Findv-hacd.cmake	2021-04-23 15:36:04.133117046 -0400
 @@ -0,0 +1,13 @@
 +find_path(v-hacd_INCLUDE_DIR "VHACD.h")
 +find_library(v-hacd_LIBRARY vhacd)
@@ -5832,7 +5832,7 @@ diff -up o3de/cmake/3rdParty/Findv-hacd.cmake.system o3de/cmake/3rdParty/Findv-h
 +endif()
 diff -up o3de/cmake/3rdParty/FindWwise.cmake.system o3de/cmake/3rdParty/FindWwise.cmake
 --- o3de/cmake/3rdParty/FindWwise.cmake.system	2021-04-11 19:45:51.000000000 -0400
-+++ o3de/cmake/3rdParty/FindWwise.cmake	2021-04-13 16:55:23.712270960 -0400
++++ o3de/cmake/3rdParty/FindWwise.cmake	2021-04-23 15:36:04.133117046 -0400
 @@ -90,9 +90,26 @@ set(WWISE_COMPILE_DEFINITIONS
      $<IF:$<CONFIG:Release>,AK_OPTIMIZED,>
  )
@@ -5867,8 +5867,8 @@ diff -up o3de/cmake/3rdParty/FindWwise.cmake.system o3de/cmake/3rdParty/FindWwis
 +
 +mark_as_advanced(Wwise_INCLUDE_DIR)
 diff -up o3de/cmake/3rdParty/Findxxhash.cmake.system o3de/cmake/3rdParty/Findxxhash.cmake
---- o3de/cmake/3rdParty/Findxxhash.cmake.system	2021-04-13 16:55:23.712270960 -0400
-+++ o3de/cmake/3rdParty/Findxxhash.cmake	2021-04-13 16:55:23.712270960 -0400
+--- o3de/cmake/3rdParty/Findxxhash.cmake.system	2021-04-23 15:36:04.133117046 -0400
++++ o3de/cmake/3rdParty/Findxxhash.cmake	2021-04-23 15:36:04.133117046 -0400
 @@ -0,0 +1,22 @@
 +find_path(xxhash_INCLUDE_DIR NAMES "xxhash.h")
 +find_library(xxhash_LIBRARY NAMES xxhash)
@@ -5893,8 +5893,8 @@ diff -up o3de/cmake/3rdParty/Findxxhash.cmake.system o3de/cmake/3rdParty/Findxxh
 +
 +mark_as_advanced(xxhash_INCLUDE_DIR xxhash_LIBRARY)
 diff -up o3de/cmake/3rdParty/FindZLIB.cmake.system o3de/cmake/3rdParty/FindZLIB.cmake
---- o3de/cmake/3rdParty/FindZLIB.cmake.system	2021-04-13 16:55:23.712270960 -0400
-+++ o3de/cmake/3rdParty/FindZLIB.cmake	2021-04-13 16:55:23.712270960 -0400
+--- o3de/cmake/3rdParty/FindZLIB.cmake.system	2021-04-23 15:36:04.133117046 -0400
++++ o3de/cmake/3rdParty/FindZLIB.cmake	2021-04-23 15:36:04.133117046 -0400
 @@ -0,0 +1,155 @@
 +# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
 +# file Copyright.txt or https://cmake.org/licensing for details.
@@ -6052,8 +6052,8 @@ diff -up o3de/cmake/3rdParty/FindZLIB.cmake.system o3de/cmake/3rdParty/FindZLIB.
 +  set_property(TARGET 3rdParty::ZLIB APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${ZLIB_LIBRARY}")
 +endif()
 diff -up o3de/cmake/3rdParty/FindZstd.cmake.system o3de/cmake/3rdParty/FindZstd.cmake
---- o3de/cmake/3rdParty/FindZstd.cmake.system	2021-04-13 16:55:23.712270960 -0400
-+++ o3de/cmake/3rdParty/FindZstd.cmake	2021-04-13 16:55:23.712270960 -0400
+--- o3de/cmake/3rdParty/FindZstd.cmake.system	2021-04-23 15:36:04.133117046 -0400
++++ o3de/cmake/3rdParty/FindZstd.cmake	2021-04-23 15:36:04.133117046 -0400
 @@ -0,0 +1,22 @@
 +# This will define
 +# Zstd_FOUND
@@ -6079,7 +6079,7 @@ diff -up o3de/cmake/3rdParty/FindZstd.cmake.system o3de/cmake/3rdParty/FindZstd.
 +endif()
 diff -up o3de/cmake/3rdParty/Platform/Linux/BuiltInPackages_linux.cmake.system o3de/cmake/3rdParty/Platform/Linux/BuiltInPackages_linux.cmake
 --- o3de/cmake/3rdParty/Platform/Linux/BuiltInPackages_linux.cmake.system	2021-04-11 19:45:51.000000000 -0400
-+++ o3de/cmake/3rdParty/Platform/Linux/BuiltInPackages_linux.cmake	2021-04-13 16:55:23.712270960 -0400
++++ o3de/cmake/3rdParty/Platform/Linux/BuiltInPackages_linux.cmake	2021-04-23 15:36:04.134117063 -0400
 @@ -10,34 +10,34 @@
  #
  
@@ -6146,7 +6146,7 @@ diff -up o3de/cmake/3rdParty/Platform/Linux/BuiltInPackages_linux.cmake.system o
 +# ly_associate_package(PACKAGE_NAME libsamplerate-0.2.1-rev1-linux    TARGETS libsamplerate   PACKAGE_HASH 9fbf284c5952607c679a7c3ddac18fa608a1b316b8ff735d5225c0618e06c562)
 diff -up o3de/CMakeLists.txt.system o3de/CMakeLists.txt
 --- o3de/CMakeLists.txt.system	2021-04-11 19:45:48.000000000 -0400
-+++ o3de/CMakeLists.txt	2021-04-13 16:55:23.712270960 -0400
++++ o3de/CMakeLists.txt	2021-04-23 15:36:04.134117063 -0400
 @@ -38,6 +38,7 @@ include(cmake/Configurations.cmake) # Re
  include(cmake/Dependencies.cmake)
  include(cmake/Deployment.cmake)
@@ -6164,7 +6164,7 @@ diff -up o3de/CMakeLists.txt.system o3de/CMakeLists.txt
 +ly_test_impact_post_step()
 diff -up o3de/cmake/LYPython.cmake.system o3de/cmake/LYPython.cmake
 --- o3de/cmake/LYPython.cmake.system	2021-04-11 19:45:51.000000000 -0400
-+++ o3de/cmake/LYPython.cmake	2021-04-13 16:55:23.712270960 -0400
++++ o3de/cmake/LYPython.cmake	2021-04-23 15:36:04.134117063 -0400
 @@ -214,9 +214,9 @@ if (EXISTS  ${LY_ROOT_FOLDER}/python/run
      set(LY_PACKAGE_VALIDATE_PACKAGE FALSE)
  endif()
@@ -6178,16 +6178,21 @@ diff -up o3de/cmake/LYPython.cmake.system o3de/cmake/LYPython.cmake
  
  ly_set(LY_PACKAGE_VALIDATE_CONTENTS ${temp_LY_PACKAGE_VALIDATE_CONTENTS})
  ly_set(LY_PACKAGE_VALIDATE_PACKAGE ${temp_LY_PACKAGE_VALIDATE_PACKAGE})
-@@ -226,21 +226,23 @@ if (NOT CMAKE_SCRIPT_MODE_FILE)
+@@ -224,23 +224,27 @@ ly_set(LY_PACKAGE_VALIDATE_PACKAGE ${tem
+ if (NOT CMAKE_SCRIPT_MODE_FILE)
+     # if we're in script mode, we dont want to actually try to find package or anything else
  
-     find_package(Python ${LY_PYTHON_VERSION} REQUIRED)
- 
-+    if (Python_FOUND)
-+        add_library(3rdParty::Python INTERFACE IMPORTED GLOBAL)
-+        ly_target_include_system_directories(TARGET 3rdParty::Python INTERFACE ${Python_INCLUDE_DIR})
-+        set_property(TARGET 3rdParty::Python APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${Python_LIBRARY}")
-+    endif()
+-    find_package(Python ${LY_PYTHON_VERSION} REQUIRED)
++    find_package(Python ${LY_PYTHON_VERSION} REQUIRED COMPONENTS Interpreter Development)
 +
++    if (Python_FOUND)
++	message(STATUS "    Python_INCLUDE_DIRS:  ${Python_INCLUDE_DIRS}")
++        message(STATUS "    Python_LIBRARIES: ${Python_LIBRARIES}")
++        add_library(3rdParty::Python INTERFACE IMPORTED GLOBAL)
++        ly_target_include_system_directories(TARGET 3rdParty::Python INTERFACE ${Python_INCLUDE_DIRS})
++        set_property(TARGET 3rdParty::Python APPEND PROPERTY INTERFACE_LINK_LIBRARIES "${Python_LIBRARIES}")
++    endif()
+ 
      # note - if you want to use a normal python via FindPython instead of the LY package above,
      # you may have to declare the below variables after find_package, as the project scripts are 
      # looking for the below variables specifically.
@@ -6207,7 +6212,7 @@ diff -up o3de/cmake/LYPython.cmake.system o3de/cmake/LYPython.cmake
  
          get_filename_component(Python_BINFOLDER ${Python_EXECUTABLE} DIRECTORY)
  
-@@ -261,13 +263,13 @@ if (NOT CMAKE_SCRIPT_MODE_FILE)
+@@ -261,13 +265,13 @@ if (NOT CMAKE_SCRIPT_MODE_FILE)
              set(LY_PYTHON_CMD "${LY_ROOT_FOLDER}/python/python.sh" "-s")
          endif()
  
@@ -6226,7 +6231,7 @@ diff -up o3de/cmake/LYPython.cmake.system o3de/cmake/LYPython.cmake
  
 diff -up o3de/Code/CryEngine/Cry3DEngine/CMakeLists.txt.system o3de/Code/CryEngine/Cry3DEngine/CMakeLists.txt
 --- o3de/Code/CryEngine/Cry3DEngine/CMakeLists.txt.system	2021-04-11 19:45:48.000000000 -0400
-+++ o3de/Code/CryEngine/Cry3DEngine/CMakeLists.txt	2021-04-13 16:55:23.713270968 -0400
++++ o3de/Code/CryEngine/Cry3DEngine/CMakeLists.txt	2021-04-23 15:36:04.134117063 -0400
 @@ -31,7 +31,7 @@ ly_add_target(
              ${pal_tool_dirs}
      BUILD_DEPENDENCIES
@@ -6238,7 +6243,7 @@ diff -up o3de/Code/CryEngine/Cry3DEngine/CMakeLists.txt.system o3de/Code/CryEngi
  )
 diff -up o3de/Code/CryEngine/Cry3DEngine/MeshCompiler/CMakeLists.txt.system o3de/Code/CryEngine/Cry3DEngine/MeshCompiler/CMakeLists.txt
 --- o3de/Code/CryEngine/Cry3DEngine/MeshCompiler/CMakeLists.txt.system	2021-04-11 19:45:48.000000000 -0400
-+++ o3de/Code/CryEngine/Cry3DEngine/MeshCompiler/CMakeLists.txt	2021-04-13 16:55:23.713270968 -0400
++++ o3de/Code/CryEngine/Cry3DEngine/MeshCompiler/CMakeLists.txt	2021-04-23 15:36:04.134117063 -0400
 @@ -23,6 +23,6 @@ ly_add_target(
              ${pal_dir}
      BUILD_DEPENDENCIES
@@ -6249,7 +6254,7 @@ diff -up o3de/Code/CryEngine/Cry3DEngine/MeshCompiler/CMakeLists.txt.system o3de
  )
 diff -up o3de/Code/CryEngine/CrySystem/CMakeLists.txt.system o3de/Code/CryEngine/CrySystem/CMakeLists.txt
 --- o3de/Code/CryEngine/CrySystem/CMakeLists.txt.system	2021-04-11 19:45:49.000000000 -0400
-+++ o3de/Code/CryEngine/CrySystem/CMakeLists.txt	2021-04-13 16:55:23.713270968 -0400
++++ o3de/Code/CryEngine/CrySystem/CMakeLists.txt	2021-04-23 15:36:04.134117063 -0400
 @@ -51,11 +51,11 @@ ly_add_target(
              Legacy::CrySystem.DLMalloc.C
          PRIVATE
@@ -6267,8 +6272,8 @@ diff -up o3de/Code/CryEngine/CrySystem/CMakeLists.txt.system o3de/Code/CryEngine
              Legacy::CrySystem.XMLBinary
              Legacy::RemoteConsoleCore
 diff -up o3de/Code/CryEngine/RenderDll/XRenderD3D9/DXGL/CMakeLists.txt.system o3de/Code/CryEngine/RenderDll/XRenderD3D9/DXGL/CMakeLists.txt
---- o3de/Code/CryEngine/RenderDll/XRenderD3D9/DXGL/CMakeLists.txt.system	2021-04-13 16:55:23.635270339 -0400
-+++ o3de/Code/CryEngine/RenderDll/XRenderD3D9/DXGL/CMakeLists.txt	2021-04-13 16:55:23.713270968 -0400
+--- o3de/Code/CryEngine/RenderDll/XRenderD3D9/DXGL/CMakeLists.txt.system	2021-04-23 15:36:04.050115661 -0400
++++ o3de/Code/CryEngine/RenderDll/XRenderD3D9/DXGL/CMakeLists.txt	2021-04-23 15:36:04.134117063 -0400
 @@ -47,7 +47,7 @@ if(DXGL_TRAIT_BUILD_OPENGL_SUPPORTED AND
              PUBLIC
                  AZ::AzFramework
@@ -6280,7 +6285,7 @@ diff -up o3de/Code/CryEngine/RenderDll/XRenderD3D9/DXGL/CMakeLists.txt.system o3
      )
 diff -up o3de/Code/Framework/AzCore/CMakeLists.txt.system o3de/Code/Framework/AzCore/CMakeLists.txt
 --- o3de/Code/Framework/AzCore/CMakeLists.txt.system	2021-04-11 19:45:49.000000000 -0400
-+++ o3de/Code/Framework/AzCore/CMakeLists.txt	2021-04-13 16:55:23.713270968 -0400
++++ o3de/Code/Framework/AzCore/CMakeLists.txt	2021-04-23 15:36:04.134117063 -0400
 @@ -41,8 +41,8 @@ ly_add_target(
              ${AZ_CORE_RADTELEMETRY_INCLUDE_DIRECTORIES}
      BUILD_DEPENDENCIES
@@ -6303,7 +6308,7 @@ diff -up o3de/Code/Framework/AzCore/CMakeLists.txt.system o3de/Code/Framework/Az
  
 diff -up o3de/Code/Framework/AzFramework/CMakeLists.txt.system o3de/Code/Framework/AzFramework/CMakeLists.txt
 --- o3de/Code/Framework/AzFramework/CMakeLists.txt.system	2021-04-11 19:45:49.000000000 -0400
-+++ o3de/Code/Framework/AzFramework/CMakeLists.txt	2021-04-13 16:55:23.713270968 -0400
++++ o3de/Code/Framework/AzFramework/CMakeLists.txt	2021-04-23 15:36:04.135117079 -0400
 @@ -33,10 +33,10 @@ ly_add_target(
      BUILD_DEPENDENCIES
          PRIVATE
@@ -6321,7 +6326,7 @@ diff -up o3de/Code/Framework/AzFramework/CMakeLists.txt.system o3de/Code/Framewo
  )
 diff -up o3de/Code/Framework/AzNetworking/CMakeLists.txt.system o3de/Code/Framework/AzNetworking/CMakeLists.txt
 --- o3de/Code/Framework/AzNetworking/CMakeLists.txt.system	2021-04-11 19:45:49.000000000 -0400
-+++ o3de/Code/Framework/AzNetworking/CMakeLists.txt	2021-04-13 16:55:23.713270968 -0400
++++ o3de/Code/Framework/AzNetworking/CMakeLists.txt	2021-04-23 15:36:04.135117079 -0400
 @@ -28,8 +28,8 @@ ly_add_target(
      BUILD_DEPENDENCIES
          PRIVATE
@@ -6335,7 +6340,7 @@ diff -up o3de/Code/Framework/AzNetworking/CMakeLists.txt.system o3de/Code/Framew
              3rdParty::RapidJSON
 diff -up o3de/Code/Framework/AzTest/CMakeLists.txt.system o3de/Code/Framework/AzTest/CMakeLists.txt
 --- o3de/Code/Framework/AzTest/CMakeLists.txt.system	2021-04-11 19:45:49.000000000 -0400
-+++ o3de/Code/Framework/AzTest/CMakeLists.txt	2021-04-13 16:55:23.713270968 -0400
++++ o3de/Code/Framework/AzTest/CMakeLists.txt	2021-04-23 15:36:04.135117079 -0400
 @@ -25,8 +25,7 @@ if(PAL_TRAIT_BUILD_TESTS_SUPPORTED)
                  ${pal_dir}
          BUILD_DEPENDENCIES
@@ -6347,8 +6352,8 @@ diff -up o3de/Code/Framework/AzTest/CMakeLists.txt.system o3de/Code/Framework/Az
                  AZ::AzCore
          PLATFORM_INCLUDE_FILES
 diff -up o3de/Code/Framework/AzToolsFramework/CMakeLists.txt.system o3de/Code/Framework/AzToolsFramework/CMakeLists.txt
---- o3de/Code/Framework/AzToolsFramework/CMakeLists.txt.system	2021-04-13 16:55:23.649270452 -0400
-+++ o3de/Code/Framework/AzToolsFramework/CMakeLists.txt	2021-04-13 16:55:23.714270976 -0400
+--- o3de/Code/Framework/AzToolsFramework/CMakeLists.txt.system	2021-04-23 15:36:04.064115895 -0400
++++ o3de/Code/Framework/AzToolsFramework/CMakeLists.txt	2021-04-23 15:36:04.135117079 -0400
 @@ -34,7 +34,7 @@ ly_add_target(
              $<$<CONFIG:debug>:ENABLE_UNDOCACHE_CONSISTENCY_CHECKS>
      BUILD_DEPENDENCIES
@@ -6375,8 +6380,8 @@ diff -up o3de/Code/Framework/AzToolsFramework/CMakeLists.txt.system o3de/Code/Fr
 \ No newline at end of file
 +endif()
 diff -up o3de/Code/Sandbox/Editor/CMakeLists.txt.system o3de/Code/Sandbox/Editor/CMakeLists.txt
---- o3de/Code/Sandbox/Editor/CMakeLists.txt.system	2021-04-13 16:55:23.649270452 -0400
-+++ o3de/Code/Sandbox/Editor/CMakeLists.txt	2021-04-13 16:55:23.714270976 -0400
+--- o3de/Code/Sandbox/Editor/CMakeLists.txt.system	2021-04-23 15:36:04.065115911 -0400
++++ o3de/Code/Sandbox/Editor/CMakeLists.txt	2021-04-23 15:36:04.135117079 -0400
 @@ -36,7 +36,7 @@ ly_add_target(
      BUILD_DEPENDENCIES
          PRIVATE
@@ -6407,8 +6412,8 @@ diff -up o3de/Code/Sandbox/Editor/CMakeLists.txt.system o3de/Code/Sandbox/Editor
              Legacy::EditorCore
  )
 diff -up o3de/Code/Sandbox/Plugins/EditorCommon/CMakeLists.txt.system o3de/Code/Sandbox/Plugins/EditorCommon/CMakeLists.txt
---- o3de/Code/Sandbox/Plugins/EditorCommon/CMakeLists.txt.system	2021-04-13 16:55:23.652270476 -0400
-+++ o3de/Code/Sandbox/Plugins/EditorCommon/CMakeLists.txt	2021-04-13 16:55:23.714270976 -0400
+--- o3de/Code/Sandbox/Plugins/EditorCommon/CMakeLists.txt.system	2021-04-23 15:36:04.067115945 -0400
++++ o3de/Code/Sandbox/Plugins/EditorCommon/CMakeLists.txt	2021-04-23 15:36:04.135117079 -0400
 @@ -45,7 +45,7 @@ ly_add_target(
              EDITOR_COMMON_IMPORTS
      BUILD_DEPENDENCIES
@@ -6419,8 +6424,8 @@ diff -up o3de/Code/Sandbox/Plugins/EditorCommon/CMakeLists.txt.system o3de/Code/
              3rdParty::Qt::Widgetso3de
              Legacy::CryCommon
 diff -up o3de/Code/Tools/AssetProcessor/CMakeLists.txt.system o3de/Code/Tools/AssetProcessor/CMakeLists.txt
---- o3de/Code/Tools/AssetProcessor/CMakeLists.txt.system	2021-04-13 16:55:23.652270476 -0400
-+++ o3de/Code/Tools/AssetProcessor/CMakeLists.txt	2021-04-13 16:55:23.714270976 -0400
+--- o3de/Code/Tools/AssetProcessor/CMakeLists.txt.system	2021-04-23 15:36:04.068115961 -0400
++++ o3de/Code/Tools/AssetProcessor/CMakeLists.txt	2021-04-23 15:36:04.135117079 -0400
 @@ -40,7 +40,7 @@ ly_add_target(
              3rdParty::Qt::Gui
              3rdParty::Qt::Network
@@ -6432,7 +6437,7 @@ diff -up o3de/Code/Tools/AssetProcessor/CMakeLists.txt.system o3de/Code/Tools/As
              AZ::AzFramework
 diff -up o3de/Code/Tools/AWSNativeSDKInit/CMakeLists.txt.system o3de/Code/Tools/AWSNativeSDKInit/CMakeLists.txt
 --- o3de/Code/Tools/AWSNativeSDKInit/CMakeLists.txt.system	2021-04-11 19:45:49.000000000 -0400
-+++ o3de/Code/Tools/AWSNativeSDKInit/CMakeLists.txt	2021-04-13 16:55:23.714270976 -0400
++++ o3de/Code/Tools/AWSNativeSDKInit/CMakeLists.txt	2021-04-23 15:36:04.136117096 -0400
 @@ -24,6 +24,6 @@ ly_add_target(
              ${pal_dir}
      BUILD_DEPENDENCIES
@@ -6443,7 +6448,7 @@ diff -up o3de/Code/Tools/AWSNativeSDKInit/CMakeLists.txt.system o3de/Code/Tools/
  )
 diff -up o3de/Code/Tools/CryCommonTools/CMakeLists.txt.system o3de/Code/Tools/CryCommonTools/CMakeLists.txt
 --- o3de/Code/Tools/CryCommonTools/CMakeLists.txt.system	2021-04-11 19:45:49.000000000 -0400
-+++ o3de/Code/Tools/CryCommonTools/CMakeLists.txt	2021-04-13 16:55:23.714270976 -0400
++++ o3de/Code/Tools/CryCommonTools/CMakeLists.txt	2021-04-23 15:36:04.136117096 -0400
 @@ -27,9 +27,9 @@ ly_add_target(
              ${pal_dir}
      BUILD_DEPENDENCIES
@@ -6459,7 +6464,7 @@ diff -up o3de/Code/Tools/CryCommonTools/CMakeLists.txt.system o3de/Code/Tools/Cr
              Legacy::CryCommon
 diff -up o3de/Code/Tools/CrySCompileServer/CrySCompileServer/CMakeLists.txt.system o3de/Code/Tools/CrySCompileServer/CrySCompileServer/CMakeLists.txt
 --- o3de/Code/Tools/CrySCompileServer/CrySCompileServer/CMakeLists.txt.system	2021-04-11 19:45:49.000000000 -0400
-+++ o3de/Code/Tools/CrySCompileServer/CrySCompileServer/CMakeLists.txt	2021-04-13 16:55:23.714270976 -0400
++++ o3de/Code/Tools/CrySCompileServer/CrySCompileServer/CMakeLists.txt	2021-04-23 15:36:04.136117096 -0400
 @@ -45,7 +45,7 @@ ly_add_target(
              ${pal_tool_core_server_dirs}
      BUILD_DEPENDENCIES
@@ -6470,8 +6475,8 @@ diff -up o3de/Code/Tools/CrySCompileServer/CrySCompileServer/CMakeLists.txt.syst
              AZ::AzFramework
  )
 diff -up o3de/Code/Tools/News/NewsBuilder/CMakeLists.txt.system o3de/Code/Tools/News/NewsBuilder/CMakeLists.txt
---- o3de/Code/Tools/News/NewsBuilder/CMakeLists.txt.system	2021-04-13 16:55:23.653270484 -0400
-+++ o3de/Code/Tools/News/NewsBuilder/CMakeLists.txt	2021-04-13 16:55:23.714270976 -0400
+--- o3de/Code/Tools/News/NewsBuilder/CMakeLists.txt.system	2021-04-23 15:36:04.069115978 -0400
++++ o3de/Code/Tools/News/NewsBuilder/CMakeLists.txt	2021-04-23 15:36:04.136117096 -0400
 @@ -32,9 +32,11 @@ ly_add_target(
          PRIVATE
              3rdParty::Qt::Coreo3de
@@ -6489,8 +6494,8 @@ diff -up o3de/Code/Tools/News/NewsBuilder/CMakeLists.txt.system o3de/Code/Tools/
              AZ::AzQtComponents
 diff -up o3de/Code/Tools/RC/ResourceCompilerABC/CMakeLists.txt.system o3de/Code/Tools/RC/ResourceCompilerABC/CMakeLists.txt
 --- o3de/Code/Tools/RC/ResourceCompilerABC/CMakeLists.txt.system	2021-04-11 19:45:49.000000000 -0400
-+++ o3de/Code/Tools/RC/ResourceCompilerABC/CMakeLists.txt	2021-04-13 16:55:23.714270976 -0400
-@@ -30,10 +30,10 @@ ly_add_target(
++++ o3de/Code/Tools/RC/ResourceCompilerABC/CMakeLists.txt	2021-04-23 15:36:04.136117096 -0400
+@@ -30,15 +30,16 @@ ly_add_target(
              .
      BUILD_DEPENDENCIES
          PRIVATE
@@ -6505,9 +6510,15 @@ diff -up o3de/Code/Tools/RC/ResourceCompilerABC/CMakeLists.txt.system o3de/Code/
              Legacy::CryCommonTools
              Legacy::Cry3DEngine.MeshCompiler.Static
              Legacy::Cry3DEngine.CGF.Static
+         PUBLIC
+             3rdParty::alembic
++            3rdParty::OpenEXR
+             Legacy::CryCommon
+             Legacy::ResourceCompiler.Static
+     RUNTIME_DEPENDENCIES
 diff -up o3de/Code/Tools/RC/ResourceCompilerPC/CMakeLists.txt.system o3de/Code/Tools/RC/ResourceCompilerPC/CMakeLists.txt
 --- o3de/Code/Tools/RC/ResourceCompilerPC/CMakeLists.txt.system	2021-04-11 19:45:49.000000000 -0400
-+++ o3de/Code/Tools/RC/ResourceCompilerPC/CMakeLists.txt	2021-04-13 16:55:23.715270984 -0400
++++ o3de/Code/Tools/RC/ResourceCompilerPC/CMakeLists.txt	2021-04-23 15:36:04.136117096 -0400
 @@ -29,7 +29,7 @@ ly_add_target(
              RESOURCE_COMPILER
      BUILD_DEPENDENCIES
@@ -6518,8 +6529,8 @@ diff -up o3de/Code/Tools/RC/ResourceCompilerPC/CMakeLists.txt.system o3de/Code/T
              Legacy::Cry3DEngine.Static
              Legacy::Cry3DEngine.MeshCompiler.Static
 diff -up o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt.system o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt
---- o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt.system	2021-04-13 16:55:23.659270533 -0400
-+++ o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt	2021-04-13 16:55:23.715270984 -0400
+--- o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt.system	2021-04-23 15:36:04.075116078 -0400
++++ o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt	2021-04-23 15:36:04.136117096 -0400
 @@ -69,7 +69,7 @@ ly_add_target(
              3rdParty::PVRTexTool
              3rdParty::squish-ccr
@@ -6531,7 +6542,7 @@ diff -up o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt.system o3d
              AZ::AzToolsFramework
 diff -up o3de/Gems/AtomLyIntegration/TechnicalArt/DccScriptingInterface/CMakeLists.txt.system o3de/Gems/AtomLyIntegration/TechnicalArt/DccScriptingInterface/CMakeLists.txt
 --- o3de/Gems/AtomLyIntegration/TechnicalArt/DccScriptingInterface/CMakeLists.txt.system	2021-04-11 19:45:50.000000000 -0400
-+++ o3de/Gems/AtomLyIntegration/TechnicalArt/DccScriptingInterface/CMakeLists.txt	2021-04-13 16:55:23.715270984 -0400
++++ o3de/Gems/AtomLyIntegration/TechnicalArt/DccScriptingInterface/CMakeLists.txt	2021-04-23 15:36:04.136117096 -0400
 @@ -10,4 +10,4 @@
  #
  
@@ -6541,7 +6552,7 @@ diff -up o3de/Gems/AtomLyIntegration/TechnicalArt/DccScriptingInterface/CMakeLis
 +# update_pip_requirements(${CMAKE_CURRENT_LIST_DIR}/requirements.txt DccScriptingInterface)
 diff -up o3de/Gems/Atom/RHI/Code/CMakeLists.txt.system o3de/Gems/Atom/RHI/Code/CMakeLists.txt
 --- o3de/Gems/Atom/RHI/Code/CMakeLists.txt.system	2021-04-11 19:45:50.000000000 -0400
-+++ o3de/Gems/Atom/RHI/Code/CMakeLists.txt	2021-04-13 16:55:23.715270984 -0400
++++ o3de/Gems/Atom/RHI/Code/CMakeLists.txt	2021-04-23 15:36:04.137117113 -0400
 @@ -100,7 +100,7 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
                      AZ::AzToolsFramework
                      AZ::AtomCore
@@ -6553,7 +6564,7 @@ diff -up o3de/Gems/Atom/RHI/Code/CMakeLists.txt.system o3de/Gems/Atom/RHI/Code/C
  endif()
 diff -up o3de/Gems/AWSClientAuth/Code/CMakeLists.txt.system o3de/Gems/AWSClientAuth/Code/CMakeLists.txt
 --- o3de/Gems/AWSClientAuth/Code/CMakeLists.txt.system	2021-04-11 19:45:49.000000000 -0400
-+++ o3de/Gems/AWSClientAuth/Code/CMakeLists.txt	2021-04-13 19:51:01.362712179 -0400
++++ o3de/Gems/AWSClientAuth/Code/CMakeLists.txt	2021-04-23 15:36:04.137117113 -0400
 @@ -27,8 +27,9 @@ ly_add_target(
              AZ::AzFramework
              Gem::AWSCore
@@ -6588,8 +6599,8 @@ diff -up o3de/Gems/AWSClientAuth/Code/CMakeLists.txt.system o3de/Gems/AWSClientA
                  AZ::AzFramework
                  Gem::AWSCore
 diff -up o3de/Gems/AWSCore/Code/CMakeLists.txt.system o3de/Gems/AWSCore/Code/CMakeLists.txt
---- o3de/Gems/AWSCore/Code/CMakeLists.txt.system	2021-04-13 16:55:23.660270541 -0400
-+++ o3de/Gems/AWSCore/Code/CMakeLists.txt	2021-04-13 16:55:23.715270984 -0400
+--- o3de/Gems/AWSCore/Code/CMakeLists.txt.system	2021-04-23 15:36:04.076116095 -0400
++++ o3de/Gems/AWSCore/Code/CMakeLists.txt	2021-04-23 15:36:04.137117113 -0400
 @@ -27,7 +27,10 @@ ly_add_target(
              AZ::AzFramework
              AZ::AWSNativeSDKInit
@@ -6604,7 +6615,7 @@ diff -up o3de/Gems/AWSCore/Code/CMakeLists.txt.system o3de/Gems/AWSCore/Code/CMa
  ly_add_target( 
 diff -up o3de/Gems/GameLift/Code/CMakeLists.txt.system o3de/Gems/GameLift/Code/CMakeLists.txt
 --- o3de/Gems/GameLift/Code/CMakeLists.txt.system	2021-04-11 19:45:50.000000000 -0400
-+++ o3de/Gems/GameLift/Code/CMakeLists.txt	2021-04-13 16:55:23.715270984 -0400
++++ o3de/Gems/GameLift/Code/CMakeLists.txt	2021-04-23 15:36:04.137117113 -0400
 @@ -28,7 +28,11 @@ ly_add_target(
              AZ::AzCore
              Legacy::CryCommon
@@ -6651,7 +6662,7 @@ diff -up o3de/Gems/GameLift/Code/CMakeLists.txt.system o3de/Gems/GameLift/Code/C
     )
 diff -up o3de/Gems/HttpRequestor/Code/CMakeLists.txt.system o3de/Gems/HttpRequestor/Code/CMakeLists.txt
 --- o3de/Gems/HttpRequestor/Code/CMakeLists.txt.system	2021-04-11 19:45:50.000000000 -0400
-+++ o3de/Gems/HttpRequestor/Code/CMakeLists.txt	2021-04-13 16:55:23.715270984 -0400
++++ o3de/Gems/HttpRequestor/Code/CMakeLists.txt	2021-04-23 15:36:04.137117113 -0400
 @@ -27,7 +27,7 @@ ly_add_target(
              AZ::AzFramework
              AZ::AWSNativeSDKInit
@@ -6661,9 +6672,32 @@ diff -up o3de/Gems/HttpRequestor/Code/CMakeLists.txt.system o3de/Gems/HttpReques
  )
  
  ly_add_target(
+diff -up o3de/Gems/LmbrCentral/Code/Platform/Linux/lrelease_linux.cmake.system o3de/Gems/LmbrCentral/Code/Platform/Linux/lrelease_linux.cmake
+--- o3de/Gems/LmbrCentral/Code/Platform/Linux/lrelease_linux.cmake.system	2021-04-26 11:14:00.498735975 -0400
++++ o3de/Gems/LmbrCentral/Code/Platform/Linux/lrelease_linux.cmake	2021-04-26 11:14:13.705952291 -0400
+@@ -9,11 +9,11 @@
+ # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ #
+ 
+-add_custom_command(TARGET LmbrCentral.Editor POST_BUILD
+-    COMMAND "${CMAKE_COMMAND}" -P "${LY_ROOT_FOLDER}/cmake/Platform/Linux/RPathChange.cmake"
+-            "$<TARGET_FILE_DIR:LmbrCentral.Editor>/lrelease"
+-            "$ORIGIN/../lib"
+-            "$ORIGIN"
+-    COMMENT "Patching lrelease..."
+-    VERBATIM
+-)
++# add_custom_command(TARGET LmbrCentral.Editor POST_BUILD
++#     COMMAND "${CMAKE_COMMAND}" -P "${LY_ROOT_FOLDER}/cmake/Platform/Linux/RPathChange.cmake"
++#             "$<TARGET_FILE_DIR:LmbrCentral.Editor>/lrelease"
++#             "$ORIGIN/../lib"
++#             "$ORIGIN"
++#     COMMENT "Patching lrelease..."
++#     VERBATIM
++# )
 diff -up o3de/Gems/Multiplayer/Code/CMakeLists.txt.system o3de/Gems/Multiplayer/Code/CMakeLists.txt
 --- o3de/Gems/Multiplayer/Code/CMakeLists.txt.system	2021-04-11 19:45:50.000000000 -0400
-+++ o3de/Gems/Multiplayer/Code/CMakeLists.txt	2021-04-13 16:55:23.716270992 -0400
++++ o3de/Gems/Multiplayer/Code/CMakeLists.txt	2021-04-23 15:36:04.137117113 -0400
 @@ -29,7 +29,7 @@ ly_add_target(
              AZ::AzFramework
              AZ::AzNetworking
@@ -6675,7 +6709,7 @@ diff -up o3de/Gems/Multiplayer/Code/CMakeLists.txt.system o3de/Gems/Multiplayer/
          *.AutoPackets.xml,AutoPackets_Inline.jinja,$path/$fileprefix.AutoPackets.inl
 diff -up o3de/Gems/MultiplayerCompression/Code/CMakeLists.txt.system o3de/Gems/MultiplayerCompression/Code/CMakeLists.txt
 --- o3de/Gems/MultiplayerCompression/Code/CMakeLists.txt.system	2021-04-11 19:45:50.000000000 -0400
-+++ o3de/Gems/MultiplayerCompression/Code/CMakeLists.txt	2021-04-13 16:55:23.716270992 -0400
++++ o3de/Gems/MultiplayerCompression/Code/CMakeLists.txt	2021-04-23 15:36:04.137117113 -0400
 @@ -23,7 +23,7 @@ ly_add_target(
              Include
      BUILD_DEPENDENCIES
@@ -6687,7 +6721,7 @@ diff -up o3de/Gems/MultiplayerCompression/Code/CMakeLists.txt.system o3de/Gems/M
  )
 diff -up o3de/Gems/NvCloth/Code/Platform/Linux/PAL_linux.cmake.system o3de/Gems/NvCloth/Code/Platform/Linux/PAL_linux.cmake
 --- o3de/Gems/NvCloth/Code/Platform/Linux/PAL_linux.cmake.system	2021-04-11 19:45:50.000000000 -0400
-+++ o3de/Gems/NvCloth/Code/Platform/Linux/PAL_linux.cmake	2021-04-13 16:55:23.716270992 -0400
++++ o3de/Gems/NvCloth/Code/Platform/Linux/PAL_linux.cmake	2021-04-23 15:36:04.137117113 -0400
 @@ -9,6 +9,6 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  #
@@ -6698,7 +6732,7 @@ diff -up o3de/Gems/NvCloth/Code/Platform/Linux/PAL_linux.cmake.system o3de/Gems/
  set(PAL_TRAIT_NVCLOTH_USE_STUB FALSE)
 diff -up o3de/Gems/PhysX/Code/CMakeLists.txt.system o3de/Gems/PhysX/Code/CMakeLists.txt
 --- o3de/Gems/PhysX/Code/CMakeLists.txt.system	2021-04-11 19:45:50.000000000 -0400
-+++ o3de/Gems/PhysX/Code/CMakeLists.txt	2021-04-13 16:55:23.716270992 -0400
++++ o3de/Gems/PhysX/Code/CMakeLists.txt	2021-04-23 15:36:04.138117129 -0400
 @@ -71,8 +71,8 @@ ly_add_target(
  
  if(PAL_TRAIT_BUILD_HOST_TOOLS)
@@ -6711,8 +6745,8 @@ diff -up o3de/Gems/PhysX/Code/CMakeLists.txt.system o3de/Gems/PhysX/Code/CMakeLi
      ly_add_target(
          NAME PhysX.Editor.Static STATIC
 diff -up o3de/Gems/SceneProcessing/Code/CMakeLists.txt.system o3de/Gems/SceneProcessing/Code/CMakeLists.txt
---- o3de/Gems/SceneProcessing/Code/CMakeLists.txt.system	2021-04-13 16:55:23.667270597 -0400
-+++ o3de/Gems/SceneProcessing/Code/CMakeLists.txt	2021-04-13 16:55:23.716270992 -0400
+--- o3de/Gems/SceneProcessing/Code/CMakeLists.txt.system	2021-04-23 15:36:04.082116195 -0400
++++ o3de/Gems/SceneProcessing/Code/CMakeLists.txt	2021-04-23 15:36:04.138117129 -0400
 @@ -38,7 +38,7 @@ if (PAL_TRAIT_BUILD_HOST_TOOLS)
          BUILD_DEPENDENCIES
              PUBLIC
@@ -6724,7 +6758,7 @@ diff -up o3de/Gems/SceneProcessing/Code/CMakeLists.txt.system o3de/Gems/ScenePro
                  AZ::SceneCore
 diff -up o3de/Gems/Twitch/Code/CMakeLists.txt.system o3de/Gems/Twitch/Code/CMakeLists.txt
 --- o3de/Gems/Twitch/Code/CMakeLists.txt.system	2021-04-11 19:45:50.000000000 -0400
-+++ o3de/Gems/Twitch/Code/CMakeLists.txt	2021-04-13 16:55:23.716270992 -0400
++++ o3de/Gems/Twitch/Code/CMakeLists.txt	2021-04-23 15:36:04.138117129 -0400
 @@ -28,7 +28,7 @@ ly_add_target(
          PUBLIC
              AZ::AzCore
@@ -6735,8 +6769,8 @@ diff -up o3de/Gems/Twitch/Code/CMakeLists.txt.system o3de/Gems/Twitch/Code/CMake
  
  ly_add_target(
 diff -up o3de/python/get_python.sh.system o3de/python/get_python.sh
---- o3de/python/get_python.sh.system	2021-04-13 16:55:23.699270855 -0400
-+++ o3de/python/get_python.sh	2021-04-13 16:55:23.716270992 -0400
+--- o3de/python/get_python.sh.system	2021-04-23 15:36:04.117116779 -0400
++++ o3de/python/get_python.sh	2021-04-23 15:36:04.138117129 -0400
 @@ -33,6 +33,14 @@ cd $DIR
  python_exitcode=$?
  if [ $python_exitcode == 0 ]; then
