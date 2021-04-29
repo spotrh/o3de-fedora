@@ -3,7 +3,7 @@
 
 Name:		squish-ccr
 Version:	2.00
-Release:	0.1.git%{shortcommit}%{?dist}
+Release:	0.2.git%{shortcommit}%{?dist}
 Source0:	https://github.com/Ethatron/squish-ccr/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
 Patch0:		squish-ccr-fixup.patch
 URL:		https://github.com/Ethatron/squish-ccr
@@ -55,5 +55,8 @@ popd
 %{_libdir}/libsquish-ccr.so
 
 %changelog
+* Tue Apr 27 2021 Tom Callaway <spot@fedoraproject.org> - 2.00-0.2.gitdeb557d
+- include more source code
+
 * Tue Mar 16 2021 Tom Callaway <spot@fedoraproject.org> - 2.00-0.1.gitdeb557d
 - initial package
