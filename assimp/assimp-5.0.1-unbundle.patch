@@ -1,0 +1,168 @@
+diff -up assimp-5.0.1/CMakeLists.txt.unbundle assimp-5.0.1/CMakeLists.txt
+--- assimp-5.0.1/CMakeLists.txt.unbundle	2021-04-14 07:19:12.000000000 -0400
++++ assimp-5.0.1/CMakeLists.txt	2021-04-14 07:26:50.099740978 -0400
+@@ -485,6 +485,28 @@ IF ( ASSIMP_NO_EXPORT )
+   MESSAGE( STATUS "Build an import-only version of Assimp." )
+ ENDIF( ASSIMP_NO_EXPORT )
+ 
++# Search for poly2tri
++FIND_LIBRARY(POLY2TRI_LIB poly2tri HINTS ${POLY2TRI_LIB_PATH})
++FIND_FILE(POLY2TRI_H poly2tri.h PATHS ${POLY2TRI_INCLUDE_PATH})
++IF (POLY2TRI_LIB AND POLY2TRI_H)
++  message(status "Found External poly2tri")
++  ADD_DEFINITIONS(-DASSIMP_SYSTEM_POLY2TRI)
++  SET(HAVE_POLY2TRI true)
++ELSE(POLY2TRI_LIB AND POLY2TRI_H)
++  SET(HAVE_POLY2TRI false)
++ENDIF(POLY2TRI_LIB AND POLY2TRI_H)
++
++# Search for clipper
++FIND_LIBRARY(CLIPPER_LIB polyclipping HINTS ${CLIPPER_LIB_PATH})
++FIND_FILE(CLIPPER_H clipper.hpp PATHS ${CLIPPER_INCLUDE_PATH})
++IF (CLIPPER_LIB AND CLIPPER_H)
++  message(status "Found External clipper")
++  ADD_DEFINITIONS(-DASSIMP_SYSTEM_CLIPPER)
++  SET(HAVE_CLIPPER true)
++ELSE(CLIPPER_LIB AND CLIPPER_H)
++  SET(HAVE_CLIPPER false)
++ENDIF(CLIPPER_LIB AND CLIPPER_H)
++
+ SET ( ASSIMP_BUILD_ARCHITECTURE "" CACHE STRING
+   "describe the current architecture."
+ )
+diff -up assimp-5.0.1/code/Blender/BlenderTessellator.h.unbundle assimp-5.0.1/code/Blender/BlenderTessellator.h
+--- assimp-5.0.1/code/Blender/BlenderTessellator.h.unbundle	2021-04-14 07:43:31.956157721 -0400
++++ assimp-5.0.1/code/Blender/BlenderTessellator.h	2021-04-14 07:27:24.868998371 -0400
+@@ -144,7 +144,7 @@ namespace Assimp
+ 
+ #if ASSIMP_BLEND_WITH_POLY_2_TRI
+ 
+-#ifdef ASSIMP_USE_HUNTER
++#if defined(ASSIMP_USE_HUNTER) || defined(ASSIMP_SYSTEM_POLY2TRI)
+ #  include <poly2tri/poly2tri.h>
+ #else
+ #  include "../contrib/poly2tri/poly2tri/poly2tri.h"
+diff -up assimp-5.0.1/code/CMakeLists.txt.unbundle assimp-5.0.1/code/CMakeLists.txt
+--- assimp-5.0.1/code/CMakeLists.txt.unbundle	2021-04-14 07:21:46.249490074 -0400
++++ assimp-5.0.1/code/CMakeLists.txt	2021-04-14 07:36:42.894129432 -0400
+@@ -882,11 +882,15 @@ IF(HUNTER_ENABLED)
+   hunter_add_package(polyclipping)
+   find_package(polyclipping CONFIG REQUIRED)
+ ELSE(HUNTER_ENABLED)
+-  SET( Clipper_SRCS
+-    ../contrib/clipper/clipper.hpp
+-    ../contrib/clipper/clipper.cpp
+-  )
+-  SOURCE_GROUP( Contrib\\Clipper FILES ${Clipper_SRCS})
++  IF (NOT HAVE_CLIPPER)
++    SET( Clipper_SRCS
++      ../contrib/clipper/clipper.hpp
++      ../contrib/clipper/clipper.cpp
++    )
++    SOURCE_GROUP( Contrib\\Clipper FILES ${Clipper_SRCS})
++  ELSE (NOT HAVE_CLIPPER)
++    SET( Clipper_SRCS "")
++  ENDIF(NOT HAVE_CLIPPER)
+ ENDIF(HUNTER_ENABLED)
+ 
+ # poly2tri
+@@ -894,20 +898,24 @@ IF(HUNTER_ENABLED)
+   hunter_add_package(poly2tri)
+   find_package(poly2tri CONFIG REQUIRED)
+ ELSE(HUNTER_ENABLED)
+-  SET( Poly2Tri_SRCS
+-    ../contrib/poly2tri/poly2tri/common/shapes.cc
+-    ../contrib/poly2tri/poly2tri/common/shapes.h
+-    ../contrib/poly2tri/poly2tri/common/utils.h
+-    ../contrib/poly2tri/poly2tri/sweep/advancing_front.h
+-    ../contrib/poly2tri/poly2tri/sweep/advancing_front.cc
+-    ../contrib/poly2tri/poly2tri/sweep/cdt.cc
+-    ../contrib/poly2tri/poly2tri/sweep/cdt.h
+-    ../contrib/poly2tri/poly2tri/sweep/sweep.cc
+-    ../contrib/poly2tri/poly2tri/sweep/sweep.h
+-    ../contrib/poly2tri/poly2tri/sweep/sweep_context.cc
+-    ../contrib/poly2tri/poly2tri/sweep/sweep_context.h
+-  )
+-  SOURCE_GROUP( Contrib\\Poly2Tri FILES ${Poly2Tri_SRCS})
++  IF (NOT HAVE_POLY2TRI)
++    SET( Poly2Tri_SRCS
++      ../contrib/poly2tri/poly2tri/common/shapes.cc
++      ../contrib/poly2tri/poly2tri/common/shapes.h
++      ../contrib/poly2tri/poly2tri/common/utils.h
++      ../contrib/poly2tri/poly2tri/sweep/advancing_front.h
++      ../contrib/poly2tri/poly2tri/sweep/advancing_front.cc
++      ../contrib/poly2tri/poly2tri/sweep/cdt.cc
++      ../contrib/poly2tri/poly2tri/sweep/cdt.h
++      ../contrib/poly2tri/poly2tri/sweep/sweep.cc
++      ../contrib/poly2tri/poly2tri/sweep/sweep.h
++      ../contrib/poly2tri/poly2tri/sweep/sweep_context.cc
++      ../contrib/poly2tri/poly2tri/sweep/sweep_context.h
++    )
++    SOURCE_GROUP( Contrib\\Poly2Tri FILES ${Poly2Tri_SRCS})
++  ELSE (NOT HAVE_POLY2TRI)
++    SET( Poly2Tri_SRCS "")
++  ENDIF (NOT HAVE_POLY2TRI)
+ ENDIF(HUNTER_ENABLED)
+ 
+ # minizip/unzip
+@@ -1222,6 +1230,16 @@ IF (RT_FOUND AND ASSIMP_IMPORTER_GLTF_US
+   TARGET_LINK_LIBRARIES(assimp ${RT_LIBRARY})
+ ENDIF (RT_FOUND AND ASSIMP_IMPORTER_GLTF_USE_OPEN3DGC)
+ 
++if (HAVE_POLY2TRI)
++  INCLUDE_DIRECTORIES(${POLY2TRI_INCLUDE_PATH})
++  TARGET_LINK_LIBRARIES(assimp ${POLY2TRI_LIB})
++endif(HAVE_POLY2TRI)
++
++if (HAVE_CLIPPER)
++  INCLUDE_DIRECTORIES(${CLIPPER_INCLUDE_PATH})
++  TARGET_LINK_LIBRARIES(assimp ${CLIPPER_LIB})
++endif(HAVE_CLIPPER)
++
+ IF(HUNTER_ENABLED)
+   INSTALL( TARGETS assimp
+     EXPORT "${TARGETS_EXPORT_NAME}"
+diff -up assimp-5.0.1/code/Importer/IFC/IFCGeometry.cpp.unbundle assimp-5.0.1/code/Importer/IFC/IFCGeometry.cpp
+--- assimp-5.0.1/code/Importer/IFC/IFCGeometry.cpp.unbundle	2021-04-14 07:52:07.273916297 -0400
++++ assimp-5.0.1/code/Importer/IFC/IFCGeometry.cpp	2021-04-14 07:52:13.709963191 -0400
+@@ -49,11 +49,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ #include "Common/PolyTools.h"
+ #include "PostProcessing/ProcessHelper.h"
+ 
+-#ifdef ASSIMP_USE_HUNTER
++#if defined(ASSIMP_USE_HUNTER) || defined (ASSIMP_SYSTEM_POLY2TRI)
+ #  include <poly2tri/poly2tri.h>
+-#  include <polyclipping/clipper.hpp>
+ #else
+ #  include "../contrib/poly2tri/poly2tri/poly2tri.h"
++#endif
++
++#if defined(ASSIMP_USE_HUNTER) || defined (ASSIMP_SYSTEM_CLIPPER)
++#  include <polyclipping/clipper.hpp>
++#else
+ #  include "../contrib/clipper/clipper.hpp"
+ #endif
+ 
+diff -up assimp-5.0.1/code/Importer/IFC/IFCOpenings.cpp.unbundle assimp-5.0.1/code/Importer/IFC/IFCOpenings.cpp
+--- assimp-5.0.1/code/Importer/IFC/IFCOpenings.cpp.unbundle	2021-04-14 07:43:58.730355931 -0400
++++ assimp-5.0.1/code/Importer/IFC/IFCOpenings.cpp	2021-04-14 07:45:13.730903228 -0400
+@@ -49,11 +49,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ #include "Common/PolyTools.h"
+ #include "PostProcessing/ProcessHelper.h"
+ 
+-#ifdef ASSIMP_USE_HUNTER
++#if defined(ASSIMP_USE_HUNTER) || defined(ASSIMP_SYSTEM_POLY2TRI)
+ #  include <poly2tri/poly2tri.h>
+-#  include <polyclipping/clipper.hpp>
+ #else
+ #  include "../contrib/poly2tri/poly2tri/poly2tri.h"
++#endif
++
++#if defined(ASSIMP_USE_HUNTER) || defined(ASSIMP_SYSTEM_CLIPPER)
++#  include <polyclipping/clipper.hpp>
++#else
+ #  include "../contrib/clipper/clipper.hpp"
+ #endif
+ 
+diff -up assimp-5.0.1/test/CMakeLists.txt.unbundle assimp-5.0.1/test/CMakeLists.txt
+diff -up assimp-5.0.1/tools/assimp_cmd/CMakeLists.txt.unbundle assimp-5.0.1/tools/assimp_cmd/CMakeLists.txt

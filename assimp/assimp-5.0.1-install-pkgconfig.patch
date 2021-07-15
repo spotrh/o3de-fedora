@@ -1,0 +1,13 @@
+diff -up assimp-5.0.1/assimp.pc.in.pkgconfig assimp-5.0.1/assimp.pc.in
+--- assimp-5.0.1/assimp.pc.in.pkgconfig	2021-04-14 08:04:54.640465663 -0400
++++ assimp-5.0.1/assimp.pc.in	2021-04-14 08:05:41.020794423 -0400
+@@ -1,7 +1,7 @@
+ prefix=@CMAKE_INSTALL_PREFIX@
+ exec_prefix=@CMAKE_INSTALL_PREFIX@/
+-libdir=@CMAKE_INSTALL_PREFIX@/@ASSIMP_LIB_INSTALL_DIR@
+-includedir=@CMAKE_INSTALL_PREFIX@/../include/@ASSIMP_INCLUDE_INSTALL_DIR@
++libdir=@ASSIMP_LIB_INSTALL_DIR@
++includedir=@ASSIMP_INCLUDE_INSTALL_DIR@
+ 
+ Name: @CMAKE_PROJECT_NAME@
+ Description: Import various well-known 3D model formats in an uniform manner.

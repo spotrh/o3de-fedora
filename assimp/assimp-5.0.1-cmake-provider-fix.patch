@@ -1,0 +1,14 @@
+diff -up assimp-5.0.1/assimpTargets-release.cmake.in.cmakefix assimp-5.0.1/assimpTargets-release.cmake.in
+--- assimp-5.0.1/assimpTargets-release.cmake.in.cmakefix	2021-04-14 08:01:38.073072356 -0400
++++ assimp-5.0.1/assimpTargets-release.cmake.in	2021-04-14 08:02:16.871347362 -0400
+@@ -91,8 +91,8 @@ get_filename_component(ASSIMP_ROOT_DIR "
+ 
+ set( ASSIMP_CXX_FLAGS ) # dynamically linked library
+ set( ASSIMP_LINK_FLAGS "" )
+-set( ASSIMP_LIBRARY_DIRS "${ASSIMP_ROOT_DIR}/@ASSIMP_LIB_INSTALL_DIR@")
+-set( ASSIMP_INCLUDE_DIRS "${ASSIMP_ROOT_DIR}/@ASSIMP_INCLUDE_INSTALL_DIR@")
++set( ASSIMP_LIBRARY_DIRS "@ASSIMP_LIB_INSTALL_DIR@")
++set( ASSIMP_INCLUDE_DIRS "@ASSIMP_INCLUDE_INSTALL_DIR@")
+ if(ASSIMP_BUILD_SHARED_LIBS)
+   set( ASSIMP_LIBRARIES ${sharedLibraryName})
+ else()

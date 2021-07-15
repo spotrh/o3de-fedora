@@ -1,6 +1,6 @@
 Name:		amazon-gamelift-server-sdk
 Version:	4.0.2
-Release:	1%{?dist}
+Release:	2%{?dist}
 URL:		https://docs.aws.amazon.com/gamelift/latest/developerguide/gamelift-supported.html
 Source0:	https://gamelift-release.s3-us-west-2.amazonaws.com/GameLift_12_22_2020.zip
 Source1:	https://raw.githubusercontent.com/xerdink/aws-gamelift-cpp-server-sdk/main/sdk.proto
@@ -11,6 +11,7 @@ Patch1:		amazon-gamelift-server-sdk-sioclient-path-fix.patch
 Patch2:		amazon-gamelift-server-sdk-sdk-proto-rootCertificatePath-fix.patch
 Patch3:		amazon-gamelift-server-sdk-ERROR_400-500-fix.patch
 Patch4:		amazon-gamelift-server-sdk-soversion.patch
+Patch5:		amazon-gamelift-server-sdk-missing-thread-header.patch
 BuildRequires:	gcc-c++, socket.io-client-cpp-devel, cmake, make
 BuildRequires:	protobuf-devel, protobuf-lite-devel
 
@@ -39,6 +40,7 @@ cp %{SOURCE1} GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1
 %patch2 -p1 -b .rootcertpathfix
 %patch3 -p1 -b .400500fix
 %patch4 -p1 -b .soversion
+%patch5 -p1 -b .missing-thread-header
 
 %build
 pushd GameLift-SDK-Release-4.0.2/GameLift-Cpp-ServerSDK-3.4.1
@@ -75,5 +77,8 @@ popd
 %{_libdir}/cmake/aws-cpp-sdk-gamelift-serverConfig.cmake
 
 %changelog
+* Tue May  4 2021 Tom Callaway <spot@fedoraproject.org> - 4.0.2-2
+- fix missing <thread>
+
 * Thu Mar 25 2021 Tom Callaway <spot@fedoraproject.org> - 4.0.2-1
 - initial package

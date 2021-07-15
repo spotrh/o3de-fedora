@@ -1,0 +1,144 @@
+diff -up assimp-5.0.1/code/Assxml/AssxmlExporter.cpp.o3de assimp-5.0.1/code/Assxml/AssxmlExporter.cpp
+--- assimp-5.0.1/code/Assxml/AssxmlExporter.cpp.o3de	2021-04-14 07:19:12.000000000 -0400
++++ assimp-5.0.1/code/Assxml/AssxmlExporter.cpp	2021-04-22 15:35:08.790306378 -0400
+@@ -590,8 +590,8 @@ void WriteDump(const aiScene* scene, IOS
+                 if (!mesh->mTextureCoords[a])
+                     break;
+ 
+-                ioprintf(io,"\t\t<TextureCoords num=\"%i\" set=\"%i\" num_components=\"%i\"> \n",mesh->mNumVertices,
+-                    a,mesh->mNumUVComponents[a]);
++                ioprintf(io,"\t\t<TextureCoords num=\"%i\" set=\"%i\" name=\"%s\" num_components=\"%i\"> \n",mesh->mNumVertices,
++                    a,mesh->mTextureCoordsNames[a].C_Str(),mesh->mNumUVComponents[a]);
+ 
+                 if (!shortened) {
+                     if (mesh->mNumUVComponents[a] == 3) {
+diff -up assimp-5.0.1/code/FBX/FBXConverter.cpp.o3de assimp-5.0.1/code/FBX/FBXConverter.cpp
+--- assimp-5.0.1/code/FBX/FBXConverter.cpp.o3de	2021-04-14 07:19:12.000000000 -0400
++++ assimp-5.0.1/code/FBX/FBXConverter.cpp	2021-04-22 15:35:08.790306378 -0400
+@@ -1141,6 +1141,8 @@ namespace Assimp {
+                     *out_uv++ = aiVector3D(v.x, v.y, 0.0f);
+                 }
+ 
++                out_mesh->mTextureCoordsNames[i] = mesh.GetTextureCoordChannelName(i);
++
+                 out_mesh->mNumUVComponents[i] = 2;
+             }
+ 
+@@ -2100,6 +2102,11 @@ namespace Assimp {
+             const aiColor3D& Emissive = GetColorPropertyFromMaterial(props, "Emissive", ok);
+             if (ok) {
+                 out_mat->AddProperty(&Emissive, 1, AI_MATKEY_COLOR_EMISSIVE);
++            } else {
++                const aiColor3D &emissiveColor = GetColorPropertyFromMaterial(props, "Maya|emissive", ok);
++                if (ok) {
++                    out_mat->AddProperty(&emissiveColor, 1, AI_MATKEY_COLOR_EMISSIVE);
++                }
+             }
+ 
+             const aiColor3D& Ambient = GetColorPropertyFromMaterial(props, "Ambient", ok);
+@@ -2181,8 +2188,54 @@ namespace Assimp {
+             const float DispFactor = PropertyGet<float>(props, "DisplacementFactor", ok);
+             if (ok) {
+                 out_mat->AddProperty(&DispFactor, 1, "$mat.displacementscaling", 0, 0);
+-    }
+-}
++            }
++
++            // PBR material information
++            const aiColor3D &baseColor = GetColorPropertyFromMaterial(props, "Maya|base_color", ok);
++            if (ok) {
++                out_mat->AddProperty(&baseColor, 1, AI_MATKEY_BASE_COLOR);
++            }
++
++            const float useColorMap = PropertyGet<float>(props, "Maya|use_color_map", ok);
++            if (ok) {
++                out_mat->AddProperty(&useColorMap, 1, AI_MATKEY_USE_COLOR_MAP);
++            }
++
++            const float useMetallicMap = PropertyGet<float>(props, "Maya|use_metallic_map", ok);
++            if (ok) {
++                out_mat->AddProperty(&useMetallicMap, 1, AI_MATKEY_USE_METALLIC_MAP);
++            }
++
++            const float metallicFactor = PropertyGet<float>(props, "Maya|metallic", ok);
++            if (ok) {
++                out_mat->AddProperty(&metallicFactor, 1, AI_MATKEY_METALLIC_FACTOR);
++            }
++
++            const float useRoughnessMap = PropertyGet<float>(props, "Maya|use_roughness_map", ok);
++            if (ok) {
++                out_mat->AddProperty(&useRoughnessMap, 1, AI_MATKEY_USE_ROUGHNESS_MAP);
++            }
++
++            const float roughnessFactor = PropertyGet<float>(props, "Maya|roughness", ok);
++            if (ok) {
++                out_mat->AddProperty(&roughnessFactor, 1, AI_MATKEY_ROUGHNESS_FACTOR);
++            }
++
++            const float useEmissiveMap = PropertyGet<float>(props, "Maya|use_emissive_map", ok);
++            if (ok) {
++                out_mat->AddProperty(&useEmissiveMap, 1, AI_MATKEY_USE_EMISSIVE_MAP);
++            }
++
++            const float emissiveIntensity = PropertyGet<float>(props, "Maya|emissive_intensity", ok);
++            if (ok) {
++                out_mat->AddProperty(&emissiveIntensity, 1, AI_MATKEY_EMISSIVE_INTENSITY);
++            }
++
++            const float useAOMap = PropertyGet<float>(props, "Maya|use_ao_map", ok);
++            if (ok) {
++                out_mat->AddProperty(&useAOMap, 1, AI_MATKEY_USE_AO_MAP);
++            }
++        }
+ 
+ 
+ void FBXConverter::SetShadingPropertiesRaw(aiMaterial* out_mat, const PropertyTable& props, const TextureMap& textures, const MeshGeometry* const mesh)
+diff -up assimp-5.0.1/code/FBX/FBXProperties.cpp.o3de assimp-5.0.1/code/FBX/FBXProperties.cpp
+--- assimp-5.0.1/code/FBX/FBXProperties.cpp.o3de	2021-04-14 07:19:12.000000000 -0400
++++ assimp-5.0.1/code/FBX/FBXProperties.cpp	2021-04-22 15:35:08.791306395 -0400
+@@ -109,7 +109,7 @@ Property* ReadTypedProperty(const Elemen
+             ParseTokenAsFloat(*tok[6]))
+         );
+     }
+-    else if (!strcmp(cs,"double") || !strcmp(cs,"Number") || !strcmp(cs,"Float") || !strcmp(cs,"FieldOfView") || !strcmp( cs, "UnitScaleFactor" ) ) {
++    else if (!strcmp(cs,"double") || !strcmp(cs,"Number") || !strcmp(cs,"float") || !strcmp(cs,"Float") || !strcmp(cs,"FieldOfView") || !strcmp( cs, "UnitScaleFactor" ) ) {
+         return new TypedProperty<float>(ParseTokenAsFloat(*tok[4]));
+     }
+     return NULL;
+diff -up assimp-5.0.1/include/assimp/material.h.o3de assimp-5.0.1/include/assimp/material.h
+--- assimp-5.0.1/include/assimp/material.h.o3de	2021-04-14 07:19:12.000000000 -0400
++++ assimp-5.0.1/include/assimp/material.h	2021-04-22 15:35:08.791306395 -0400
+@@ -942,6 +942,18 @@ extern "C" {
+ #define AI_MATKEY_SHADER_COMPUTE "?sh.cs",0,0
+ 
+ // ---------------------------------------------------------------------------
++// PBR material support
++#define AI_MATKEY_USE_COLOR_MAP "$mat.useColorMap", 0, 0
++#define AI_MATKEY_BASE_COLOR "$clr.base", 0, 0
++#define AI_MATKEY_USE_METALLIC_MAP "$mat.useMetallicMap", 0, 0
++#define AI_MATKEY_METALLIC_FACTOR "$mat.metallicFactor", 0, 0
++#define AI_MATKEY_USE_ROUGHNESS_MAP "$mat.useRoughnessMap", 0, 0
++#define AI_MATKEY_ROUGHNESS_FACTOR "$mat.roughnessFactor", 0, 0
++#define AI_MATKEY_USE_EMISSIVE_MAP "$mat.useEmissiveMap", 0, 0
++#define AI_MATKEY_EMISSIVE_INTENSITY "$mat.emissiveIntensity", 0, 0
++#define AI_MATKEY_USE_AO_MAP "$mat.useAOMap", 0, 0
++
++// ---------------------------------------------------------------------------
+ // Pure key names for all texture-related properties
+ //! @cond MATS_DOC_FULL
+ #define _AI_MATKEY_TEXTURE_BASE         "$tex.file"
+diff -up assimp-5.0.1/include/assimp/mesh.h.o3de assimp-5.0.1/include/assimp/mesh.h
+--- assimp-5.0.1/include/assimp/mesh.h.o3de	2021-04-14 07:19:12.000000000 -0400
++++ assimp-5.0.1/include/assimp/mesh.h	2021-04-22 15:40:23.669666135 -0400
+@@ -653,6 +653,11 @@ struct aiMesh
+     */
+     C_STRUCT aiVector3D* mTextureCoords[AI_MAX_NUMBER_OF_TEXTURECOORDS];
+ 
++    /**
++    * UV Stream name
++    */
++    C_STRUCT aiString mTextureCoordsNames[AI_MAX_NUMBER_OF_TEXTURECOORDS];
++
+     /** Specifies the number of components for a given UV channel.
+     * Up to three channels are supported (UVW, for accessing volume
+     * or cube maps). If the value is 2 for a given channel n, the
