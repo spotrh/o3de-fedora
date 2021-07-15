@@ -1,6 +1,6 @@
 Name:		s2n-tls
 Version:	1.0.1
-Release:	1%{?dist}
+Release:	2%{?dist}
 Summary:	An implementation of the TLS/SSL protocols
 URL:		https://github.com/aws/s2n-tls
 Source0:	https://github.com/aws/s2n-tls/archive/v%{version}.tar.gz
@@ -29,6 +29,7 @@ Development files for s2n-tls.
 sed -i 's| -fvisibility=hidden -DS2N_EXPORTS||g' CMakeLists.txt
 
 %build
+%global optflags %{optflags} -Wno-error=array-parameter=
 %cmake -DBUILD_SHARED_LIBS=ON
 %cmake_build
 
