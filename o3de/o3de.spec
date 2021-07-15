@@ -10,7 +10,7 @@ Summary:	A game engine architected for performance, modularity, and productivity
 URL:		https://github.com/aws/o3de
 License:	ASL 2.0 or MIT
 # git clone https://github.com/aws/o3de.git
-# tar --exclude-vcs -cvJf o3de-20210310git448c549.tar.xz o3de/
+# tar --exclude-vcs -cvJf o3de-20210707git4f523e4.tar.xz o3de/
 Source0:	o3de-%{gitdate}git%{shortcommit}.tar.xz
 # o3de needs a forked version of rapidxml-devel
 # We cannot use the Fedora system copy
