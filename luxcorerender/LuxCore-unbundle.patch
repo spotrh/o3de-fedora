@@ -1,0 +1,32 @@
+diff -ru LuxCore-luxcorerender_v2.5beta1.deps/CMakeLists.txt LuxCore-luxcorerender_v2.5beta1/CMakeLists.txt
+--- LuxCore-luxcorerender_v2.5beta1.deps/CMakeLists.txt	2020-11-15 02:42:41.000000000 -0800
++++ LuxCore-luxcorerender_v2.5beta1/CMakeLists.txt	2020-11-27 22:10:46.636428479 -0800
+@@ -92,7 +92,6 @@
+ SET(LuxRays_INCLUDE_DIR "${LuxRays_SOURCE_DIR}/include")
+ include_directories("${LuxRays_INCLUDE_DIR}")
+ 
+-include_directories("${LuxRays_SOURCE_DIR}/deps/json-3.7.3/include")
+ include_directories("${LuxRays_SOURCE_DIR}/deps/cuew/include")
+ include_directories("${LuxRays_SOURCE_DIR}/deps/clew/include")
+ include_directories("${LuxRays_SOURCE_DIR}/deps/optix-7.1.0/include")
+@@ -206,7 +205,7 @@
+ #
+ ################################################################################
+ 
+-add_subdirectory(pyunittests)
++
+ 
+ ################################################################################
+ #
+diff -ru LuxCore-luxcorerender_v2.5beta1.deps/samples/luxcoreui/CMakeLists.txt LuxCore-luxcorerender_v2.5beta1/samples/luxcoreui/CMakeLists.txt
+--- LuxCore-luxcorerender_v2.5beta1.deps/samples/luxcoreui/CMakeLists.txt	2020-11-15 02:42:41.000000000 -0800
++++ LuxCore-luxcorerender_v2.5beta1/samples/luxcoreui/CMakeLists.txt	2020-11-27 22:11:08.555051748 -0800
+@@ -22,8 +22,6 @@
+ #
+ #############################################################################
+ 
+-add_subdirectory(deps/glfw-3.1.1)
+-include_directories(deps/glfw-3.1.1/include)
+ include_directories(deps/nfd/include)
+ 
+ #############################################################################

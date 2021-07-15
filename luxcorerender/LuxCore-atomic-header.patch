@@ -1,0 +1,33 @@
+--- LuxCore-luxcorerender_v2.5beta1/src/slg/scene/parsematerials.cpp
++++ LuxCore-luxcorerender_v2.5beta1/src/slg/scene/parsematerials.cpp
+@@ -24,6 +24,8 @@
+ #include <boost/unordered_map.hpp>
+ #include <boost/unordered_set.hpp>
+ 
++#include <atomic>
++
+ #include "slg/scene/scene.h"
+ #include "slg/textures/constfloat.h"
+ #include "slg/textures/constfloat3.h"
+--- LuxCore-luxcorerender_v2.5beta1/src/slg/scene/parseobjects.cpp
++++ LuxCore-luxcorerender_v2.5beta1/src/slg/scene/parseobjects.cpp
+@@ -16,6 +16,8 @@
+  * limitations under the License.                                          *
+  ***************************************************************************/
+ 
++#include <atomic>
++
+ #include "slg/scene/scene.h"
+ #include "slg/utils/filenameresolver.h"
+ 
+--- LuxCore-luxcorerender_v2.5beta1/src/slg/scene/parsevolumes.cpp
++++ LuxCore-luxcorerender_v2.5beta1/src/slg/scene/parsevolumes.cpp
+@@ -24,6 +24,8 @@
+ #include <boost/unordered_map.hpp>
+ #include <boost/unordered_set.hpp>
+ 
++#include <atomic>
++
+ #include "slg/scene/scene.h"
+ #include "slg/textures/constfloat.h"
+ #include "slg/textures/constfloat3.h"

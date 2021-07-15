@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2014 Ryan Lerch <rlerch@redhat.com> -->
+<!--
+BugReportURL: http://www.luxrender.net/mantis/view.php?id=1540
+SentUpstream: 2014-09-18
+-->
+<component type="addon">
+  <id>com.github.luxcorerender.blendluxcore</id>
+  <name>LuxCore Render</name>
+  <extends>blender.desktop</extends>
+  <summary>3D renderer plugin for Blender</summary>
+  <url type="homepage">https://luxcorerender.org/</url>
+  <url type="bugtracker">https://github.com/LuxCoreRender/BlendLuxCore/issues</url>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0+</project_license>
+  <updatecontact>admin@luxcorerender.org</updatecontact>
+</component>

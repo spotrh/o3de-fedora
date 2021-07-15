@@ -1,0 +1,61 @@
+diff -up LuxCore-luxcorerender_v2.5/CMakeLists.txt.hack LuxCore-luxcorerender_v2.5/CMakeLists.txt
+--- LuxCore-luxcorerender_v2.5/CMakeLists.txt.hack	2021-06-22 17:47:03.028722047 +0000
++++ LuxCore-luxcorerender_v2.5/CMakeLists.txt	2021-06-22 17:47:52.588402801 +0000
+@@ -157,6 +157,7 @@ endif()
+ 
+ if (LUXCORE_DISABLE_OIDN)
+ 	ADD_DEFINITIONS("-DLUXCORE_DISABLE_OIDN")
++	set(OIDN_LIBRARY "")
+ 
+ 	message(STATUS "Intel OIDN support: disabled")
+ else()
+diff -up LuxCore-luxcorerender_v2.5/cmake/PlatformSpecific.cmake.hack LuxCore-luxcorerender_v2.5/cmake/PlatformSpecific.cmake
+--- LuxCore-luxcorerender_v2.5/cmake/PlatformSpecific.cmake.hack	2021-06-22 17:51:51.376843342 +0000
++++ LuxCore-luxcorerender_v2.5/cmake/PlatformSpecific.cmake	2021-06-22 17:52:56.306419303 +0000
+@@ -262,7 +262,9 @@ ENDIF(APPLE)
+ IF(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+ 	# Update if necessary
+ 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-long-long -pedantic")
+-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -msse2 -msse3 -mssse3")
++	IF(${CMAKE_HOST_SYSTEM_PROCESSOR} MATCHES "x86_64")
++	  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -msse2 -msse3 -mssse3")
++	ENDIF()
+ 	IF(NOT CYGWIN)
+ 	  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+ 	ENDIF(NOT CYGWIN)
+diff -up LuxCore-luxcorerender_v2.5/include/slg/film/imagepipeline/plugins/optixdenoiser.h.hack LuxCore-luxcorerender_v2.5/include/slg/film/imagepipeline/plugins/optixdenoiser.h
+--- LuxCore-luxcorerender_v2.5/include/slg/film/imagepipeline/plugins/optixdenoiser.h.hack	2021-06-22 17:56:37.724973278 +0000
++++ LuxCore-luxcorerender_v2.5/include/slg/film/imagepipeline/plugins/optixdenoiser.h	2021-06-22 17:56:50.804887856 +0000
+@@ -19,7 +19,7 @@
+ #ifndef _SLG_OPTIX_DENOISER_H
+ #define	_SLG_OPTIX_DENOISER_H
+ 
+-#if !defined(LUXRAYS_DISABLE_CUDA)
++#if !defined(LUXRAYS_DISABLE_CUDA) && !defined(LUXCORE_DISABLE_OIDN)
+ 
+ #include <vector>
+ 
+diff -up LuxCore-luxcorerender_v2.5/src/slg/film/filmparse.cpp.hack LuxCore-luxcorerender_v2.5/src/slg/film/filmparse.cpp
+--- LuxCore-luxcorerender_v2.5/src/slg/film/filmparse.cpp.hack	2021-06-22 18:01:44.543126482 +0000
++++ LuxCore-luxcorerender_v2.5/src/slg/film/filmparse.cpp	2021-06-22 18:02:05.933000571 +0000
+@@ -748,7 +748,7 @@ ImagePipeline *Film::CreateImagePipeline
+ 				const string fileName = props.Get(Property(prefix + ".file")("lut.cube")).Get<string>();
+ 				const float strength = Clamp(props.Get(Property(prefix + ".strength")(1.f)).Get<float>(), 0.f, 1.f);
+ 				imagePipeline->AddPlugin(new ColorLUTPlugin(fileName, strength));
+-#if !defined(LUXRAYS_DISABLE_CUDA)
++#if !defined(LUXRAYS_DISABLE_CUDA) && !defined(LUXCORE_DISABLE_OIDN)
+ 			} else if (type == "OPTIX_DENOISER") {
+ 				const float sharpness = Clamp(props.Get(Property(prefix + ".sharpness")(.1f)).Get<float>(), 0.f, 1.f);
+ 				const u_int minSPP = props.Get(Property(prefix + ".minspp")(0)).Get<u_int>();
+diff -up LuxCore-luxcorerender_v2.5/src/slg/film/imagepipeline/plugins/optixdenoiser.cpp.hack LuxCore-luxcorerender_v2.5/src/slg/film/imagepipeline/plugins/optixdenoiser.cpp
+--- LuxCore-luxcorerender_v2.5/src/slg/film/imagepipeline/plugins/optixdenoiser.cpp.hack	2021-06-22 18:04:40.402090442 +0000
++++ LuxCore-luxcorerender_v2.5/src/slg/film/imagepipeline/plugins/optixdenoiser.cpp	2021-06-22 18:05:01.401964995 +0000
+@@ -16,7 +16,7 @@
+  * limitations under the License.                                          *
+  ***************************************************************************/
+ 
+-#if !defined(LUXRAYS_DISABLE_CUDA)
++#if !defined(LUXRAYS_DISABLE_CUDA) && !defined(LUXCORE_DISABLE_OIDN)
+ 
+ #include <boost/format.hpp>
+ 

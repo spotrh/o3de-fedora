@@ -1,0 +1,27 @@
+From 71b156c4f5199eb8f09174b7767e2df4ab86e386 Mon Sep 17 00:00:00 2001
+From: Nicolas Chauvet <kwizart@gmail.com>
+Date: Sun, 11 Apr 2021 11:28:29 +0200
+Subject: [PATCH] Fixed compiler error 'std::std' not been declared
+
+---
+ include/luxrays/utils/utils.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/include/luxrays/utils/utils.h b/include/luxrays/utils/utils.h
+index 1a49d54658b1..af52bbdc52e7 100644
+--- a/include/luxrays/utils/utils.h
++++ b/include/luxrays/utils/utils.h
+@@ -36,8 +36,8 @@
+ #define isnan(a) _isnan(a)
+ #define isinf(f) (!_finite((f)))
+ #else
+-#define isnan(a) std::isnan(a)
+-#define isinf(f) std::isinf(f)
++using std::isnan;
++using std::isinf;
+ #endif
+ 
+ #if defined(WIN32)
+-- 
+2.30.2
+

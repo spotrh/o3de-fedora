@@ -1,0 +1,38 @@
+diff -ru LuxCore-luxcorerender_v2.5beta1.orig/cmake/PlatformSpecific.cmake LuxCore-luxcorerender_v2.5beta1/cmake/PlatformSpecific.cmake
+--- LuxCore-luxcorerender_v2.5beta1.orig/cmake/PlatformSpecific.cmake	2020-11-15 02:42:41.000000000 -0800
++++ LuxCore-luxcorerender_v2.5beta1/cmake/PlatformSpecific.cmake	2020-11-27 22:21:31.124367337 -0800
+@@ -259,7 +259,7 @@
+ 
+ IF(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+ 	# Update if necessary
+-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Wno-long-long -pedantic")
++	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -Wall -Wno-long-long -pedantic")
+ 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -msse2 -msse3 -mssse3")
+ 	IF(NOT CYGWIN)
+ 	  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+diff -ru LuxCore-luxcorerender_v2.5beta1.orig/CMakeLists.txt LuxCore-luxcorerender_v2.5beta1/CMakeLists.txt
+--- LuxCore-luxcorerender_v2.5beta1.orig/CMakeLists.txt	2020-11-15 02:42:41.000000000 -0800
++++ LuxCore-luxcorerender_v2.5beta1/CMakeLists.txt	2020-11-27 22:23:50.388985025 -0800
+@@ -42,6 +42,10 @@
+ enable_language(C)
+ enable_language(CXX)
+ 
++# Use C++ standard 14
++set(CMAKE_CXX_STANDARD 14)
++set(CMAKE_CXX_STANDARD_REQUIRED ON)
++
+ if (CMAKE_CONFIGURATION_TYPES)
+ 
+ 	message(STATUS "Multi-config generator detected")
+diff -ru LuxCore-luxcorerender_v2.5beta1.orig/src/slg/engines/bakecpu/bakecputhread.cpp LuxCore-luxcorerender_v2.5beta1/src/slg/engines/bakecpu/bakecputhread.cpp
+--- LuxCore-luxcorerender_v2.5beta1.orig/src/slg/engines/bakecpu/bakecputhread.cpp	2020-11-15 02:42:41.000000000 -0800
++++ LuxCore-luxcorerender_v2.5beta1/src/slg/engines/bakecpu/bakecputhread.cpp	2020-11-27 22:27:14.155499302 -0800
+@@ -352,7 +352,7 @@
+ 	const PathTracer &pathTracer = engine->pathTracer;
+ 	
+ 	const PathTracer::ConnectToEyeCallBackType connectToEyeCallBack = boost::bind(
+-			&BakeCPURenderThread::RenderConnectToEyeCallBack, this, mapInfo, _1, _2, _3, _4, _5);
++			&BakeCPURenderThread::RenderConnectToEyeCallBack, this, mapInfo, boost::placeholders::_1, boost::placeholders::_2, boost::placeholders::_3, boost::placeholders::_4, boost::placeholders::_5);
+ 
+ 	pathTracer.RenderLightSample(state.device, state.scene, state.film, state.lightSampler,
+ 			state.lightSampleResults, connectToEyeCallBack);
