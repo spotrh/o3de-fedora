@@ -1,11 +1,11 @@
 Name:		socket.io-client-cpp
 Version:	3.0.0
-Release:	1%{?dist}
+Release:	2%{?dist}
 Summary:	C++11 implementation of Socket.IO client
 License:	MIT
 URL:		https://github.com/socketio/socket.io-client-cpp
 Source0:	https://github.com/socketio/socket.io-client-cpp/archive/refs/tags/%{version}.tar.gz
-BuildRequires:	websocketpp-devel, openssl-devel
+BuildRequires:	websocketpp-devel, openssl-devel, asio-devel, rapidjson-devel
 BuildRequires:	gcc-c++, make, cmake
 
 %description
@@ -39,6 +39,9 @@ chmod -x README.md LICENSE
 %{_libdir}/libsioclient*.so
 
 %changelog
+* Mon Jun 21 2021 Tom Callaway <spot@fedoraproject.org> - 3.0.0-2
+- add BR: asio-devel, rapidjson-devel
+
 * Thu Mar 25 2021 Tom Callaway <spot@fedoraproject.org> - 3.0.0-1
 - initial package
 
