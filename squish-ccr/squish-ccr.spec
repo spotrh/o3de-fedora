@@ -3,9 +3,11 @@
 
 Name:		squish-ccr
 Version:	2.00
-Release:	0.2.git%{shortcommit}%{?dist}
+Release:	0.3.git%{shortcommit}%{?dist}
 Source0:	https://github.com/Ethatron/squish-ccr/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
 Patch0:		squish-ccr-fixup.patch
+# Translate SSE calls to neon
+Patch1:		squish-ccr-aarch64-hack.patch
 URL:		https://github.com/Ethatron/squish-ccr
 Summary:	Squish texture compression - now concurrently
 License:	MIT
@@ -24,6 +26,7 @@ Development files for squish-ccr.
 %prep
 %setup -q -n %{name}-%{commit}
 %patch0 -p1 -b .fixup
+%patch1 -p1 -b .aarch64hack
 
 %ifarch x86_64
 sed -i 's|USE_SSE ?= 0|USE_SSE ?= 1|g' config
@@ -34,7 +37,11 @@ sed -i 's|USE_ALTIVEC ?= 0|USE_ALTIVEC ?= 1|g' config
 %endif
 
 %build
+%ifarch x86_64 i686 aarch64
 %make_build CPPFLAGS="%{optflags} -fPIC -DSQUISH_USE_CPP=1 -Wno-strict-aliasing -Wno-unused-function -Wno-unused-value -DSQUISH_USE_SSE=2 -Wno-reorder -Wno-unknown-pragmas -Wno-unused-but-set-variable -fpermissive -Wno-attributes -fcommon"
+%else
+%make_build CPPFLAGS="%{optflags} -fPIC -DSQUISH_USE_CPP=1 -Wno-strict-aliasing -Wno-unused-function -Wno-unused-value -Wno-reorder -Wno-unknown-pragmas -Wno-unused-but-set-variable -fpermissive -Wno-attributes -fcommon"
+%endif
 
 %install
 mkdir -p %{buildroot}%{_includedir}/squish-ccr
@@ -55,6 +62,10 @@ popd
 %{_libdir}/libsquish-ccr.so
 
 %changelog
+* Mon Jun 21 2021 Tom Callaway <spot@fedoraproject.org> - 2.00-0.3.gitdeb557d
+- do not try to use sse except on x86
+- ... but translate SSE to neon on aarch64
+
 * Tue Apr 27 2021 Tom Callaway <spot@fedoraproject.org> - 2.00-0.2.gitdeb557d
 - include more source code
 
