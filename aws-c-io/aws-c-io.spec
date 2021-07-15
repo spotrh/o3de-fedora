@@ -1,6 +1,6 @@
 Name:		aws-c-io
 Version:	0.9.2
-Release:	1%{?dist}
+Release:	2%{?dist}
 Summary:	IO and TLS work for the AWS SDK for C
 URL:		https://github.com/awslabs/aws-c-io
 Source0:	https://github.com/awslabs/aws-c-io/archive/v%{version}.tar.gz
@@ -34,6 +34,7 @@ Development files for aws-c-io.
 %setup -q
 
 %build
+%global optflags %{optflags} -Wno-error=maybe-uninitialized
 %cmake -DBUILD_SHARED_LIBS=ON
 %cmake_build
 
@@ -55,5 +56,8 @@ Development files for aws-c-io.
 %{_libdir}/libaws-c-io.so
 
 %changelog
+* Mon Jun 21 2021 Tom Callaway <spot@fedoraproject.org> - 0.9.2-2
+- pass -Wno-error=maybe-uninitialized
+
 * Wed Mar 17 2021 Tom Callaway <spot@fedoraproject.org> - 0.9.2-1
 - initial package
