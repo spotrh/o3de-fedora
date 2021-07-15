@@ -21,7 +21,7 @@ texture compression standard.
 %cmake -DISA_AVX2=ON -DISA_SSE41=ON -DISA_SSE2=ON
 %else
 %ifarch aarch64
-%cmake -DISA_NEON=ON
+%cmake -DARCH=aarch64 -DISA_NEON=ON
 %endif
 %endif
 %cmake_build
