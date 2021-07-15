@@ -1,0 +1,17 @@
+diff -up o3de/Code/Framework/AzCore/AzCore/Compression/zstd_compression.cpp.zstd-1.5 o3de/Code/Framework/AzCore/AzCore/Compression/zstd_compression.cpp
+--- o3de/Code/Framework/AzCore/AzCore/Compression/zstd_compression.cpp.zstd-1.5	2021-05-20 14:09:10.305159726 -0400
++++ o3de/Code/Framework/AzCore/AzCore/Compression/zstd_compression.cpp	2021-05-20 14:14:14.547389930 -0400
+@@ -78,9 +78,12 @@ void ZStd::StopCompressor()
+ void ZStd::ResetCompressor()
+ {
+     AZ_Assert(m_streamCompression, "Compressor not started!");
+-    size_t r = ZSTD_resetCStream(m_streamCompression,0);
++    size_t r = ZSTD_CCtx_reset(m_streamCompression, ZSTD_reset_session_only);
++    size_t s = ZSTD_CCtx_setPledgedSrcSize(m_streamCompression, ZSTD_CONTENTSIZE_UNKNOWN);
+     AZ_UNUSED(r);
++    AZ_UNUSED(s);
+     AZ_Assert(!ZSTD_isError(r), "Can't reset compressor");
++    AZ_Assert(!ZSTD_isError(s), "Can't reset PledgedSrcSize on compressor");
+ }
+ 
+ unsigned int ZStd::Compress(const void* data, unsigned int& dataSize, void* compressedData, unsigned int compressedDataSize, FlushType flushType)

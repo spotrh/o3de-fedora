@@ -1,0 +1,12 @@
+diff -up o3de/Code/Tools/AssetProcessor/native/utilities/assetUtils.cpp.system-xxhash o3de/Code/Tools/AssetProcessor/native/utilities/assetUtils.cpp
+--- o3de/Code/Tools/AssetProcessor/native/utilities/assetUtils.cpp.system-xxhash	2021-04-23 09:31:39.552976220 -0400
++++ o3de/Code/Tools/AssetProcessor/native/utilities/assetUtils.cpp	2021-04-23 09:31:49.334137367 -0400
+@@ -41,7 +41,7 @@
+ #include <AzFramework/API/ApplicationAPI.h>
+ #include <AzFramework/Platform/PlatformDefaults.h>
+ #include <AzToolsFramework/UI/Logging/LogLine.h>
+-#include <xxhash/xxhash.h>
++#include <xxhash.h>
+ 
+ #if defined(AZ_PLATFORM_WINDOWS)
+ #   include <windows.h>

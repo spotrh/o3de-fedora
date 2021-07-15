@@ -1,0 +1,12 @@
+diff -up o3de/Gems/EditorPythonBindings/Code/Source/PythonUtility.cpp.no-matching-function o3de/Gems/EditorPythonBindings/Code/Source/PythonUtility.cpp
+--- o3de/Gems/EditorPythonBindings/Code/Source/PythonUtility.cpp.no-matching-function	2021-04-23 13:38:21.849629327 -0400
++++ o3de/Gems/EditorPythonBindings/Code/Source/PythonUtility.cpp	2021-04-23 13:37:01.784293256 -0400
+@@ -166,7 +166,7 @@ namespace EditorPythonBindings
+                     ConvertPythonFromEnumClass<AZ::s64>(underlyingTypeId, behaviorValue, outboundPythonValue);
+ 
+                 AZ_Error("python", converted, "Enumeration backed by a non-numeric integer type.");
+-                return converted ? AZStd::make_optional(pybind11::cast<AZ::s64>(outboundPythonValue)) : AZStd::nullopt;
++                return converted ? AZStd::make_optional(pybind11::cast<AZ::s64&>(outboundPythonValue)) : AZStd::nullopt;
+             }
+             return AZStd::nullopt;
+         }

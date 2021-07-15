@@ -1,0 +1,51 @@
+diff -up o3de/Code/Framework/AzNetworking/AzNetworking/AutoGen/AutoPackets_Header.jinja.py39 o3de/Code/Framework/AzNetworking/AzNetworking/AutoGen/AutoPackets_Header.jinja
+--- o3de/Code/Framework/AzNetworking/AzNetworking/AutoGen/AutoPackets_Header.jinja.py39	2021-05-04 11:53:07.000000000 -0400
++++ o3de/Code/Framework/AzNetworking/AzNetworking/AutoGen/AutoPackets_Header.jinja	2021-05-05 11:48:10.235237703 -0400
+@@ -25,7 +25,7 @@ AZStd::fixed_vector<{{ element.attrib['T
+         static constexpr AzNetworking::PacketType Type = aznumeric_cast<AzNetworking::PacketType>({{ type }});
+ 
+         {{ name }}() = default;
+-{%  if (packetNode.getchildren()) | len > 0 %}
++{%  if (packetNode) | len > 0 %}
+         explicit {{ name }}
+         (
+ {%          for Member in packetNode %}
+@@ -65,7 +65,7 @@ AZStd::fixed_vector<{{ element.attrib['T
+         AZStd::unique_ptr<AzNetworking::IPacket> Clone() const override;
+         bool Serialize(AzNetworking::ISerializer& serializer) override;
+         //! @}
+-{%  if (packetNode.getchildren()) | len > 0 %}
++{%  if (packetNode) | len > 0 %}
+ 
+     private:
+ 
+diff -up o3de/Code/Framework/AzNetworking/AzNetworking/AutoGen/AutoPackets_Source.jinja.py39 o3de/Code/Framework/AzNetworking/AzNetworking/AutoGen/AutoPackets_Source.jinja
+--- o3de/Code/Framework/AzNetworking/AzNetworking/AutoGen/AutoPackets_Source.jinja.py39	2021-05-04 11:53:07.000000000 -0400
++++ o3de/Code/Framework/AzNetworking/AzNetworking/AutoGen/AutoPackets_Source.jinja	2021-05-05 11:48:10.235237703 -0400
+@@ -15,7 +15,7 @@ AZStd::array<{{ element.attrib['Type'] }
+ AZStd::fixed_vector<{{ element.attrib['Type'] }}, {{ element.attrib['Count'] }}>{% endif %}
+ {%- endmacro %}
+ {% macro DefinePacketMethods(packetNode, name) %}
+-{%  if (packetNode.getchildren()) | len > 0 %}
++{%  if (packetNode) | len > 0 %}
+     {{ name }}::{{ name }}
+     (
+ {%      for Member in packetNode.iter('Member') %}
+diff -up o3de/Tools/TestRailImporter/lib/testrail_importer/testrail_tools/testrail_report_converter.py.py39 o3de/Tools/TestRailImporter/lib/testrail_importer/testrail_tools/testrail_report_converter.py
+--- o3de/Tools/TestRailImporter/lib/testrail_importer/testrail_tools/testrail_report_converter.py.py39	2021-05-04 11:53:09.000000000 -0400
++++ o3de/Tools/TestRailImporter/lib/testrail_importer/testrail_tools/testrail_report_converter.py	2021-05-05 12:30:34.518148681 -0400
+@@ -62,12 +62,12 @@ class TestRailReportConverter(object):
+             time = case_node.attrib.get("time", "0")
+             log_nodes = case_node.findall("system-out")
+             log_text = ""
+-            properties = case_node.getchildren()
++            properties = case_node
+ 
+             if not properties:
+                 test_cases_without_id_marker.append(case_node)
+             else:
+-                properties = case_node.getchildren()[0].getchildren()
++                properties = case_node[0]
+ 
+             for ln in log_nodes:
+                 log_text += ln.text

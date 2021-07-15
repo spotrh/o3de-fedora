@@ -1,0 +1,36 @@
+diff -up o3de/Code/Tools/ProjectManager/Source/Application.cpp.debug o3de/Code/Tools/ProjectManager/Source/Application.cpp
+--- o3de/Code/Tools/ProjectManager/Source/Application.cpp.debug	2021-07-12 13:36:32.667906986 -0400
++++ o3de/Code/Tools/ProjectManager/Source/Application.cpp	2021-07-12 13:42:08.824123565 -0400
+@@ -69,6 +69,20 @@ namespace O3DE::ProjectManager
+         }
+ 
+         m_pythonBindings = AZStd::make_unique<PythonBindings>(GetEngineRoot());
++	if (!m_pythonBindings)
++	{
++		QMessageBox::critical(nullptr, QObject::tr("!m_pythonBindings"),
++			QObject::tr("m_pythonBindings does not exist"));
++	} else {
++		AZ_Warning("ProjectManager", false, "m_pythonBindings exists");
++	}
++
++	if (!m_pythonBindings->PythonStarted())
++	{
++		QMessageBox::critical(nullptr, QObject::tr("!m_pythonBindings->PythonStarted()"),
++			QObject::tr("m_pythonBindings->PythonStarted() returned false"));
++	}
++
+         if (!m_pythonBindings || !m_pythonBindings->PythonStarted())
+         {
+             if (interactive)
+diff -up o3de/Code/Tools/ProjectManager/Source/PythonBindings.cpp.debug o3de/Code/Tools/ProjectManager/Source/PythonBindings.cpp
+--- o3de/Code/Tools/ProjectManager/Source/PythonBindings.cpp.debug	2021-07-12 13:44:34.406083509 -0400
++++ o3de/Code/Tools/ProjectManager/Source/PythonBindings.cpp	2021-07-12 13:53:31.860653290 -0400
+@@ -249,6 +249,8 @@ namespace O3DE::ProjectManager
+ 
+         // set PYTHON_HOME
+         AZStd::string pyBasePath = Platform::GetPythonHomePath(PY_PACKAGE, m_enginePath.c_str());
++	printf("pyBasePath is %s", pyBasePath.c_str());
++
+         if (!AZ::IO::SystemFile::Exists(pyBasePath.c_str()))
+         {
+             AZ_Error("python", false, "Python home path does not exist: %s", pyBasePath.c_str());

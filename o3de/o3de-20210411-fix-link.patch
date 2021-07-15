@@ -1,0 +1,12 @@
+diff -up o3de/Gems/ScriptCanvas/Code/scriptcanvasgem_debugger_files.cmake.fixlink o3de/Gems/ScriptCanvas/Code/scriptcanvasgem_debugger_files.cmake
+--- o3de/Gems/ScriptCanvas/Code/scriptcanvasgem_debugger_files.cmake.fixlink	2021-04-27 16:03:26.865325426 -0400
++++ o3de/Gems/ScriptCanvas/Code/scriptcanvasgem_debugger_files.cmake	2021-04-27 16:03:51.638747858 -0400
+@@ -10,6 +10,8 @@
+ #
+ 
+ set(FILES
++    Include/ScriptCanvas/Asset/ExecutionLogAsset.h
++    Include/ScriptCanvas/Asset/ExecutionLogAsset.cpp
+     Include/ScriptCanvas/Debugger/API.h
+     Include/ScriptCanvas/Debugger/API.cpp
+     Include/ScriptCanvas/Debugger/APIArguments.h

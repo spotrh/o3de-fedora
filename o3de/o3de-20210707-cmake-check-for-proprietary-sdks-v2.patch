@@ -1,0 +1,131 @@
+diff -up o3de/cmake/Platform/Linux/PAL_linux.cmake.proprietarysdk o3de/cmake/Platform/Linux/PAL_linux.cmake
+--- o3de/cmake/Platform/Linux/PAL_linux.cmake.proprietarysdk	2021-07-07 13:33:56.000000000 +0000
++++ o3de/cmake/Platform/Linux/PAL_linux.cmake	2021-07-07 20:29:35.473295424 +0000
+@@ -36,3 +36,10 @@ set(LY_ASSET_DEPLOY_ASSET_TYPE "pc" CACH
+ 
+ # Set the python cmd tool
+ ly_set(LY_PYTHON_CMD ${CMAKE_CURRENT_SOURCE_DIR}/python/python.sh)
++
++# The only places where we know for sure that the Proprietary SDKs exist on Linux are x86_64 (maybe also i386, but who cares about that)
++if(CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64 OR CMAKE_SYSTEM_PROCESSOR STREQUAL amd64)
++  ly_set(PAL_TRAIT_PLATFORM_HAS_PROPRIETARY_SDKS TRUE)
++else()
++  ly_set(PAL_TRAIT_PLATFORM_HAS_PROPRIETARY_SDKS FALSE)
++endif()
+diff -up o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt.proprietarysdk o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt
+--- o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt.proprietarysdk	2021-07-07 20:29:35.394298180 +0000
++++ o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt	2021-07-07 20:29:35.473295424 +0000
+@@ -19,6 +19,10 @@ if(NOT PAL_TRAIT_BUILD_HOST_TOOLS)
+     return()
+ endif()
+ 
++if(NOT PAL_TRAIT_PLATFORM_HAS_PROPRIETARY_SDKS)
++    return()
++endif()
++
+ set(platform_tools_files)
+ set(pal_tools_include_files)
+ set(pal_tools_include_dirs)
+diff -up o3de/Gems/Atom/Tools/MaterialEditor/Code/CMakeLists.txt.proprietarysdk o3de/Gems/Atom/Tools/MaterialEditor/Code/CMakeLists.txt
+--- o3de/Gems/Atom/Tools/MaterialEditor/Code/CMakeLists.txt.proprietarysdk	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/Atom/Tools/MaterialEditor/Code/CMakeLists.txt	2021-07-07 20:29:35.474295389 +0000
+@@ -17,6 +17,9 @@ if(NOT PAL_TRAIT_ATOM_MATERIAL_EDITOR_AP
+     return()
+ endif()
+ 
++if(NOT PAL_TRAIT_PLATFORM_HAS_PROPRIETARY_SDKS)
++    return()
++endif()
+ 
+ ly_add_target(
+     NAME MaterialEditor.Document STATIC
+diff -up o3de/Gems/AudioEngineWwise/Code/Platform/Linux/PAL_linux.cmake.proprietarysdk o3de/Gems/AudioEngineWwise/Code/Platform/Linux/PAL_linux.cmake
+--- o3de/Gems/AudioEngineWwise/Code/Platform/Linux/PAL_linux.cmake.proprietarysdk	2021-07-07 20:29:35.474295389 +0000
++++ o3de/Gems/AudioEngineWwise/Code/Platform/Linux/PAL_linux.cmake	2021-07-07 20:30:58.831387132 +0000
+@@ -5,4 +5,9 @@
+ #
+ #
+ 
+-set(PAL_TRAIT_AUDIO_ENGINE_WWISE_USE_STUB FALSE)
++# Wwise SDK is only available on Linux/x86_64
++if(CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64 OR CMAKE_SYSTEM_PROCESSOR STREQUAL amd64)
++   set(PAL_TRAIT_AUDIO_ENGINE_WWISE_USE_STUB FALSE)
++else()
++   set(PAL_TRAIT_AUDIO_ENGINE_WWISE_USE_STUB TRUE)
++endif()
+diff -up o3de/Gems/NvCloth/Code/Platform/Linux/PAL_linux.cmake.proprietarysdk o3de/Gems/NvCloth/Code/Platform/Linux/PAL_linux.cmake
+--- o3de/Gems/NvCloth/Code/Platform/Linux/PAL_linux.cmake.proprietarysdk	2021-07-07 20:29:35.474295389 +0000
++++ o3de/Gems/NvCloth/Code/Platform/Linux/PAL_linux.cmake	2021-07-07 20:31:59.158282381 +0000
+@@ -7,4 +7,9 @@
+ 
+ ly_associate_package(PACKAGE_NAME NvCloth-1.1.6-rev2-multiplatform TARGETS NvCloth PACKAGE_HASH 535d927782fa5d3086c5f813c46392ee3c294fc117dcd87b055d469c3f034356)
+ 
+-set(PAL_TRAIT_NVCLOTH_USE_STUB FALSE)
++# NvCloth only possible on Linux/x86_64
++if(CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64 OR CMAKE_SYSTEM_PROCESSOR STREQUAL amd64)
++   set(PAL_TRAIT_NVCLOTH_USE_STUB FALSE)
++else()
++   set(PAL_TRAIT_NVCLOTH_USE_STUB TRUE)
++endif()
+diff -up o3de/Gems/PhysX/Code/CMakeLists.txt.proprietarysdk o3de/Gems/PhysX/Code/CMakeLists.txt
+--- o3de/Gems/PhysX/Code/CMakeLists.txt.proprietarysdk	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/PhysX/Code/CMakeLists.txt	2021-07-07 20:29:35.475295354 +0000
+@@ -72,7 +72,7 @@ ly_add_target(
+ ly_create_alias(NAME PhysX.Clients NAMESPACE Gem TARGETS Gem::PhysX)
+ ly_create_alias(NAME PhysX.Servers NAMESPACE Gem TARGETS Gem::PhysX)
+ 
+-if(PAL_TRAIT_BUILD_HOST_TOOLS)
++if(PAL_TRAIT_BUILD_HOST_TOOLS AND PAL_TRAIT_PHYSX_SUPPORTED)
+ 
+      ly_associate_package(PACKAGE_NAME poly2tri-0.3.3-rev2-multiplatform TARGETS poly2tri PACKAGE_HASH 04092d06716f59b936b61906eaf3647db23b685d81d8b66131eb53e0aeaa1a38) 
+      ly_associate_package(PACKAGE_NAME v-hacd-2.0-rev1-multiplatform     TARGETS v-hacd   PACKAGE_HASH 5c71aef19cc9787d018d64eec076e9f51ea5a3e0dc6b6e22e57c898f6cc4afe3)
+@@ -150,7 +150,7 @@ endif()
+ ################################################################################
+ # Tests
+ ################################################################################
+-if(PAL_TRAIT_BUILD_TESTS_SUPPORTED)
++if(PAL_TRAIT_BUILD_TESTS_SUPPORTED AND PAL_TRAIT_PHYSX_SUPPORTED)
+ 
+     
+ 
+diff -up o3de/Gems/PhysX/Code/physx_unsupported_files.cmake.proprietarysdk o3de/Gems/PhysX/Code/physx_unsupported_files.cmake
+--- o3de/Gems/PhysX/Code/physx_unsupported_files.cmake.proprietarysdk	2021-07-07 20:29:35.474295389 +0000
++++ o3de/Gems/PhysX/Code/physx_unsupported_files.cmake	2021-07-07 20:32:50.844479091 +0000
+@@ -5,7 +5,10 @@
+ #
+ #
+ 
++# ui file is only here for AUTOUIC check
++
+ set(FILES
+     Source/PhysXUnsupported_precompiled.cpp
+     Source/PhysXUnsupported_precompiled.h
++    Editor/EditorWindow.ui
+ )
+diff -up o3de/Gems/PhysX/Code/Source/Platform/Linux/PAL_linux.cmake.proprietarysdk o3de/Gems/PhysX/Code/Source/Platform/Linux/PAL_linux.cmake
+--- o3de/Gems/PhysX/Code/Source/Platform/Linux/PAL_linux.cmake.proprietarysdk	2021-07-07 20:29:35.475295354 +0000
++++ o3de/Gems/PhysX/Code/Source/Platform/Linux/PAL_linux.cmake	2021-07-07 20:33:35.614916894 +0000
+@@ -5,5 +5,10 @@
+ #
+ #
+ 
+-set(PAL_TRAIT_PHYSX_SUPPORTED TRUE)
++# PhysX only available on Linux/x86_64
++if(CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64 OR CMAKE_SYSTEM_PROCESSOR STREQUAL amd64)
++   set(PAL_TRAIT_PHYSX_SUPPORTED TRUE)
++else()
++   set(PAL_TRAIT_PHYSX_SUPPORTED FALSE)
++endif()
+ set(PAL_TRAIT_JOINTS_TYPED_TEST_CASE FALSE)
+diff -up o3de/Gems/PhysXDebug/Code/CMakeLists.txt.proprietarysdk o3de/Gems/PhysXDebug/Code/CMakeLists.txt
+--- o3de/Gems/PhysXDebug/Code/CMakeLists.txt.proprietarysdk	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/PhysXDebug/Code/CMakeLists.txt	2021-07-07 20:29:35.475295354 +0000
+@@ -44,7 +44,7 @@ ly_add_target(
+ ly_create_alias(NAME PhysXDebug.Clients NAMESPACE Gem TARGETS Gem::PhysXDebug)
+ ly_create_alias(NAME PhysXDebug.Servers NAMESPACE Gem TARGETS Gem::PhysXDebug)
+ 
+-if(PAL_TRAIT_BUILD_HOST_TOOLS)
++if(PAL_TRAIT_BUILD_HOST_TOOLS AND PAL_TRAIT_PHYSX_SUPPORTED)
+     ly_add_target(
+         NAME PhysXDebug.Editor GEM_MODULE
+         NAMESPACE Gem

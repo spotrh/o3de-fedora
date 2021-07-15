@@ -1,0 +1,11 @@
+diff -up o3de/cmake/Platform/Common/Clang/Configurations_clang.cmake.defaulted-function-deleted o3de/cmake/Platform/Common/Clang/Configurations_clang.cmake
+--- o3de/cmake/Platform/Common/Clang/Configurations_clang.cmake.defaulted-function-deleted	2021-04-27 09:32:23.665556947 -0400
++++ o3de/cmake/Platform/Common/Clang/Configurations_clang.cmake	2021-04-27 09:32:38.751799685 -0400
+@@ -24,6 +24,7 @@ ly_append_configurations_options(
+         -Wno-unknown-warning-option       
+         "-Wno-#pragma-messages"
+         -Wno-absolute-value
++        -Wno-defaulted-function-deleted
+         -Wno-dynamic-class-memaccess
+         -Wno-format-security
+         -Wno-inconsistent-missing-override

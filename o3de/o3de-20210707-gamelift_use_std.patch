@@ -1,0 +1,11 @@
+diff -up o3de/Gems/AWSGameLift/Code/AWSGameLiftServer/Source/GameLiftServerSDKWrapper.h.use_std o3de/Gems/AWSGameLift/Code/AWSGameLiftServer/Source/GameLiftServerSDKWrapper.h
+--- o3de/Gems/AWSGameLift/Code/AWSGameLiftServer/Source/GameLiftServerSDKWrapper.h.use_std	2021-07-08 14:51:30.856533894 +0000
++++ o3de/Gems/AWSGameLift/Code/AWSGameLiftServer/Source/GameLiftServerSDKWrapper.h	2021-07-08 14:53:59.432359136 +0000
+@@ -7,6 +7,7 @@
+ 
+ #pragma once
+ 
++#define GAMELIFT_USE_STD 1
+ #include <aws/gamelift/server/GameLiftServerAPI.h>
+ 
+ #include <AzCore/std/string/string.h>

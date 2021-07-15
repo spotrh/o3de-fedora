@@ -1,0 +1,3375 @@
+diff -up o3de/cmake/3rdParty/FindQt.cmake.qt5-fix o3de/cmake/3rdParty/FindQt.cmake
+--- o3de/cmake/3rdParty/FindQt.cmake.qt5-fix	2021-07-07 21:16:39.183761286 +0000
++++ o3de/cmake/3rdParty/FindQt.cmake	2021-07-07 21:16:39.183761286 +0000
+@@ -0,0 +1,173 @@
++#
++# All or portions of this file Copyright (c) Amazon.com, Inc. or its affiliates or
++# its licensors.
++#
++# For complete copyright and license terms please see the LICENSE at the root of this
++# distribution (the "License"). All use of this software is governed by the License,
++# or, if provided, by the license below or the license accompanying this file. Do not
++# remove or modify any license notices. This file is distributed on an "AS IS" BASIS,
++# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++#
++
++if(TARGET 3rdParty::Qt::Coreo3de) # Check we are not called multiple times
++    return()
++endif()
++
++set(QT_PACKAGE_NAME Qt)
++# set(QT_PACKAGE_VERSION 5.15.1.2-az)
++
++# set(BASE_PATH "${LY_3RDPARTY_PATH}/${QT_PACKAGE_NAME}/${QT_PACKAGE_VERSION}")
++# if(NOT EXISTS ${BASE_PATH})
++#     message(FATAL_ERROR "Cannot find 3rdParty library ${QT_PACKAGE_NAME} on path ${BASE_PATH}")
++# endif()
++
++set(QT5_COMPONENTS
++    Coreo3de
++    Concurrent
++    Gui
++    LinguistTools
++    Network
++    OpenGL
++    Svg
++    Test
++    WebEngineWidgets
++    Widgetso3de
++    Xml
++)
++
++# include(${CMAKE_CURRENT_LIST_DIR}/Platform/${PAL_PLATFORM_NAME}/Qt_${PAL_PLATFORM_NAME_LOWERCASE}.cmake)
++
++list(APPEND CMAKE_PREFIX_PATH ${QT_LIB_PATH}/cmake/Qt5)
++
++# Clear the cache for found DIRs
++unset(Qt5_DIR CACHE)
++foreach(component ${QT5_COMPONENTS})
++    unset(Qt5${component}_DIR CACHE)
++endforeach()
++unset(Qt5Positioning_DIR CACHE)
++unset(Qt5PrintSupport_DIR CACHE)
++unset(Qt5WebChannel_DIR CACHE)
++unset(Qt5WebEngineCore_DIR CACHE)
++
++# Populate the Qt5 configurations
++find_package(Qt5
++    COMPONENTS ${QT5_COMPONENTS}
++    REQUIRED
++    NO_CMAKE_PACKAGE_REGISTRY 
++)
++mark_as_advanced(Qt5_DIR) # Hiding from GUI
++mark_as_advanced(Qt5LinguistTools_DIR) # Hiding from GUI, this variable comes from the LinguistTools module
++
++# Now create libraries that wrap the dependency so we can refer to them in our format
++foreach(component ${QT5_COMPONENTS})
++    if(TARGET Qt5::${component})
++
++        get_target_property(system_includes Qt5::${component} INTERFACE_INCLUDE_DIRECTORIES)
++        set_target_properties(Qt5::${component} PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "") # Clear it in case someone refers to it
++
++        ly_target_include_system_directories(TARGET Qt5::${component}
++            INTERFACE "${system_includes}"
++        )
++
++        add_library(3rdParty::Qt::${component} INTERFACE IMPORTED)
++        set_target_properties(3rdParty::Qt::${component} PROPERTIES
++            INTERFACE_LINK_LIBRARIES Qt5::${component}
++            INTERFACE_COMPILE_DEFINITIONS QT_NO_EXCEPTIONS
++        )
++        mark_as_advanced(Qt5${component}_DIR) # Hiding from GUI
++
++    endif()
++endforeach()
++
++# Some extra DIR variables we want to hide from GUI
++mark_as_advanced(Qt5Positioning_DIR)
++mark_as_advanced(Qt5PrintSupport_DIR)
++mark_as_advanced(Qt5WebChannel_DIR)
++mark_as_advanced(Qt5WebEngineCore_DIR)
++
++# Special case for Qt::Gui, we are using the private headers...
++ly_target_include_system_directories(TARGET 3rdParty::Qt::Gui
++   INTERFACE "${Qt5Gui_PRIVATE_INCLUDE_DIRS}"
++)
++
++# Another special case: Qt:Widgets, we are also using private headers
++ly_target_include_system_directories(TARGET 3rdParty::Qt::Widgetso3de
++    INTERFACE "${Qt5Widgetso3de_PRIVATE_INCLUDE_DIRS}"
++)
++
++# UIC executable
++unset(QT_UIC_EXECUTABLE CACHE)
++find_program(QT_UIC_EXECUTABLE uic-qt5 HINTS "${QT_PATH}/bin")
++mark_as_advanced(QT_UIC_EXECUTABLE) # Hiding from GUI
++
++#! ly_qt_uic_target: handles qt's ui files by injecting uic generation
++#
++# AUTOUIC has issues to detect changes in UIC files and trigger regeneration:
++# https://gitlab.kitware.com/cmake/cmake/-/issues/18741
++# So instead, we are going to manually wrap the files. We dont use qt5_wrap_ui because
++# it outputs to ${CMAKE_CURRENT_BINARY_DIR}/ui_${outfile}.h and we want to follow the
++# same folder structure that AUTOUIC uses
++#
++function(ly_qt_uic_target TARGET)
++    
++    get_target_property(all_ui_sources ${TARGET} SOURCES)
++    list(FILTER all_ui_sources INCLUDE REGEX "^.*\\.ui$")
++    if(NOT all_ui_sources)
++        message(FATAL_ERROR "Target ${TARGET} contains AUTOUIC but doesnt have any .ui file")
++    endif()
++    
++    if(AUTOGEN_BUILD_DIR)
++        set(gen_dir ${AUTOGEN_BUILD_DIR})
++    else()
++        set(gen_dir ${CMAKE_CURRENT_BINARY_DIR}/${TARGET}_autogen/include)
++    endif()
++
++    foreach(ui_source ${all_ui_sources})
++        
++        get_filename_component(filename ${ui_source} NAME_WE)
++        get_filename_component(dir ${ui_source} DIRECTORY)
++        if(IS_ABSOLUTE ${dir})
++            file(RELATIVE_PATH dir ${CMAKE_CURRENT_SOURCE_DIR} ${dir})
++        endif()
++
++        set(outfolder ${gen_dir}/${dir})
++        set(outfile ${outfolder}/ui_${filename}.h)
++        get_filename_component(infile ${ui_source} ABSOLUTE)
++
++        file(MAKE_DIRECTORY ${outfolder})
++        add_custom_command(OUTPUT ${outfile}
++          COMMAND ${QT_UIC_EXECUTABLE} -o ${outfile} ${infile}
++          MAIN_DEPENDENCY ${infile} VERBATIM
++          COMMENT "UIC ${infile}"
++        )
++
++        set_source_files_properties(${infile} PROPERTIES SKIP_AUTOUIC TRUE)
++        set_source_files_properties(${outfile} PROPERTIES 
++            SKIP_AUTOMOC TRUE
++            SKIP_AUTOUIC TRUE
++            GENERATED TRUE
++        )
++        list(APPEND all_ui_wrapped_sources ${outfile})
++
++    endforeach()
++
++    # Add files to the target
++    target_sources(${TARGET} PRIVATE ${all_ui_wrapped_sources})
++    source_group("Generated Files" FILES ${all_ui_wrapped_sources})
++
++    # Add include directories relative to the generated folder
++    # query for the property first to avoid the "NOTFOUND" in a list
++    get_property(has_includes TARGET ${TARGET} PROPERTY INCLUDE_DIRECTORIES SET)
++    if(has_includes)
++        get_property(all_include_directories TARGET ${TARGET} PROPERTY INCLUDE_DIRECTORIES)
++        foreach(dir ${all_include_directories})
++            if(IS_ABSOLUTE ${dir})
++                file(RELATIVE_PATH dir ${CMAKE_CURRENT_SOURCE_DIR} ${dir})
++            endif()
++            list(APPEND new_includes ${gen_dir}/${dir})
++        endforeach()
++    endif()
++    list(APPEND new_includes ${gen_dir})
++    target_include_directories(${TARGET} PRIVATE ${new_includes})
++
++endfunction()
+diff -up o3de/Code/Editor/CMakeLists.txt.qt5-fix o3de/Code/Editor/CMakeLists.txt
+--- o3de/Code/Editor/CMakeLists.txt.qt5-fix	2021-07-07 21:17:16.939443721 +0000
++++ o3de/Code/Editor/CMakeLists.txt	2021-07-07 21:18:10.334580378 +0000
+@@ -34,9 +34,9 @@ ly_add_target(
+             Legacy::CryCommon
+             3rdParty::zlib
+         PUBLIC
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Gui
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             AZ::AzToolsFramework
+ )
+ 
+@@ -98,9 +98,9 @@ ly_add_target(
+             SANDBOX_IMPORTS
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Gui
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             3rdParty::Qt::Concurrent
+             3rdParty::tiff
+             3rdParty::squish-ccr
+@@ -166,7 +166,7 @@ ly_add_target(
+         Platform/${PAL_PLATFORM_NAME}/editor_${PAL_PLATFORM_NAME_LOWERCASE}.cmake
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             Legacy::CryCommon
+     RUNTIME_DEPENDENCIES
+         Legacy::CrySystem
+@@ -209,7 +209,7 @@ if(PAL_TRAIT_BUILD_TESTS_SUPPORTED)
+             PRIVATE
+                 AZ::AzTest
+                 3rdParty::Qt::Gui
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+                 Legacy::EditorCore
+                 Legacy::CryCommon
+                 AZ::AzCore
+@@ -234,9 +234,9 @@ if(PAL_TRAIT_BUILD_TESTS_SUPPORTED)
+         BUILD_DEPENDENCIES
+             PRIVATE
+                 AZ::AzTest
+-                3rdParty::Qt::Core
++                3rdParty::Qt::Coreo3de
+                 3rdParty::Qt::Gui
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+                 Legacy::CryCommon
+                 AZ::AzToolsFramework
+                 Legacy::EditorLib
+diff -up o3de/Code/Editor/Controls/ConsoleSCB.cpp.qt5-fix o3de/Code/Editor/Controls/ConsoleSCB.cpp
+--- o3de/Code/Editor/Controls/ConsoleSCB.cpp.qt5-fix	2021-07-07 21:18:25.341056698 +0000
++++ o3de/Code/Editor/Controls/ConsoleSCB.cpp	2021-07-07 21:19:06.690613710 +0000
+@@ -13,9 +13,9 @@
+ // Qt
+ #include <QHeaderView>
+ #include <QSortFilterProxyModel>
+-#include <QtWidgets/QMenu>
+-#include <QtWidgets/QScrollBar>
+-#include <QtWidgets/QTableView>
++#include <QtWidgetso3de/QMenu>
++#include <QtWidgetso3de/QScrollBar>
++#include <QtWidgetso3de/QTableView>
+ #include <QtGui/QSyntaxHighlighter>
+ 
+ // AzQtComponents
+diff -up o3de/Code/Editor/Controls/ConsoleSCBMFC.cpp.qt5-fix o3de/Code/Editor/Controls/ConsoleSCBMFC.cpp
+--- o3de/Code/Editor/Controls/ConsoleSCBMFC.cpp.qt5-fix	2021-07-07 21:19:22.929047034 +0000
++++ o3de/Code/Editor/Controls/ConsoleSCBMFC.cpp	2021-07-07 21:19:54.379949486 +0000
+@@ -17,16 +17,16 @@
+ #include <QtUtil.h>
+ #include <QtUtilWin.h>
+ 
+-#include <QtCore/QStringList>
+-#include <QtCore/QScopedPointer>
+-#include <QtCore/QPoint>
++#include <QtCoreo3de/QStringList>
++#include <QtCoreo3de/QScopedPointer>
++#include <QtCoreo3de/QPoint>
+ #include <QtGui/QCursor>
+ #include <QtGui/QMouseEvent>
+-#include <QtWidgets/QStyle>
+-#include <QtWidgets/QStyleFactory>
+-#include <QtWidgets/QMenu>
+-#include <QtWidgets/QScrollBar>
+-#include <QtWidgets/QVBoxLayout>
++#include <QtWidgetso3de/QStyle>
++#include <QtWidgetso3de/QStyleFactory>
++#include <QtWidgetso3de/QMenu>
++#include <QtWidgetso3de/QScrollBar>
++#include <QtWidgetso3de/QVBoxLayout>
+ 
+ #include <vector>
+ #include <iostream>
+diff -up o3de/Code/Editor/Controls/ConsoleSCBMFC.h.qt5-fix o3de/Code/Editor/Controls/ConsoleSCBMFC.h
+--- o3de/Code/Editor/Controls/ConsoleSCBMFC.h.qt5-fix	2021-07-07 21:20:15.871199510 +0000
++++ o3de/Code/Editor/Controls/ConsoleSCBMFC.h	2021-07-07 21:20:35.524513657 +0000
+@@ -11,9 +11,9 @@
+ #pragma once
+ 
+ #if !defined(Q_MOC_RUN)
+-#include <QtWidgets/QLineEdit>
+-#include <QtWidgets/QTextEdit>
+-#include <QtWidgets/QPushButton>
++#include <QtWidgetso3de/QLineEdit>
++#include <QtWidgetso3de/QTextEdit>
++#include <QtWidgetso3de/QPushButton>
+ 
+ #include "ConsoleSCB.h"
+ #endif
+diff -up o3de/Code/Editor/Controls/ReflectedPropertyControl/PropertyGenericCtrl.cpp.qt5-fix o3de/Code/Editor/Controls/ReflectedPropertyControl/PropertyGenericCtrl.cpp
+--- o3de/Code/Editor/Controls/ReflectedPropertyControl/PropertyGenericCtrl.cpp.qt5-fix	2021-07-07 21:20:51.856943697 +0000
++++ o3de/Code/Editor/Controls/ReflectedPropertyControl/PropertyGenericCtrl.cpp	2021-07-07 21:21:16.560081632 +0000
+@@ -12,7 +12,7 @@
+ // Qt
+ #include <QMessageBox>
+ #include <QHBoxLayout>
+-#include <QtWidgets/QLabel>
++#include <QtWidgetso3de/QLabel>
+ #include <QLineEdit>
+ #include <QStringListModel>
+ #include <QToolButton>
+@@ -27,7 +27,7 @@
+ #include "QtViewPaneManager.h"
+ 
+ AZ_PUSH_DISABLE_DLL_EXPORT_MEMBER_WARNING
+-#include <QtWidgets/QListView>
++#include <QtWidgetso3de/QListView>
+ AZ_POP_DISABLE_DLL_EXPORT_MEMBER_WARNING
+ 
+ 
+diff -up o3de/Code/Editor/Controls/ReflectedPropertyControl/PropertyMiscCtrl.cpp.qt5-fix o3de/Code/Editor/Controls/ReflectedPropertyControl/PropertyMiscCtrl.cpp
+--- o3de/Code/Editor/Controls/ReflectedPropertyControl/PropertyMiscCtrl.cpp.qt5-fix	2021-07-07 21:21:30.451596853 +0000
++++ o3de/Code/Editor/Controls/ReflectedPropertyControl/PropertyMiscCtrl.cpp	2021-07-07 21:21:57.001670331 +0000
+@@ -11,10 +11,10 @@
+ 
+ // Qt
+ #include <QHBoxLayout>
+-#include <QtWidgets/QLabel>
++#include <QtWidgetso3de/QLabel>
+ #include <QLineEdit>
+-#include <QtWidgets/QToolButton>
+-#include <QtCore/QTimer>
++#include <QtWidgetso3de/QToolButton>
++#include <QtCoreo3de/QTimer>
+ #include <QtUtilWin.h>
+ 
+ // Editor
+diff -up o3de/Code/Editor/Controls/ReflectedPropertyControl/PropertyResourceCtrl.h.qt5-fix o3de/Code/Editor/Controls/ReflectedPropertyControl/PropertyResourceCtrl.h
+--- o3de/Code/Editor/Controls/ReflectedPropertyControl/PropertyResourceCtrl.h.qt5-fix	2021-07-07 21:22:11.185175364 +0000
++++ o3de/Code/Editor/Controls/ReflectedPropertyControl/PropertyResourceCtrl.h	2021-07-07 21:22:22.020797233 +0000
+@@ -16,8 +16,8 @@
+ #include "ReflectedVar.h"
+ #include "Util/VariablePropertyType.h"
+ #include <QWidget>
+-#include <QtWidgets/QToolButton>
+-#include <QtCore/QVector>
++#include <QtWidgetso3de/QToolButton>
++#include <QtCoreo3de/QVector>
+ #endif
+ 
+ class QLineEdit;
+diff -up o3de/Code/Editor/LegacyViewportCameraController.h.qt5-fix o3de/Code/Editor/LegacyViewportCameraController.h
+--- o3de/Code/Editor/LegacyViewportCameraController.h.qt5-fix	2021-07-07 21:22:35.316333258 +0000
++++ o3de/Code/Editor/LegacyViewportCameraController.h	2021-07-07 21:22:43.770038243 +0000
+@@ -14,7 +14,7 @@
+ 
+ #include <Atom/RPI.Public/Base.h>
+ 
+-#include <QtCore/qnamespace.h>
++#include <QtCoreo3de/qnamespace.h>
+ #include <QPoint>
+ 
+ namespace AzFramework
+diff -up o3de/Code/Editor/NewLevelDialog.cpp.qt5-fix o3de/Code/Editor/NewLevelDialog.cpp
+--- o3de/Code/Editor/NewLevelDialog.cpp.qt5-fix	2021-07-07 21:23:01.969403137 +0000
++++ o3de/Code/Editor/NewLevelDialog.cpp	2021-07-07 21:23:12.347040984 +0000
+@@ -11,7 +11,7 @@
+ #include "NewLevelDialog.h"
+ 
+ // Qt
+-#include <QtWidgets/QPushButton>
++#include <QtWidgetso3de/QPushButton>
+ #include <QFileDialog>
+ #include <QMessageBox>
+ #include <QTimer>
+diff -up o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/CMakeLists.txt.qt5-fix o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/CMakeLists.txt
+--- o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/CMakeLists.txt.qt5-fix	2021-07-07 21:23:47.697807343 +0000
++++ o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/CMakeLists.txt	2021-07-07 21:24:14.562869828 +0000
+@@ -26,7 +26,7 @@ ly_add_target(
+             .
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             AZ::AzCore
+             AZ::AzToolsFramework
+             Legacy::CryCommon
+@@ -58,9 +58,9 @@ if(PAL_TRAIT_BUILD_TESTS_SUPPORTED)
+                 .
+         BUILD_DEPENDENCIES
+             PRIVATE
+-                3rdParty::Qt::Core
++                3rdParty::Qt::Coreo3de
+                 3rdParty::Qt::Gui
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+                 AZ::AzTest
+                 AZ::AzToolsFramework
+                 AZ::AzToolsFrameworkTestCommon
+diff -up o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerListModel.cpp.qt5-fix o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerListModel.cpp
+--- o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerListModel.cpp.qt5-fix	2021-07-07 21:24:27.351423548 +0000
++++ o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerListModel.cpp	2021-07-07 21:24:53.303517894 +0000
+@@ -8,13 +8,13 @@
+ 
+ #include "OutlinerListModel.hxx"
+ 
+-#include <QtCore/QMimeData>
++#include <QtCoreo3de/QMimeData>
+ #include <QFontMetrics>
+ #include <QtGui/QPainter>
+-#include <QtWidgets/QStyleOption>
+-#include <QtWidgets/QCheckBox>
+-#include <QtWidgets/QStyle>
+-#include <QtWidgets/QMessageBox>
++#include <QtWidgetso3de/QStyleOption>
++#include <QtWidgetso3de/QCheckBox>
++#include <QtWidgetso3de/QStyle>
++#include <QtWidgetso3de/QMessageBox>
+ #include <QGuiApplication>
+ #include <QStyleOptionButton>
+ #include <QTimer>
+diff -up o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerListModel.hxx.qt5-fix o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerListModel.hxx
+--- o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerListModel.hxx.qt5-fix	2021-07-07 21:25:00.277274524 +0000
++++ o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerListModel.hxx	2021-07-07 21:25:17.552671681 +0000
+@@ -11,10 +11,10 @@
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+ 
+-#include <QtWidgets/QWidget>
+-#include <QtWidgets/QStyledItemDelegate>
+-#include <QtWidgets/QCheckBox>
+-#include <QtCore/QRect>
++#include <QtWidgetso3de/QWidget>
++#include <QtWidgetso3de/QStyledItemDelegate>
++#include <QtWidgetso3de/QCheckBox>
++#include <QtCoreo3de/QRect>
+ 
+ #include <AzCore/Memory/SystemAllocator.h>
+ #include <AzCore/Component/EntityBus.h>
+diff -up o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerSortFilterProxyModel.hxx.qt5-fix o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerSortFilterProxyModel.hxx
+--- o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerSortFilterProxyModel.hxx.qt5-fix	2021-07-07 21:25:29.081269366 +0000
++++ o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerSortFilterProxyModel.hxx	2021-07-07 21:25:36.973993946 +0000
+@@ -10,7 +10,7 @@
+ 
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+-#include <QtCore/QSortFilterProxyModel>
++#include <QtCoreo3de/QSortFilterProxyModel>
+ #include <AzCore/Memory/SystemAllocator.h>
+ #endif
+ 
+diff -up o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerWidget.cpp.qt5-fix o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerWidget.cpp
+--- o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerWidget.cpp.qt5-fix	2021-07-07 21:25:56.433314878 +0000
++++ o3de/Code/Editor/Plugins/ComponentEntityEditorPlugin/UI/Outliner/OutlinerWidget.cpp	2021-07-07 21:26:09.241867903 +0000
+@@ -43,8 +43,8 @@
+ #include <QDir>
+ #include <QPainter>
+ #include <QApplication>
+-#include <QtCore/QPropertyAnimation>
+-#include <QtCore/QTimer>
++#include <QtCoreo3de/QPropertyAnimation>
++#include <QtCoreo3de/QTimer>
+ #include <QHeaderView>
+ #include <QInputDialog>
+ 
+diff -up o3de/Code/Editor/Plugins/EditorAssetImporter/AssetBrowserContextProvider.cpp.qt5-fix o3de/Code/Editor/Plugins/EditorAssetImporter/AssetBrowserContextProvider.cpp
+--- o3de/Code/Editor/Plugins/EditorAssetImporter/AssetBrowserContextProvider.cpp.qt5-fix	2021-07-07 21:26:25.743292070 +0000
++++ o3de/Code/Editor/Plugins/EditorAssetImporter/AssetBrowserContextProvider.cpp	2021-07-07 21:26:34.835974766 +0000
+@@ -8,7 +8,7 @@
+ #include "EditorAssetImporter_precompiled.h"
+ #include <AssetBrowserContextProvider.h>
+ #include <AssetImporterPlugin.h>
+-#include <QtCore/QMimeData>
++#include <QtCoreo3de/QMimeData>
+ #include <QMenu>
+ #include <AzToolsFramework/AssetBrowser/AssetBrowserEntry.h>
+ #include <SceneAPI/SceneCore/Events/AssetImportRequest.h>
+diff -up o3de/Code/Editor/Plugins/EditorAssetImporter/CMakeLists.txt.qt5-fix o3de/Code/Editor/Plugins/EditorAssetImporter/CMakeLists.txt
+--- o3de/Code/Editor/Plugins/EditorAssetImporter/CMakeLists.txt.qt5-fix	2021-07-07 21:26:44.062652789 +0000
++++ o3de/Code/Editor/Plugins/EditorAssetImporter/CMakeLists.txt	2021-07-07 21:27:02.784999446 +0000
+@@ -25,8 +25,8 @@ ly_add_target(
+             .
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Core
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Coreo3de
++            3rdParty::Qt::Widgetso3de
+             AZ::AzCore
+             AZ::AzToolsFramework
+             AZ::SceneCore
+diff -up o3de/Code/Editor/Plugins/EditorCommon/CMakeLists.txt.qt5-fix o3de/Code/Editor/Plugins/EditorCommon/CMakeLists.txt
+--- o3de/Code/Editor/Plugins/EditorCommon/CMakeLists.txt.qt5-fix	2021-07-07 21:27:12.287667838 +0000
++++ o3de/Code/Editor/Plugins/EditorCommon/CMakeLists.txt	2021-07-07 21:27:23.356281588 +0000
+@@ -39,8 +39,8 @@ ly_add_target(
+     BUILD_DEPENDENCIES
+         PRIVATE
+             3rdParty::zlib
+-            3rdParty::Qt::Core
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Coreo3de
++            3rdParty::Qt::Widgetso3de
+             Legacy::CryCommon
+             Legacy::EditorCore
+             AZ::AzCore
+diff -up o3de/Code/Editor/Plugins/ProjectSettingsTool/CMakeLists.txt.qt5-fix o3de/Code/Editor/Plugins/ProjectSettingsTool/CMakeLists.txt
+--- o3de/Code/Editor/Plugins/ProjectSettingsTool/CMakeLists.txt.qt5-fix	2021-07-07 21:27:34.527891740 +0000
++++ o3de/Code/Editor/Plugins/ProjectSettingsTool/CMakeLists.txt	2021-07-07 21:27:43.755569725 +0000
+@@ -24,9 +24,9 @@ ly_add_target(
+             EDITOR_COMMON_IMPORTS
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Gui
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             AZ::AzCore
+             AZ::AzToolsFramework
+             Legacy::CryCommon
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/FlowLayout.cpp.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/FlowLayout.cpp
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/FlowLayout.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/FlowLayout.cpp	2021-07-07 21:16:39.183761286 +0000
+@@ -39,7 +39,7 @@
+ ****************************************************************************/
+ // Modified from original
+ 
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include <AzQtComponents/Components/FlowLayout.h>
+ 
+ FlowLayout::FlowLayout(QWidget* parent, int margin, int hSpacing, int vSpacing)
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/FlowLayout.h.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/FlowLayout.h
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/FlowLayout.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/FlowLayout.h	2021-07-07 21:16:39.183761286 +0000
+@@ -42,9 +42,9 @@
+ #ifndef FLOWLAYOUT_H
+ #define FLOWLAYOUT_H
+ 
+-#include <QtCore/QRect>
+-#include <QtWidgets/QLayout>
+-#include <QtWidgets/QStyle>
++#include <QtCoreo3de/QRect>
++#include <QtWidgetso3de/QLayout>
++#include <QtWidgetso3de/QStyle>
+ 
+ #include <AzQtComponents/AzQtComponentsAPI.h>
+ 
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Style.cpp.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Style.cpp
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Style.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Style.cpp	2021-07-07 21:16:39.183761286 +0000
+@@ -68,10 +68,10 @@ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown
+ #include <QTextEdit>
+ #include <QToolButton>
+ #include <QtGui/private/qscreen_p.h>
+-#include <QtWidgets/private/qstylesheetstyle_p.h>
++#include <QtWidgetso3de/private/qstylesheetstyle_p.h>
+ AZ_POP_DISABLE_WARNING
+ 
+-#include <QtWidgets/private/qstylehelper_p.h>
++#include <QtWidgetso3de/private/qstylehelper_p.h>
+ 
+ #include <limits>
+ 
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/StyleHelpers.h.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/StyleHelpers.h
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/StyleHelpers.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/StyleHelpers.h	2021-07-07 21:16:39.184761251 +0000
+@@ -9,7 +9,7 @@
+ #include <AzQtComponents/Components/StyleManager.h>
+ 
+ AZ_PUSH_DISABLE_WARNING(4251 4800, "-Wunknown-warning-option") // disable warnings spawned by QT
+-#include <QtWidgets/private/qstylesheetstyle_p.h>
++#include <QtWidgetso3de/private/qstylesheetstyle_p.h>
+ AZ_POP_DISABLE_WARNING
+ 
+ namespace AzQtComponents
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/StyleManager.cpp.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/StyleManager.cpp
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/StyleManager.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/StyleManager.cpp	2021-07-07 21:16:39.184761251 +0000
+@@ -24,7 +24,7 @@ AZ_POP_DISABLE_WARNING
+ #include <QWidget>
+ #include <QDebug>
+ 
+-#include <QtWidgets/private/qstylesheetstyle_p.h>
++#include <QtWidgetso3de/private/qstylesheetstyle_p.h>
+ 
+ #include <AzQtComponents/Components/StylesheetPreprocessor.h>
+ #include <AzQtComponents/Utilities/QtPluginPaths.h>
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/StylesheetPreprocessor.cpp.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/StylesheetPreprocessor.cpp
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/StylesheetPreprocessor.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/StylesheetPreprocessor.cpp	2021-07-07 21:16:39.184761251 +0000
+@@ -6,9 +6,9 @@
+  */
+ #include <AzCore/Debug/Trace.h>
+ #include <AzQtComponents/Components/StylesheetPreprocessor.h>
+-#include <QtCore/QObject>
+-#include <QtCore/QJsonDocument>
+-#include <QtCore/QJsonObject>
++#include <QtCoreo3de/QObject>
++#include <QtCoreo3de/QJsonDocument>
++#include <QtCoreo3de/QJsonObject>
+ #include <QRegularExpression>
+ 
+ namespace
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ComboBox.cpp.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ComboBox.cpp
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ComboBox.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ComboBox.cpp	2021-07-07 21:16:39.184761251 +0000
+@@ -22,7 +22,7 @@ AZ_PUSH_DISABLE_WARNING(4244 4251, "-Wun
+ #include <QStyledItemDelegate>
+ #include <QToolButton>
+ 
+-#include <QtWidgets/private/qstylesheetstyle_p.h>
++#include <QtWidgetso3de/private/qstylesheetstyle_p.h>
+ AZ_POP_DISABLE_WARNING
+ 
+ namespace AzQtComponents
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/PushButton.cpp.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/PushButton.cpp
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/PushButton.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/PushButton.cpp	2021-07-07 21:16:39.184761251 +0000
+@@ -23,8 +23,8 @@
+ #include <QToolButton>
+ #include <QVariant>
+ 
+-#include <QtWidgets/private/qstyle_p.h>
+-#include <QtWidgets/private/qstylehelper_p.h>
++#include <QtWidgetso3de/private/qstyle_p.h>
++#include <QtWidgetso3de/private/qstylehelper_p.h>
+ 
+ namespace AzQtComponents
+ {
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ScrollBar.cpp.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ScrollBar.cpp
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ScrollBar.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ScrollBar.cpp	2021-07-07 21:16:39.185761216 +0000
+@@ -19,7 +19,7 @@
+ #include <QScrollBar>
+ #include <QEvent>
+ 
+-#include <QtWidgets/private/qstylesheetstyle_p.h>
++#include <QtWidgetso3de/private/qstylesheetstyle_p.h>
+ 
+ namespace AzQtComponents
+ {
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/Slider.cpp.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/Slider.cpp
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/Slider.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/Slider.cpp	2021-07-07 21:16:39.185761216 +0000
+@@ -717,7 +717,7 @@ void Slider::drawHandle(const QStyleOpti
+ int Slider::styleHintAbsoluteSetButtons()
+ {
+     // Make sliders jump to the value when the user clicks on them instead of the Qt default of moving closer to the clicked location
+-    return (Qt::LeftButton | Qt::MidButton | Qt::RightButton);
++    return (Qt::LeftButton | Qt::MiddleButton | Qt::RightButton);
+ }
+ 
+ 
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/SpinBox.cpp.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/SpinBox.cpp
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/SpinBox.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/SpinBox.cpp	2021-07-07 21:16:39.185761216 +0000
+@@ -29,7 +29,7 @@
+ #include <QWindow>
+ #include <QTextLayout>
+ 
+-#include <QtWidgets/private/qstylesheetstyle_p.h>
++#include <QtWidgetso3de/private/qstylesheetstyle_p.h>
+ 
+ namespace AzQtComponents
+ {
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ToolBar.cpp.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ToolBar.cpp
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ToolBar.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ToolBar.cpp	2021-07-07 21:16:39.185761216 +0000
+@@ -19,7 +19,7 @@
+ #include <QToolButton>
+ 
+ AZ_PUSH_DISABLE_WARNING(4244 4251, "-Wunknown-warning-option") // 4251: 'QCss::Declaration::d': class 'QExplicitlySharedDataPointer<QCss::Declaration::DeclarationData>' needs to have dll-interface to be used by clients of struct 'QCss::Declaration'
+-#include <QtWidgets/private/qstylesheetstyle_p.h>
++#include <QtWidgetso3de/private/qstylesheetstyle_p.h>
+ AZ_POP_DISABLE_WARNING
+ 
+ namespace AzQtComponents
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ToolButton.cpp.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ToolButton.cpp
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ToolButton.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/ToolButton.cpp	2021-07-07 21:16:39.186761181 +0000
+@@ -16,7 +16,7 @@
+ #include <QSize>
+ #include <QStyleOptionToolButton>
+ #include <QToolButton>
+-#include <QtWidgets/private/qstylehelper_p.h>
++#include <QtWidgetso3de/private/qstylehelper_p.h>
+ 
+ namespace AzQtComponents
+ {
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/TreeView.cpp.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/TreeView.cpp
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/TreeView.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Components/Widgets/TreeView.cpp	2021-07-07 21:16:39.186761181 +0000
+@@ -15,7 +15,7 @@
+ #include <AzQtComponents/Components/StyleManager.h>
+ #include <AzQtComponents/Components/ConfigHelpers.h>
+ 
+-#include <QtWidgets/private/qstylesheetstyle_p.h>
++#include <QtWidgetso3de/private/qstylesheetstyle_p.h>
+ 
+ namespace AzQtComponents
+ {
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Gallery/ToolBarPage.cpp.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Gallery/ToolBarPage.cpp
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Gallery/ToolBarPage.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Gallery/ToolBarPage.cpp	2021-07-07 21:16:39.186761181 +0000
+@@ -24,7 +24,7 @@
+ #include <QDebug>
+ 
+ AZ_PUSH_DISABLE_WARNING(4244 4251, "-Wunknown-warning-option") // 4251: 'QCss::Declaration::d': class 'QExplicitlySharedDataPointer<QCss::Declaration::DeclarationData>' needs to have dll-interface to be used by clients of struct 'QCss::Declaration'
+-#include <QtWidgets/private/qstylesheetstyle_p.h>
++#include <QtWidgetso3de/private/qstylesheetstyle_p.h>
+ AZ_POP_DISABLE_WARNING
+ 
+ ToolBarPage::ToolBarPage(QMainWindow* parent)
+diff -up o3de/Code/Framework/AzQtComponents/AzQtComponents/Utilities/ScopedCleanup.h.qt5-fix o3de/Code/Framework/AzQtComponents/AzQtComponents/Utilities/ScopedCleanup.h
+--- o3de/Code/Framework/AzQtComponents/AzQtComponents/Utilities/ScopedCleanup.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/AzQtComponents/Utilities/ScopedCleanup.h	2021-07-07 21:16:39.186761181 +0000
+@@ -8,7 +8,7 @@
+ #ifndef SCOPEDCLEANUP_H
+ #define SCOPEDCLEANUP_H
+ 
+-#include <QtCore/qglobal.h>
++#include <QtCoreo3de/qglobal.h>
+ 
+ /**
+  * RAII-style class that executes a lambda when it goes out of scope.
+diff -up o3de/Code/Framework/AzQtComponents/CMakeLists.txt.qt5-fix o3de/Code/Framework/AzQtComponents/CMakeLists.txt
+--- o3de/Code/Framework/AzQtComponents/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzQtComponents/CMakeLists.txt	2021-07-07 21:16:39.186761181 +0000
+@@ -30,11 +30,11 @@ ly_add_target(
+             AZ_QT_COMPONENTS_EXPORT_SYMBOLS
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Gui
+             AZ::AzFramework
+         PUBLIC
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             3rdParty::Qt::Svg
+             3rdParty::Qt::Xml
+             AZ::AzCore
+@@ -55,7 +55,7 @@ ly_add_target(
+     BUILD_DEPENDENCIES
+         PRIVATE
+             3rdParty::Qt::Svg
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             AZ::AzQtComponents
+             AZ::AzToolsFramework
+ )
+@@ -67,7 +67,7 @@ ly_add_target(
+         AzQtComponents/azqtcomponents_rpestandalone_files.cmake
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             AZ::AzToolsFramework
+ )
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Application/Ticker.h.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Application/Ticker.h
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Application/Ticker.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Application/Ticker.h	2021-07-07 21:16:39.186761181 +0000
+@@ -5,9 +5,9 @@
+  *
+  */
+ #if !defined(Q_MOC_RUN)
+-#include <QtCore/QObject>
+-#include <QtCore/QTimer>
+-#include <QtCore/QThread>
++#include <QtCoreo3de/QObject>
++#include <QtCoreo3de/QTimer>
++#include <QtCoreo3de/QThread>
+ 
+ #include <AzCore/Memory/SystemAllocator.h>
+ #endif
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Application/ToolsApplication.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Application/ToolsApplication.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Application/ToolsApplication.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Application/ToolsApplication.cpp	2021-07-07 21:16:39.187761146 +0000
+@@ -67,7 +67,7 @@
+ #include <AzToolsFramework/Undo/UndoCacheInterface.h>
+ #include <AzToolsFramework/Prefab/PrefabPublicInterface.h>
+ 
+-#include <QtWidgets/QMessageBox>
++#include <QtWidgetso3de/QMessageBox>
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // 4251: 'QFileInfo::d_ptr': class 'QSharedDataPointer<QFileInfoPrivate>' needs to have dll-interface to be used by clients of class 'QFileInfo'
+ #include <QDir>
+ AZ_POP_DISABLE_OVERRIDE_WARNING
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/AzToolsFramework_precompiled.h.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/AzToolsFramework_precompiled.h
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/AzToolsFramework_precompiled.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/AzToolsFramework_precompiled.h	2021-07-07 21:16:39.187761146 +0000
+@@ -12,12 +12,12 @@
+ 
+ // QT
+ AZ_PUSH_DISABLE_WARNING(4127, "-Wunknown-warning-option") // conditional expression is constant
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ AZ_POP_DISABLE_WARNING
+-#include <QtCore/QEvent>
+-#include <QtWidgets/QLabel>
+-#include <QtWidgets/QApplication>
+-#include <QtWidgets/QScrollArea>
++#include <QtCoreo3de/QEvent>
++#include <QtWidgetso3de/QLabel>
++#include <QtWidgetso3de/QApplication>
++#include <QtWidgetso3de/QScrollArea>
+ 
+ #if defined(AZ_PLATFORM_APPLE_OSX) || defined(AZ_PLATFORM_LINUX)
+ typedef void* HWND;
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Entity/EditorEntityModel.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Entity/EditorEntityModel.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Entity/EditorEntityModel.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Entity/EditorEntityModel.cpp	2021-07-07 21:16:39.187761146 +0000
+@@ -30,7 +30,7 @@
+ #include <AzToolsFramework/UI/PropertyEditor/InstanceDataHierarchy.h>
+ #include <AzToolsFramework/UI/UICore/WidgetHelpers.h>
+ 
+-#include <QtWidgets/QMessageBox>
++#include <QtWidgetso3de/QMessageBox>
+ 
+ namespace
+ {
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Slice/SliceUtilities.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Slice/SliceUtilities.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Slice/SliceUtilities.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/Slice/SliceUtilities.cpp	2021-07-07 21:16:39.188761111 +0000
+@@ -61,16 +61,16 @@
+ #include <AzToolsFramework/Slice/SliceMetadataEntityContextBus.h>
+ AZ_PUSH_DISABLE_WARNING(4251 4244, "-Wunknown-warning-option") // 4251: class '...' needs to have dll-interface to be used by clients of class '...'
+                                                                // 4244: 'argument': conversion from 'int' to 'float', possible loss of data
+-#include <QtWidgets/QWidget>
+-#include <QtWidgets/QWidgetAction>
+-#include <QtWidgets/QMenu>
+-#include <QtWidgets/QDialog>
+-#include <QtWidgets/QFileDialog>
+-#include <QtWidgets/QMessageBox>
+-#include <QtWidgets/QPushButton>
+-#include <QtWidgets/QErrorMessage>
+-#include <QtWidgets/QVBoxLayout>
+-#include <QtCore/QThread>
++#include <QtWidgetso3de/QWidget>
++#include <QtWidgetso3de/QWidgetAction>
++#include <QtWidgetso3de/QMenu>
++#include <QtWidgetso3de/QDialog>
++#include <QtWidgetso3de/QFileDialog>
++#include <QtWidgetso3de/QMessageBox>
++#include <QtWidgetso3de/QPushButton>
++#include <QtWidgetso3de/QErrorMessage>
++#include <QtWidgetso3de/QVBoxLayout>
++#include <QtCoreo3de/QThread>
+ #include <QDialogButtonBox>
+ AZ_POP_DISABLE_WARNING
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/ComponentAssetMimeDataContainer.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/ComponentAssetMimeDataContainer.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/ComponentAssetMimeDataContainer.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/ComponentAssetMimeDataContainer.cpp	2021-07-07 21:16:39.188761111 +0000
+@@ -14,7 +14,7 @@
+ #include <AzCore/Serialization/Utils.h>
+ #include <AzCore/Serialization/ObjectStream.h>
+ 
+-#include <QtCore/QMimeData>
++#include <QtCoreo3de/QMimeData>
+ 
+ namespace AzToolsFramework
+ {
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/EditorAssetMimeDataContainer.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/EditorAssetMimeDataContainer.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/EditorAssetMimeDataContainer.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/EditorAssetMimeDataContainer.cpp	2021-07-07 21:16:39.189761076 +0000
+@@ -14,7 +14,7 @@
+ #include <AzCore/Serialization/Utils.h>
+ #include <AzCore/Serialization/ObjectStream.h>
+ 
+-#include <QtCore/QMimeData>
++#include <QtCoreo3de/QMimeData>
+ 
+ namespace AzToolsFramework
+ {
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Docking/DockWidgetUtils.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Docking/DockWidgetUtils.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Docking/DockWidgetUtils.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Docking/DockWidgetUtils.cpp	2021-07-07 21:16:39.189761076 +0000
+@@ -16,9 +16,9 @@ AZ_PUSH_DISABLE_WARNING(4251 4244 4458,
+ #include <QDockWidget>
+ #include <QDebug>
+ #include <QDataStream>
+-#include <QtWidgets/private/qdockarealayout_p.h>
+-#include <QtWidgets/private/qtoolbararealayout_p.h>
+-#include <QtWidgets/private/qmainwindowlayout_p.h>
++#include <QtWidgetso3de/private/qdockarealayout_p.h>
++#include <QtWidgetso3de/private/qtoolbararealayout_p.h>
++#include <QtWidgetso3de/private/qmainwindowlayout_p.h>
+ AZ_POP_DISABLE_WARNING
+ 
+ namespace AzToolsFramework
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/CustomMenus/CustomMenusAPI.h.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/CustomMenus/CustomMenusAPI.h
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/CustomMenus/CustomMenusAPI.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/CustomMenus/CustomMenusAPI.h	2021-07-07 21:16:39.189761076 +0000
+@@ -11,7 +11,7 @@
+ #include <AzCore/base.h>
+ #include <AzCore/EBus/EBus.h>
+ #include <AzCore/Math/Crc.h>
+-#include <QtCore/QString>
++#include <QtCoreo3de/QString>
+ 
+ #pragma once
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/CustomMenus/CustomMenusComponent.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/CustomMenus/CustomMenusComponent.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/CustomMenus/CustomMenusComponent.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/CustomMenus/CustomMenusComponent.cpp	2021-07-07 21:16:39.189761076 +0000
+@@ -9,7 +9,7 @@
+ #include <AzCore/Component/Component.h>
+ #include <AzCore/Serialization/SerializeContext.h>
+ #include <AzToolsFramework/UI/LegacyFramework/UIFrameworkAPI.h>
+-#include <QtWidgets/qaction.h>
++#include <QtWidgetso3de/qaction.h>
+ #include "CustomMenusAPI.h"
+ 
+ #include <QMenu>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/MainWindowSavedState.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/MainWindowSavedState.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/MainWindowSavedState.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/MainWindowSavedState.cpp	2021-07-07 21:16:39.189761076 +0000
+@@ -9,7 +9,7 @@
+ 
+ #include "MainWindowSavedState.h"
+ #include <AzCore/Serialization/SerializeContext.h>
+-#include <QtCore/QByteArray>
++#include <QtCoreo3de/QByteArray>
+ 
+ namespace AzToolsFramework
+ {
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/UIFramework.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/UIFramework.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/UIFramework.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/UIFramework.cpp	2021-07-07 21:16:39.190761042 +0000
+@@ -23,9 +23,9 @@
+ #include "MainWindowSavedState.h"
+ 
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // '...' needs to have dll-interface to be used by clients of class '...'
+-#include <QtWidgets/QApplication>
+-#include <QtCore/QTimer>
+-#include <QtCore/QDir>
++#include <QtWidgetso3de/QApplication>
++#include <QtCoreo3de/QTimer>
++#include <QtCoreo3de/QDir>
+ #include <QThread>
+ #include <QAction>
+ #include <QMenu>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/UIFramework.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/UIFramework.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/UIFramework.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/LegacyFramework/UIFramework.hxx	2021-07-07 21:16:39.190761042 +0000
+@@ -16,9 +16,9 @@
+ #include <AzToolsFramework/UI/LegacyFramework/Core/EditorFrameworkAPI.h>
+ 
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // '...' needs to have dll-interface to be used by clients of class '...'
+-#include <QtCore/QObject>
+-#include <QtWidgets/QWidget>
+-#include <QtWidgets/QTableView>
++#include <QtCoreo3de/QObject>
++#include <QtWidgetso3de/QWidget>
++#include <QtWidgetso3de/QTableView>
+ #include <QtGui/QStandardItemModel>
+ AZ_POP_DISABLE_WARNING
+ #endif
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Outliner/EntityOutlinerSortFilterProxyModel.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Outliner/EntityOutlinerSortFilterProxyModel.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Outliner/EntityOutlinerSortFilterProxyModel.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Outliner/EntityOutlinerSortFilterProxyModel.hxx	2021-07-07 21:16:39.190761042 +0000
+@@ -10,7 +10,7 @@
+ 
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+-#include <QtCore/QSortFilterProxyModel>
++#include <QtCoreo3de/QSortFilterProxyModel>
+ #include <AzCore/Memory/SystemAllocator.h>
+ #endif
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ComponentEditorHeader.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ComponentEditorHeader.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ComponentEditorHeader.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ComponentEditorHeader.cpp	2021-07-07 21:16:39.190761042 +0000
+@@ -10,9 +10,9 @@
+ 
+ #include <QDesktopServices>
+ 
+-#include <QtWidgets/QHBoxLayout>
+-#include <QtWidgets/QMenu>
+-#include <QtWidgets/QPushButton>
++#include <QtWidgetso3de/QHBoxLayout>
++#include <QtWidgetso3de/QMenu>
++#include <QtWidgetso3de/QPushButton>
+ 
+ namespace AzToolsFramework
+ {
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ComponentEditorHeader.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ComponentEditorHeader.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ComponentEditorHeader.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ComponentEditorHeader.hxx	2021-07-07 21:16:39.190761042 +0000
+@@ -7,7 +7,7 @@
+ #pragma once
+ 
+ #if !defined(Q_MOC_RUN)
+-#include <QtWidgets/QFrame>
++#include <QtWidgetso3de/QFrame>
+ #include <AzCore/std/string/string.h>
+ 
+ #include <AzQtComponents/Components/Widgets/CardHeader.h>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/DHQSlider.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/DHQSlider.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/DHQSlider.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/DHQSlider.cpp	2021-07-07 21:16:39.190761042 +0000
+@@ -7,7 +7,7 @@
+ #include "AzToolsFramework_precompiled.h"
+ #include "DHQSlider.hxx"
+ #include "PropertyQTConstants.h"
+-#include <QtWidgets/QAbstractSpinBox>
++#include <QtWidgetso3de/QAbstractSpinBox>
+ AZ_PUSH_DISABLE_WARNING(4244 4251, "-Wunknown-warning-option") // 4244: conversion from 'int' to 'float', possible loss of data
+                                                                // 4251: 'QInputEvent::modState': class 'QFlags<Qt::KeyboardModifier>' needs to have dll-interface to be used by clients of class 'QInputEvent'
+ #include <QWheelEvent>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/DHQSlider.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/DHQSlider.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/DHQSlider.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/DHQSlider.hxx	2021-07-07 21:16:39.190761042 +0000
+@@ -10,7 +10,7 @@
+ 
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+-#include <QtWidgets/QSlider>
++#include <QtWidgetso3de/QSlider>
+ 
+ 
+ #pragma once
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/EntityIdQLabel.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/EntityIdQLabel.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/EntityIdQLabel.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/EntityIdQLabel.hxx	2021-07-07 21:16:39.191761007 +0000
+@@ -14,7 +14,7 @@
+ #include <AzCore/Memory/SystemAllocator.h>
+ #include <AzCore/std/string/string_view.h>
+ 
+-#include <QtWidgets/QLabel>
++#include <QtWidgetso3de/QLabel>
+ #endif
+ 
+ #pragma once
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/EntityPropertyEditor.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/EntityPropertyEditor.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/EntityPropertyEditor.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/EntityPropertyEditor.hxx	2021-07-07 21:16:39.191761007 +0000
+@@ -29,7 +29,7 @@
+ #include <AzToolsFramework/ToolsComponents/EditorInspectorComponentBus.h>
+ #include <AzQtComponents/Components/O3DEStylesheet.h>
+ 
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include <QtGui/QIcon>
+ #include <QComboBox>
+ #endif
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/GenericComboBoxCtrl.h.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/GenericComboBoxCtrl.h
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/GenericComboBoxCtrl.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/GenericComboBoxCtrl.h	2021-07-07 21:16:39.191761007 +0000
+@@ -8,7 +8,7 @@
+ #pragma once
+ 
+ #if !defined(Q_MOC_RUN)
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ 
+ #include <AzCore/Math/Uuid.h>
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/GenericComboBoxCtrl.inl.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/GenericComboBoxCtrl.inl
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/GenericComboBoxCtrl.inl.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/GenericComboBoxCtrl.inl	2021-07-07 21:16:39.191761007 +0000
+@@ -8,7 +8,7 @@
+ #pragma once
+ 
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // 4251: 'QLayoutItem::align': class 'QFlags<Qt::AlignmentFlag>' needs to have dll-interface to be used by clients of class 'QLayoutItem'
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ AZ_POP_DISABLE_WARNING
+ 
+ #include <QPushButton>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyAssetCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyAssetCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyAssetCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyAssetCtrl.cpp	2021-07-07 21:16:39.192760972 +0000
+@@ -12,17 +12,17 @@
+ #include "PropertyQTConstants.h"
+ 
+ AZ_PUSH_DISABLE_WARNING(4244 4251, "-Wunknown-warning-option")
+-#include <QtWidgets/QHBoxLayout>
+-#include <QtWidgets/QPushButton>
+-#include <QtWidgets/QLabel>
+-#include <QtWidgets/QMenu>
+-#include <QtWidgets/QFileDialog>
+-#include <QtWidgets/QMessageBox>
++#include <QtWidgetso3de/QHBoxLayout>
++#include <QtWidgetso3de/QPushButton>
++#include <QtWidgetso3de/QLabel>
++#include <QtWidgetso3de/QMenu>
++#include <QtWidgetso3de/QFileDialog>
++#include <QtWidgetso3de/QMessageBox>
+ #include <QtGui/QPixmapCache>
+ #include <QtGui/QMouseEvent>
+-#include <QtCore/QMimeData>
+-#include <QtCore/QEvent>
+-#include <QtCore/QTimer>
++#include <QtCoreo3de/QMimeData>
++#include <QtCoreo3de/QEvent>
++#include <QtCoreo3de/QTimer>
+ #include <QClipboard>
+ #include <QListView>
+ #include <QTableView>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyAudioCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyAudioCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyAudioCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyAudioCtrl.cpp	2021-07-07 21:16:39.192760972 +0000
+@@ -10,12 +10,12 @@
+ #include "PropertyAudioCtrl.h"
+ #include "PropertyQTConstants.h"
+ 
+-#include <QtWidgets/QLabel>
+-#include <QtWidgets/QLineEdit>
+-#include <QtWidgets/QToolButton>
++#include <QtWidgetso3de/QLabel>
++#include <QtWidgetso3de/QLineEdit>
++#include <QtWidgetso3de/QToolButton>
+ AZ_PUSH_DISABLE_WARNING(4244 4251, "-Wunknown-warning-option") // 4244: conversion from 'int' to 'float', possible loss of data
+                                                                // 4251: 'QInputEvent::modState': class 'QFlags<Qt::KeyboardModifier>' needs to have dll-interface to be used by clients of class 'QInputEvent'
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ #include <QtGui/QMouseEvent>
+ AZ_POP_DISABLE_WARNING
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolComboBoxCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolComboBoxCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolComboBoxCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolComboBoxCtrl.cpp	2021-07-07 21:16:39.192760972 +0000
+@@ -8,9 +8,9 @@
+ #include "PropertyBoolComboBoxCtrl.hxx"
+ #include "PropertyQTConstants.h"
+ #include "DHQComboBox.hxx"
+-#include <QtWidgets/QComboBox>
++#include <QtWidgetso3de/QComboBox>
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // 4251: 'QLayoutItem::align': class 'QFlags<Qt::AlignmentFlag>' needs to have dll-interface to be used by clients of class 'QLayoutItem'
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ AZ_POP_DISABLE_WARNING
+ 
+ //just a test to see how it would work to pop a dialog
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolComboBoxCtrl.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolComboBoxCtrl.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolComboBoxCtrl.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolComboBoxCtrl.hxx	2021-07-07 21:16:39.192760972 +0000
+@@ -13,7 +13,7 @@
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include "PropertyEditorAPI.h"
+ #endif
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolRadioButtonsCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolRadioButtonsCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolRadioButtonsCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolRadioButtonsCtrl.cpp	2021-07-07 21:16:39.192760972 +0000
+@@ -11,7 +11,7 @@
+ #include <QButtonGroup>
+ #include <QRadioButton>
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // 4251: 'QLayoutItem::align': class 'QFlags<Qt::AlignmentFlag>' needs to have dll-interface to be used by clients of class 'QLayoutItem'
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ AZ_POP_DISABLE_WARNING
+ 
+ namespace AzToolsFramework
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolRadioButtonsCtrl.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolRadioButtonsCtrl.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolRadioButtonsCtrl.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyBoolRadioButtonsCtrl.hxx	2021-07-07 21:16:39.192760972 +0000
+@@ -12,7 +12,7 @@
+ #include <AzCore/Memory/SystemAllocator.h>
+ #include <AzToolsFramework/UI/PropertyEditor/PropertyEditorAPI.h>
+ 
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #endif
+ 
+ class QRadioButton;
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyButtonCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyButtonCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyButtonCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyButtonCtrl.cpp	2021-07-07 21:16:39.193760937 +0000
+@@ -7,9 +7,9 @@
+ #include "AzToolsFramework_precompiled.h"
+ #include "PropertyButtonCtrl.hxx"
+ #include "PropertyQTConstants.h"
+-#include <QtWidgets/QPushButton>
++#include <QtWidgetso3de/QPushButton>
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // 4251: 'QLayoutItem::align': class 'QFlags<Qt::AlignmentFlag>' needs to have dll-interface to be used by clients of class 'QLayoutItem'
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ AZ_POP_DISABLE_WARNING
+ 
+ namespace AzToolsFramework
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyButtonCtrl.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyButtonCtrl.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyButtonCtrl.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyButtonCtrl.hxx	2021-07-07 21:16:39.193760937 +0000
+@@ -12,7 +12,7 @@
+ 
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include "PropertyEditorAPI.h"
+ #endif
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyCheckBoxCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyCheckBoxCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyCheckBoxCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyCheckBoxCtrl.cpp	2021-07-07 21:16:39.193760937 +0000
+@@ -10,8 +10,8 @@
+ #include "PropertyQTConstants.h"
+ 
+ AZ_PUSH_DISABLE_WARNING(4244 4251, "-Wunknown-warning-option")
+-#include <QtWidgets/QCheckBox>
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QCheckBox>
++#include <QtWidgetso3de/QHBoxLayout>
+ AZ_POP_DISABLE_WARNING
+ 
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyCheckBoxCtrl.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyCheckBoxCtrl.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyCheckBoxCtrl.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyCheckBoxCtrl.hxx	2021-07-07 21:16:39.193760937 +0000
+@@ -11,7 +11,7 @@
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include "PropertyEditorAPI.h"
+ #endif
+ class QCheckBox;
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyColorCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyColorCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyColorCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyColorCtrl.cpp	2021-07-07 21:16:39.193760937 +0000
+@@ -9,15 +9,15 @@
+ #include "PropertyQTConstants.h"
+ #include <AzQtComponents/Components/Widgets/ColorPicker.h>
+ #include <AzQtComponents/Utilities/Conversions.h>
+-#include <QtWidgets/QSlider>
+-#include <QtWidgets/QLineEdit>
++#include <QtWidgetso3de/QSlider>
++#include <QtWidgetso3de/QLineEdit>
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option")
+ // 'QLayoutItem::align': class 'QFlags<Qt::AlignmentFlag>' needs to have dll-interface to be used by clients of class 'QLayoutItem'
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ // qpainter.h(465): warning C4251: 'QPainter::d_ptr': class 'QScopedPointer<QPainterPrivate,QScopedPointerDeleter<T>>' needs to have dll-interface to be used by clients of class 'QPainter'
+ #include <QPainter> 
+ AZ_POP_DISABLE_WARNING
+-#include <QtWidgets/QToolButton>
++#include <QtWidgetso3de/QToolButton>
+ 
+ #include "../UICore/ColorPickerDelegate.hxx"
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyColorCtrl.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyColorCtrl.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyColorCtrl.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyColorCtrl.hxx	2021-07-07 21:16:39.193760937 +0000
+@@ -22,7 +22,7 @@
+ // 4251: class needs to have dll-interface to be used by clients of class 
+ // 4800: forcing value to bool 'true' or 'false' (performance warning)
+ AZ_PUSH_DISABLE_WARNING(4251 4800, "-Wunknown-warning-option")
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ AZ_POP_DISABLE_WARNING
+ #endif
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyCRCCtrl.h.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyCRCCtrl.h
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyCRCCtrl.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyCRCCtrl.h	2021-07-07 21:16:39.194760902 +0000
+@@ -8,7 +8,7 @@
+ 
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/Memory/SystemAllocator.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ 
+ #include "PropertyEditorAPI.h"
+ #endif
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyDoubleSliderCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyDoubleSliderCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyDoubleSliderCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyDoubleSliderCtrl.cpp	2021-07-07 21:16:39.194760902 +0000
+@@ -10,7 +10,7 @@
+ #include "DHQSlider.hxx"
+ #include "PropertyQTConstants.h"
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // 4251: 'QLayoutItem::align': class 'QFlags<Qt::AlignmentFlag>' needs to have dll-interface to be used by clients of class 'QLayoutItem'
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ AZ_POP_DISABLE_WARNING
+ #include <AzCore/Math/MathUtils.h>
+ #include <AzQtComponents/Components/Widgets/SpinBox.h>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyDoubleSpinCtrl.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyDoubleSpinCtrl.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyDoubleSpinCtrl.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyDoubleSpinCtrl.hxx	2021-07-07 21:16:39.194760902 +0000
+@@ -13,7 +13,7 @@
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include "PropertyEditorAPI.h"
+ #endif
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEditorApi.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEditorApi.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEditorApi.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEditorApi.cpp	2021-07-07 21:16:39.194760902 +0000
+@@ -6,7 +6,7 @@
+  */
+ #include "AzToolsFramework_precompiled.h"
+ #include "PropertyEditorAPI.h"
+-#include <QtWidgets/QDoubleSpinBox>
++#include <QtWidgetso3de/QDoubleSpinBox>
+ 
+ #include <AzCore/Math/Crc.h>
+ #include <AzCore/Serialization/EditContext.h>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEntityIdCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEntityIdCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEntityIdCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEntityIdCtrl.cpp	2021-07-07 21:16:39.195760867 +0000
+@@ -24,9 +24,9 @@
+ #include <AzToolsFramework/ViewportSelection/EditorPickEntitySelection.h>
+ 
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // 4251: 'QLayoutItem::align': class 'QFlags<Qt::AlignmentFlag>' needs to have dll-interface to be used by clients of class 'QLayoutItem'
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ AZ_POP_DISABLE_WARNING
+-#include <QtCore/QMimeData>
++#include <QtCoreo3de/QMimeData>
+ AZ_PUSH_DISABLE_WARNING(4244 4251, "-Wunknown-warning-option") // 4244: conversion from 'int' to 'float', possible loss of data
+                                                                // 4251: 'QInputEvent::modState': class 'QFlags<Qt::KeyboardModifier>' needs to have dll-interface to be used by clients of class 'QInputEvent'
+ #include <QDragEnterEvent>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEntityIdCtrl.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEntityIdCtrl.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEntityIdCtrl.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEntityIdCtrl.hxx	2021-07-07 21:16:39.195760867 +0000
+@@ -16,7 +16,7 @@
+ #include <AzCore/Memory/SystemAllocator.h>
+ #include <AzToolsFramework/API/ToolsApplicationAPI.h>
+ #include <AzFramework/Entity/EntityContextBus.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include <QIcon>
+ #include "PropertyEditorAPI.h"
+ #endif
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEnumComboBoxCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEnumComboBoxCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEnumComboBoxCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyEnumComboBoxCtrl.cpp	2021-07-07 21:16:39.195760867 +0000
+@@ -8,9 +8,9 @@
+ #include "PropertyEnumComboBoxCtrl.hxx"
+ #include "PropertyQTConstants.h"
+ #include "DHQComboBox.hxx"
+-#include <QtWidgets/QComboBox>
++#include <QtWidgetso3de/QComboBox>
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // 4251: 'QLayoutItem::align': class 'QFlags<Qt::AlignmentFlag>' needs to have dll-interface to be used by clients of class 'QLayoutItem'
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ AZ_POP_DISABLE_WARNING
+ 
+ namespace AzToolsFramework
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyIntCtrlCommon.h.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyIntCtrlCommon.h
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyIntCtrlCommon.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyIntCtrlCommon.h	2021-07-07 21:16:39.195760867 +0000
+@@ -12,7 +12,7 @@
+ #include <AzToolsFramework/UI/PropertyEditor/PropertyEditorAPI.h>
+ #include <AzToolsFramework/UI/PropertyEditor/PropertyQTConstants.h>
+ #include <AzToolsFramework/UI/PropertyEditor/QtWidgetLimits.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ 
+ namespace AzToolsFramework
+ {   
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyIntSliderCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyIntSliderCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyIntSliderCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyIntSliderCtrl.cpp	2021-07-07 21:16:39.195760867 +0000
+@@ -11,7 +11,7 @@
+ #include <AzQtComponents/Components/Widgets/SpinBox.h>
+ 
+ AZ_PUSH_DISABLE_WARNING(4244 4251, "-Wunknown-warning-option")
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ #include <QSignalBlocker>
+ AZ_POP_DISABLE_WARNING
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyIntSpinCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyIntSpinCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyIntSpinCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyIntSpinCtrl.cpp	2021-07-07 21:16:39.195760867 +0000
+@@ -8,11 +8,11 @@
+ #include "PropertyIntSpinCtrl.hxx"
+ #include "PropertyQTConstants.h"
+ #include <AzQtComponents/Components/Widgets/SpinBox.h>
+-#include <QtWidgets/QSlider>
++#include <QtWidgetso3de/QSlider>
+ 
+ AZ_PUSH_DISABLE_WARNING(4251 4244, "-Wunknown-warning-option") // 4251: 'QLayoutItem::align': class 'QFlags<Qt::AlignmentFlag>' needs to have dll-interface to be used by clients of class 'QLayoutItem'
+                                                                // 4244: conversion from 'int' to 'float', possible loss of data
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ #include <QFocusEvent>
+ AZ_POP_DISABLE_WARNING
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyRowWidget.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyRowWidget.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyRowWidget.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyRowWidget.cpp	2021-07-07 21:16:39.196760832 +0000
+@@ -16,8 +16,8 @@
+ AZ_PUSH_DISABLE_WARNING(4244 4251 4800, "-Wunknown-warning-option") // 4244: conversion from 'int' to 'float', possible loss of data
+                                                                     // 4251: class '...' needs to have dll-interface to be used by clients of class 'QInputEvent'
+                                                                     // 4800: QTextEngine *const ': forcing value to bool 'true' or 'false' (performance warning)
+-#include <QtWidgets/QHBoxLayout>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QHBoxLayout>
++#include <QtWidgetso3de/QWidget>
+ #include <QtGui/QFontMetrics>
+ #include <QtGui/QTextLayout>
+ #include <QtGui/QPainter>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyRowWidget.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyRowWidget.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyRowWidget.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyRowWidget.hxx	2021-07-07 21:16:39.196760832 +0000
+@@ -13,14 +13,14 @@ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown
+ #include <AzCore/Memory/SystemAllocator.h>
+ #include <AzCore/Serialization/EditContext.h>
+ #include <AzQtComponents/Components/Widgets/ElidingLabel.h>
+-#include <QtWidgets/QWidget>
+-#include <QtWidgets/QLabel>
+-#include <QtWidgets/QLayout>
+-#include <QtWidgets/QToolButton>
+-#include <QtWidgets/QCheckBox>
+-#include <QtWidgets/QFrame>
+-#include <QtCore/QPointer>
+-#include <QtCore/QElapsedTimer>
++#include <QtWidgetso3de/QWidget>
++#include <QtWidgetso3de/QLabel>
++#include <QtWidgetso3de/QLayout>
++#include <QtWidgetso3de/QToolButton>
++#include <QtWidgetso3de/QCheckBox>
++#include <QtWidgetso3de/QFrame>
++#include <QtCoreo3de/QPointer>
++#include <QtCoreo3de/QElapsedTimer>
+ AZ_POP_DISABLE_WARNING
+ 
+ #include "PropertyEditorAPI.h"
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyStringComboBoxCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyStringComboBoxCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyStringComboBoxCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyStringComboBoxCtrl.cpp	2021-07-07 21:16:39.196760832 +0000
+@@ -8,9 +8,9 @@
+ #include "PropertyStringComboBoxCtrl.hxx"
+ #include "PropertyQTConstants.h"
+ #include "DHQComboBox.hxx"
+-#include <QtWidgets/QComboBox>
++#include <QtWidgetso3de/QComboBox>
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // 'QLayoutItem::align': class 'QFlags<Qt::AlignmentFlag>' needs to have dll-interface to be used by clients of class 'QLayoutItem'
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ AZ_POP_DISABLE_WARNING
+ 
+ namespace AzToolsFramework
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyStringLineEditCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyStringLineEditCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyStringLineEditCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyStringLineEditCtrl.cpp	2021-07-07 21:16:39.196760832 +0000
+@@ -10,7 +10,7 @@
+ #include <AzQtComponents/Components/StyledLineEdit.h>
+ AZ_PUSH_DISABLE_WARNING(4244 4251, "-Wunknown-warning-option") // 4244: conversion from 'int' to 'float', possible loss of data
+                                                                // 4251: 'QInputEvent::modState': class 'QFlags<Qt::KeyboardModifier>' needs to have dll-interface to be used by clients of class 'QInputEvent'
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ #include <QFocusEvent>
+ AZ_POP_DISABLE_WARNING
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyStringLineEditCtrl.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyStringLineEditCtrl.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyStringLineEditCtrl.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyStringLineEditCtrl.hxx	2021-07-07 21:16:39.197760797 +0000
+@@ -13,7 +13,7 @@
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include "PropertyEditorAPI.h"
+ #endif
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyVectorCtrl.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyVectorCtrl.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyVectorCtrl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyVectorCtrl.cpp	2021-07-07 21:16:39.197760797 +0000
+@@ -9,9 +9,9 @@
+ #include "PropertyQTConstants.h"
+ #include <AzQtComponents/Components/Widgets/SpinBox.h>
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // 4251: 'QLayoutItem::align': class 'QFlags<Qt::AlignmentFlag>' needs to have dll-interface to be used by clients of class 'QLayoutItem'
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ AZ_POP_DISABLE_WARNING
+-#include <QtWidgets/QLabel>
++#include <QtWidgetso3de/QLabel>
+ #include <AzCore/Math/Transform.h>
+ #include <cmath>
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyVectorCtrl.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyVectorCtrl.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyVectorCtrl.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/PropertyVectorCtrl.hxx	2021-07-07 21:16:39.197760797 +0000
+@@ -13,7 +13,7 @@
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include <AzCore/Math/Vector2.h>
+ #include <AzCore/Math/Vector3.h>
+ #include <AzCore/Math/Vector4.h>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ReflectedPropertyEditor.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ReflectedPropertyEditor.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ReflectedPropertyEditor.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ReflectedPropertyEditor.cpp	2021-07-07 21:16:39.197760797 +0000
+@@ -13,15 +13,15 @@
+ #include <AzCore/Serialization/EditContext.h>
+ #include <AzCore/Math/Sfmt.h>
+ #include <AzToolsFramework/Slice/SliceUtilities.h>
+-#include <QtWidgets/QMessageBox>
+-#include <QtWidgets/QMenu>
+-#include <QtWidgets/QDialogButtonBox>
+-#include <QtWidgets/QVBoxLayout>
++#include <QtWidgetso3de/QMessageBox>
++#include <QtWidgetso3de/QMenu>
++#include <QtWidgetso3de/QDialogButtonBox>
++#include <QtWidgetso3de/QVBoxLayout>
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // 'QTextFormat::d': class 'QSharedDataPointer<QTextFormatPrivate>' needs to have dll-interface to be used by clients of class 'QTextFormat'
+-#include <QtWidgets/QInputDialog>
++#include <QtWidgetso3de/QInputDialog>
+ AZ_POP_DISABLE_WARNING
+-#include <QtCore/QTimer>
+-#include <QtCore/QSet>
++#include <QtCoreo3de/QTimer>
++#include <QtCoreo3de/QSet>
+ #include <AzToolsFramework/UI/PropertyEditor/ComponentEditor.hxx>
+ #include <AzCore/std/sort.h>
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ReflectedPropertyEditor.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ReflectedPropertyEditor.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ReflectedPropertyEditor.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/PropertyEditor/ReflectedPropertyEditor.hxx	2021-07-07 21:16:39.198760762 +0000
+@@ -14,8 +14,8 @@
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+ #include "PropertyEditorAPI.h"
+-#include <QtWidgets/QWidget>
+-#include <QtWidgets/QFrame>
++#include <QtWidgetso3de/QWidget>
++#include <QtWidgetso3de/QFrame>
+ #endif
+ 
+ class QScrollArea;
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/SearchWidget/SearchCriteriaWidget.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/SearchWidget/SearchCriteriaWidget.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/SearchWidget/SearchCriteriaWidget.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/SearchWidget/SearchCriteriaWidget.cpp	2021-07-07 21:16:39.198760762 +0000
+@@ -7,19 +7,19 @@
+ #include "AzToolsFramework_precompiled.h"
+ 
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // 'QLayoutItem::align': class 'QFlags<Qt::AlignmentFlag>' needs to have dll-interface to be used by clients of class 'QLayoutItem'
+-#include <QtWidgets/QBoxLayout>
++#include <QtWidgetso3de/QBoxLayout>
+ AZ_POP_DISABLE_WARNING
+-#include <QtWidgets/QLabel>
+-#include <QtWidgets/QLayout>
+-#include <QtWidgets/QLineEdit>
+-#include <QtWidgets/QMenu>
+-#include <QtWidgets/QPushButton>
+-#include <QtWidgets/QComboBox>
++#include <QtWidgetso3de/QLabel>
++#include <QtWidgetso3de/QLayout>
++#include <QtWidgetso3de/QLineEdit>
++#include <QtWidgetso3de/QMenu>
++#include <QtWidgetso3de/QPushButton>
++#include <QtWidgetso3de/QComboBox>
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // 'QFileInfo::d_ptr': class 'QSharedDataPointer<QFileInfoPrivate>' needs to have dll-interface to be used by clients of class 'QFileInfo'
+-#include <QtWidgets/QFileDialog>
++#include <QtWidgetso3de/QFileDialog>
+ AZ_POP_DISABLE_WARNING
+-#include <QtWidgets/QMessageBox>
+-#include <QtWidgets/QWidgetAction>
++#include <QtWidgetso3de/QMessageBox>
++#include <QtWidgetso3de/QWidgetAction>
+ AZ_PUSH_DISABLE_WARNING(4244 4251, "-Wunknown-warning-option") // 4144: conversion from 'int' to 'float', possible loss of data
+                                                                // 4251: 'QInputEvent::modState': class 'QFlags<Qt::KeyboardModifier>' needs to have dll-interface to be used by clients of class 'QInputEvent'
+ #include <QMouseEvent>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/SearchWidget/SearchCriteriaWidget.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/SearchWidget/SearchCriteriaWidget.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/SearchWidget/SearchCriteriaWidget.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/SearchWidget/SearchCriteriaWidget.hxx	2021-07-07 21:16:39.198760762 +0000
+@@ -7,7 +7,7 @@
+ #pragma once
+ 
+ #if !defined(Q_MOC_RUN)
+-#include <QtWidgets/QFrame>
++#include <QtWidgetso3de/QFrame>
+ 
+ #include <AzCore/std/string/string.h>
+ #include <AzCore/std/functional.h>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Slice/SlicePushWidget.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Slice/SlicePushWidget.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Slice/SlicePushWidget.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Slice/SlicePushWidget.hxx	2021-07-07 21:16:39.198760762 +0000
+@@ -8,8 +8,8 @@
+ #pragma once
+ 
+ #if !defined(Q_MOC_RUN)
+-#include <QtWidgets/QCheckBox>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QCheckBox>
++#include <QtWidgetso3de/QWidget>
+ #include <QtGui/QIcon>
+ 
+ #include <AzCore/Serialization/SerializeContext.h>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Slice/SliceRelationshipWidget.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Slice/SliceRelationshipWidget.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Slice/SliceRelationshipWidget.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Slice/SliceRelationshipWidget.cpp	2021-07-07 21:16:39.198760762 +0000
+@@ -7,15 +7,15 @@
+ 
+ #include "AzToolsFramework_precompiled.h"
+ 
+-#include <QtWidgets/QDialog>
+-#include <QtWidgets/QDialogButtonBox>
++#include <QtWidgetso3de/QDialog>
++#include <QtWidgetso3de/QDialogButtonBox>
+ AZ_PUSH_DISABLE_WARNING(4251, "-Wunknown-warning-option") // 4251: 'QTreeWidgetItemIterator::d_ptr': class 'QScopedPointer<QTreeWidgetItemIteratorPrivate,QScopedPointerDeleter<T>>' needs to have dll-interface to be used by clients of class 'QTreeWidgetItemIterator'
+-#include <QtWidgets/QTreeWidget>
+-#include <QtWidgets/QVBoxLayout>
++#include <QtWidgetso3de/QTreeWidget>
++#include <QtWidgetso3de/QVBoxLayout>
+ AZ_POP_DISABLE_WARNING
+-#include <QtWidgets/QPushButton>
+-#include <QtWidgets/QHeaderView>
+-#include <QtWidgets/QSplitter>
++#include <QtWidgetso3de/QPushButton>
++#include <QtWidgetso3de/QHeaderView>
++#include <QtWidgetso3de/QSplitter>
+ 
+ #include "SliceRelationshipWidget.hxx"
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Slice/SliceRelationshipWidget.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Slice/SliceRelationshipWidget.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Slice/SliceRelationshipWidget.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/Slice/SliceRelationshipWidget.hxx	2021-07-07 21:16:39.199760728 +0000
+@@ -8,7 +8,7 @@
+ #pragma once
+ 
+ #if !defined(Q_MOC_RUN)
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include <AzToolsFramework/Slice/SliceDependencyBrowserBus.h>
+ #include <AzToolsFramework/UI/Slice/SliceRelationshipBus.h>
+ #endif
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/AZAutoSizingScrollArea.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/AZAutoSizingScrollArea.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/AZAutoSizingScrollArea.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/AZAutoSizingScrollArea.hxx	2021-07-07 21:16:39.199760728 +0000
+@@ -14,7 +14,7 @@
+ 
+ #pragma once
+ 
+-#include <QtWidgets/QScrollArea>
++#include <QtWidgetso3de/QScrollArea>
+ #endif
+ 
+ namespace AzToolsFramework
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/ColorPickerDelegate.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/ColorPickerDelegate.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/ColorPickerDelegate.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/ColorPickerDelegate.cpp	2021-07-07 21:16:39.199760728 +0000
+@@ -5,7 +5,7 @@
+  *
+  */
+ #include "AzToolsFramework_precompiled.h"
+-#include <QtCore/QAbstractItemModel>
++#include <QtCoreo3de/QAbstractItemModel>
+ #include "ColorPickerDelegate.hxx"
+ 
+ #include <AzQtComponents/Components/Widgets/ColorPicker.h>
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/ColorPickerDelegate.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/ColorPickerDelegate.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/ColorPickerDelegate.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/ColorPickerDelegate.hxx	2021-07-07 21:16:39.199760728 +0000
+@@ -10,7 +10,7 @@
+ 
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/Memory/SystemAllocator.h>
+-#include <QtWidgets/QStyledItemDelegate>
++#include <QtWidgetso3de/QStyledItemDelegate>
+ #endif
+ 
+ #pragma once
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/PlainTextEdit.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/PlainTextEdit.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/PlainTextEdit.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/PlainTextEdit.hxx	2021-07-07 21:16:39.199760728 +0000
+@@ -17,7 +17,7 @@
+ AZ_PUSH_DISABLE_WARNING(4251 4244 4800, "-Wunknown-warning-option") // 4251: 'QRawFont::d': class 'QExplicitlySharedDataPointer<QRawFontPrivate>' needs to have dll-interface to be used by clients of class 'QRawFont'
+                                                                     // 4244: conversion from 'int' to 'float', possible loss of data
+                                                                     // 4800: 'QTextEngine *const ': forcing value to bool 'true' or 'false' (performance warning)
+-#include <QtWidgets/qplaintextedit.h>
++#include <QtWidgetso3de/qplaintextedit.h>
+ AZ_POP_DISABLE_WARNING
+ #endif
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/QWidgetSavedState.cpp.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/QWidgetSavedState.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/QWidgetSavedState.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/QWidgetSavedState.cpp	2021-07-07 21:16:39.199760728 +0000
+@@ -9,8 +9,8 @@
+ #include "QWidgetSavedState.h"
+ 
+ #include <AzCore/Serialization/SerializeContext.h>
+-#include <QtCore/QByteArray>
+-#include <QtWidgets/QWidget>
++#include <QtCoreo3de/QByteArray>
++#include <QtWidgetso3de/QWidget>
+ 
+ namespace AzToolsFramework
+ {
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/TargetSelectorButton.hxx.qt5-fix o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/TargetSelectorButton.hxx
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/TargetSelectorButton.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/UI/UICore/TargetSelectorButton.hxx	2021-07-07 21:16:39.200760693 +0000
+@@ -12,7 +12,7 @@
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+ #include "AzFramework/TargetManagement/TargetManagementAPI.h"
+-#include <QtWidgets/QPushButton>
++#include <QtWidgetso3de/QPushButton>
+ #include <qwidgetaction.h>
+ #endif
+ 
+diff -up o3de/Code/Framework/AzToolsFramework/CMakeLists.txt.qt5-fix o3de/Code/Framework/AzToolsFramework/CMakeLists.txt
+--- o3de/Code/Framework/AzToolsFramework/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/CMakeLists.txt	2021-07-07 21:16:39.200760693 +0000
+@@ -33,9 +33,9 @@ ly_add_target(
+             3rdParty::SQLite
+             AZ::AzCore
+         PUBLIC
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Gui
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             AZ::AzFramework
+             AZ::AzQtComponents
+ )
+diff -up o3de/Code/Framework/Tests/EntityTestbed.h.qt5-fix o3de/Code/Framework/Tests/EntityTestbed.h
+--- o3de/Code/Framework/Tests/EntityTestbed.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Framework/Tests/EntityTestbed.h	2021-07-07 21:16:39.200760693 +0000
+@@ -24,12 +24,12 @@
+ #include <AzToolsFramework/Entity/EditorEntityContextBus.h>
+ #include <AzToolsFramework/Entity/SliceEditorEntityOwnershipServiceBus.h>
+ #include <AzToolsFramework/Application/ToolsApplication.h>
+-#include <QtWidgets/QMainWindow>
+-#include <QtWidgets/QApplication>
+-#include <QtWidgets/QVBoxLayout>
+-#include <QtWidgets/QPushButton>
+-#include <QtWidgets/QFileDialog>
+-#include <QtCore/QTimer>
++#include <QtWidgetso3de/QMainWindow>
++#include <QtWidgetso3de/QApplication>
++#include <QtWidgetso3de/QVBoxLayout>
++#include <QtWidgetso3de/QPushButton>
++#include <QtWidgetso3de/QFileDialog>
++#include <QtCoreo3de/QTimer>
+ 
+ #pragma once
+ 
+diff -up o3de/Code/Tools/AssetBundler/CMakeLists.txt.qt5-fix o3de/Code/Tools/AssetBundler/CMakeLists.txt
+--- o3de/Code/Tools/AssetBundler/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/AssetBundler/CMakeLists.txt	2021-07-07 21:16:39.200760693 +0000
+@@ -23,9 +23,9 @@ ly_add_target(
+             .
+     BUILD_DEPENDENCIES
+         PUBLIC
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Gui
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             AZ::AzToolsFramework
+             ${additional_dependencies}
+ )
+@@ -64,9 +64,9 @@ ly_add_target(
+             .
+     BUILD_DEPENDENCIES
+         PUBLIC
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Gui
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             AZ::AzToolsFramework
+             AZ::AssetBundlerBatch.Static
+             ${additional_dependencies}
+diff -up o3de/Code/Tools/AssetProcessor/AssetBuilder/CMakeLists.txt.qt5-fix o3de/Code/Tools/AssetProcessor/AssetBuilder/CMakeLists.txt
+--- o3de/Code/Tools/AssetProcessor/AssetBuilder/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/AssetProcessor/AssetBuilder/CMakeLists.txt	2021-07-07 21:16:39.200760693 +0000
+@@ -16,7 +16,7 @@ ly_add_target(
+             .
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Gui
+             3rdParty::Qt::Network
+             AZ::AzCore
+diff -up o3de/Code/Tools/AssetProcessor/CMakeLists.txt.qt5-fix o3de/Code/Tools/AssetProcessor/CMakeLists.txt
+--- o3de/Code/Tools/AssetProcessor/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/AssetProcessor/CMakeLists.txt	2021-07-07 21:16:39.200760693 +0000
+@@ -30,7 +30,7 @@ ly_add_target(
+             native
+     BUILD_DEPENDENCIES
+         PUBLIC
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Gui
+             3rdParty::Qt::Network
+             3rdParty::RapidJSON
+diff -up o3de/Code/Tools/AssetProcessor/native/AssetDatabase/AssetDatabase.h.qt5-fix o3de/Code/Tools/AssetProcessor/native/AssetDatabase/AssetDatabase.h
+--- o3de/Code/Tools/AssetProcessor/native/AssetDatabase/AssetDatabase.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/AssetProcessor/native/AssetDatabase/AssetDatabase.h	2021-07-07 21:16:39.200760693 +0000
+@@ -13,8 +13,8 @@
+ #include <AzCore/Asset/AssetCommon.h>
+ #include <AzToolsFramework/AssetDatabase/AssetDatabaseConnection.h>
+ 
+-#include <QtCore/QSet>
+-#include <QtCore/QString>
++#include <QtCoreo3de/QSet>
++#include <QtCoreo3de/QString>
+ 
+ #include "AzToolsFramework/API/EditorAssetSystemAPI.h"
+ 
+diff -up o3de/Code/Tools/CrashHandler/Tools/CMakeLists.txt.qt5-fix o3de/Code/Tools/CrashHandler/Tools/CMakeLists.txt
+--- o3de/Code/Tools/CrashHandler/Tools/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/CrashHandler/Tools/CMakeLists.txt	2021-07-07 21:16:39.201760658 +0000
+@@ -23,7 +23,7 @@ ly_add_target(
+         PUBLIC
+             AZ::CrashHandler
+         PRIVATE
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             AZ::AzToolsFramework
+ )
+ 
+@@ -40,9 +40,9 @@ ly_add_target(
+             Uploader
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Gui
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             AZ::CrashUploaderSupport
+             AZ::AzQtComponents
+     TARGET_PROPERTIES
+diff -up o3de/Code/Tools/GridHub/CMakeLists.txt.qt5-fix o3de/Code/Tools/GridHub/CMakeLists.txt
+--- o3de/Code/Tools/GridHub/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/GridHub/CMakeLists.txt	2021-07-07 21:16:39.201760658 +0000
+@@ -25,12 +25,12 @@ ly_add_target(
+             .
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Gui
+             3rdParty::Qt::OpenGL
+             3rdParty::Qt::Network
+             3rdParty::Qt::Svg
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             AZ::AzCore
+             AZ::GridMate
+ )
+diff -up o3de/Code/Tools/GridHub/GridHub/gridhub.cpp.qt5-fix o3de/Code/Tools/GridHub/GridHub/gridhub.cpp
+--- o3de/Code/Tools/GridHub/GridHub/gridhub.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/GridHub/GridHub/gridhub.cpp	2021-07-07 21:16:39.201760658 +0000
+@@ -8,7 +8,7 @@
+ #include <AzCore/PlatformDef.h>
+ AZ_PUSH_DISABLE_WARNING(4244 4251, "-Wunknown-warning-option")
+ #include <QtGui>
+-#include <QtWidgets/QMenu>
++#include <QtWidgetso3de/QMenu>
+ #include <QtNetwork/QHostInfo>
+ AZ_POP_DISABLE_WARNING
+ 
+diff -up o3de/Code/Tools/GridHub/GridHub/main.cpp.qt5-fix o3de/Code/Tools/GridHub/GridHub/main.cpp
+--- o3de/Code/Tools/GridHub/GridHub/main.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/GridHub/GridHub/main.cpp	2021-07-07 21:16:39.201760658 +0000
+@@ -20,14 +20,14 @@
+ 
+ #include "gridhub.hxx"
+ AZ_PUSH_DISABLE_WARNING(4244 4251, "-Wunknown-warning-option")
+-#include <QtWidgets/QApplication>
+-#include <QtWidgets/QMessageBox>
+-#include <QtCore/QFile>
+-#include <QtCore/QDateTime>
+-#include <QtCore/QDir>
+-#include <QtCore/QAbstractNativeEventFilter>
+-#include <QtCore/QSharedMemory>
+-#include <QtCore/QProcess>
++#include <QtWidgetso3de/QApplication>
++#include <QtWidgetso3de/QMessageBox>
++#include <QtCoreo3de/QFile>
++#include <QtCoreo3de/QDateTime>
++#include <QtCoreo3de/QDir>
++#include <QtCoreo3de/QAbstractNativeEventFilter>
++#include <QtCoreo3de/QSharedMemory>
++#include <QtCoreo3de/QProcess>
+ AZ_POP_DISABLE_WARNING
+ 
+ #include <AzCore/EBus/EBus.h>
+diff -up o3de/Code/Tools/News/CMakeLists.txt.qt5-fix o3de/Code/Tools/News/CMakeLists.txt
+--- o3de/Code/Tools/News/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/News/CMakeLists.txt	2021-07-07 21:16:39.201760658 +0000
+@@ -24,8 +24,8 @@ ly_add_target(
+             .
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Network
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             AZ::AzQtComponents
+ )
+diff -up o3de/Code/Tools/News/NewsBuilder/CMakeLists.txt.qt5-fix o3de/Code/Tools/News/NewsBuilder/CMakeLists.txt
+--- o3de/Code/Tools/News/NewsBuilder/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/News/NewsBuilder/CMakeLists.txt	2021-07-07 21:16:39.202760623 +0000
+@@ -26,8 +26,8 @@ ly_add_target(
+             .
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Core
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Coreo3de
++            3rdParty::Qt::Widgetso3de
+             3rdParty::AWSNativeSDK::Dependencies
+             3rdParty::AWSNativeSDK::Core
+             3rdParty::AWSNativeSDK::S3
+diff -up o3de/Code/Tools/ProjectManager/CMakeLists.txt.qt5-fix o3de/Code/Tools/ProjectManager/CMakeLists.txt
+--- o3de/Code/Tools/ProjectManager/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/ProjectManager/CMakeLists.txt	2021-07-07 21:16:39.202760623 +0000
+@@ -35,9 +35,9 @@ ly_add_target(
+             Source
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Concurrent
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             3rdParty::Python
+             3rdParty::pybind11
+             AZ::AzCore
+@@ -57,9 +57,9 @@ ly_add_target(
+             Source
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Concurrent
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             3rdParty::Python
+             3rdParty::pybind11
+             AZ::AzCore
+@@ -82,9 +82,9 @@ if(PAL_TRAIT_BUILD_TESTS_SUPPORTED)
+                 Platform/${PAL_PLATFORM_NAME}
+         BUILD_DEPENDENCIES
+             PRIVATE
+-                3rdParty::Qt::Core
++                3rdParty::Qt::Coreo3de
+                 3rdParty::Qt::Concurrent
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+                 3rdParty::Python
+                 3rdParty::pybind11
+                 AZ::AzTest
+diff -up o3de/Code/Tools/SceneAPI/SceneUI/CMakeLists.txt.qt5-fix o3de/Code/Tools/SceneAPI/SceneUI/CMakeLists.txt
+--- o3de/Code/Tools/SceneAPI/SceneUI/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/SceneAPI/SceneUI/CMakeLists.txt	2021-07-07 21:16:39.202760623 +0000
+@@ -33,9 +33,9 @@ ly_add_target(
+             AZ::SceneCore
+             AZ::SceneData
+         PUBLIC
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Gui
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+ )
+ 
+ if(PAL_TRAIT_BUILD_TESTS_SUPPORTED)
+diff -up o3de/Code/Tools/Standalone/Platform/Mac/Source/Driller/EvenTrace/EventTraceDataAggregator_Mac.cpp.qt5-fix o3de/Code/Tools/Standalone/Platform/Mac/Source/Driller/EvenTrace/EventTraceDataAggregator_Mac.cpp
+--- o3de/Code/Tools/Standalone/Platform/Mac/Source/Driller/EvenTrace/EventTraceDataAggregator_Mac.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Platform/Mac/Source/Driller/EvenTrace/EventTraceDataAggregator_Mac.cpp	2021-07-07 21:16:39.202760623 +0000
+@@ -5,9 +5,9 @@
+  *
+  */
+ 
+-#include <QtCore/QString>
+-#include <QtCore/QProcess>
+-#include <QtCore/QDir>
++#include <QtCoreo3de/QString>
++#include <QtCoreo3de/QProcess>
++#include <QtCoreo3de/QDir>
+ 
+ namespace Driller
+ {
+diff -up o3de/Code/Tools/Standalone/Platform/Windows/Source/Driller/EvenTrace/EventTraceDataAggregator_Windows.cpp.qt5-fix o3de/Code/Tools/Standalone/Platform/Windows/Source/Driller/EvenTrace/EventTraceDataAggregator_Windows.cpp
+--- o3de/Code/Tools/Standalone/Platform/Windows/Source/Driller/EvenTrace/EventTraceDataAggregator_Windows.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Platform/Windows/Source/Driller/EvenTrace/EventTraceDataAggregator_Windows.cpp	2021-07-07 21:16:39.202760623 +0000
+@@ -5,8 +5,8 @@
+  *
+  */
+ 
+-#include <QtCore/QString>
+-#include <QtCore/QProcess>
++#include <QtCoreo3de/QString>
++#include <QtCoreo3de/QProcess>
+ 
+ namespace Driller
+ {
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationHeaderView.cpp.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationHeaderView.cpp
+--- o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationHeaderView.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationHeaderView.cpp	2021-07-07 21:16:39.202760623 +0000
+@@ -10,7 +10,7 @@
+ #include "AnnotationHeaderView.hxx"
+ #include "AnnotationsDataView.hxx"
+ #include "Annotations.hxx"
+-#include <QtWidgets/QGridLayout>
++#include <QtWidgetso3de/QGridLayout>
+ 
+ namespace Driller
+ {
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationHeaderView.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationHeaderView.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationHeaderView.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationHeaderView.hxx	2021-07-07 21:16:39.202760623 +0000
+@@ -12,7 +12,7 @@
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+ 
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ 
+ #include <Source/Driller/Annotations/ui_AnnotationHeaderView.h>
+ #include <Source/Driller/DrillerNetworkMessages.h>
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationsDataView_Events.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationsDataView_Events.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationsDataView_Events.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationsDataView_Events.hxx	2021-07-07 21:16:39.203760588 +0000
+@@ -14,7 +14,7 @@
+ #include <AzCore/std/containers/unordered_map.h>
+ #include <AzCore/std/containers/unordered_set.h>
+ 
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ 
+ #include "Source/Driller/DrillerDataTypes.h"
+ #endif
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationsHeaderView_Events.cpp.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationsHeaderView_Events.cpp
+--- o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationsHeaderView_Events.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationsHeaderView_Events.cpp	2021-07-07 21:16:39.203760588 +0000
+@@ -10,7 +10,7 @@
+ #include "AnnotationsHeaderView_Events.hxx"
+ #include "AnnotationsDataView_Events.hxx"
+ #include "Annotations.hxx"
+-#include <QtWidgets/QGridLayout>
++#include <QtWidgetso3de/QGridLayout>
+ 
+ namespace Driller
+ {
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationsHeaderView_Events.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationsHeaderView_Events.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationsHeaderView_Events.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Annotations/AnnotationsHeaderView_Events.hxx	2021-07-07 21:16:39.203760588 +0000
+@@ -11,7 +11,7 @@
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include <Source/Driller/DrillerNetworkMessages.h>
+ 
+ #include "Source/Driller/DrillerDataTypes.h"
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Annotations/ConfigureAnnotationsWindow.cpp.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Annotations/ConfigureAnnotationsWindow.cpp
+--- o3de/Code/Tools/Standalone/Source/Driller/Annotations/ConfigureAnnotationsWindow.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Annotations/ConfigureAnnotationsWindow.cpp	2021-07-07 21:16:39.203760588 +0000
+@@ -6,7 +6,7 @@
+  */
+ 
+ #include "StandaloneTools_precompiled.h"
+-#include <QtCore/QAbstractTableModel>
++#include <QtCoreo3de/QAbstractTableModel>
+ #include "ConfigureAnnotationsWindow.hxx"
+ #include <Source/Driller/Annotations/ui_ConfigureAnnotationsDialog.h>
+ #include <Source/Driller/Annotations/Annotations.hxx>
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Carrier/CarrierDataView.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Carrier/CarrierDataView.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/Carrier/CarrierDataView.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Carrier/CarrierDataView.hxx	2021-07-07 21:16:39.203760588 +0000
+@@ -11,8 +11,8 @@
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+-#include <QtWidgets/QMainWindow>
+-#include <QtWidgets/QDialog>
++#include <QtWidgetso3de/QMainWindow>
++#include <QtWidgetso3de/QDialog>
+ 
+ #include "Source/Driller/StripChart.hxx"
+ #include "Source/Driller/DrillerOperationTelemetryEvent.h"
+diff -up o3de/Code/Tools/Standalone/Source/Driller/ChannelConfigurationWidget.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/ChannelConfigurationWidget.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/ChannelConfigurationWidget.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/ChannelConfigurationWidget.hxx	2021-07-07 21:16:39.203760588 +0000
+@@ -12,7 +12,7 @@
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+ 
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #endif
+ 
+ namespace Driller
+diff -up o3de/Code/Tools/Standalone/Source/Driller/ChannelControl.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/ChannelControl.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/ChannelControl.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/ChannelControl.hxx	2021-07-07 21:16:39.204760553 +0000
+@@ -12,7 +12,7 @@
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+ 
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ 
+ #include "DrillerNetworkMessages.h"
+ 
+diff -up o3de/Code/Tools/Standalone/Source/Driller/ChannelDataView.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/ChannelDataView.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/ChannelDataView.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/ChannelDataView.hxx	2021-07-07 21:16:39.204760553 +0000
+@@ -14,7 +14,7 @@
+ #include <AzCore/std/containers/unordered_set.h>
+ #include <AzCore/std/containers/unordered_map.h>
+ 
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ 
+ #include "Source/Driller/DrillerDataTypes.h"
+ #endif
+diff -up o3de/Code/Tools/Standalone/Source/Driller/ChannelProfilerWidget.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/ChannelProfilerWidget.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/ChannelProfilerWidget.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/ChannelProfilerWidget.hxx	2021-07-07 21:16:39.204760553 +0000
+@@ -13,7 +13,7 @@
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+ 
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ 
+ #include "Source/Driller/DrillerDataTypes.h"
+ 
+diff -up o3de/Code/Tools/Standalone/Source/Driller/CollapsiblePanel.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/CollapsiblePanel.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/CollapsiblePanel.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/CollapsiblePanel.hxx	2021-07-07 21:16:39.204760553 +0000
+@@ -14,7 +14,7 @@
+ 
+ #pragma once
+ 
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #endif
+ 
+ namespace Ui
+diff -up o3de/Code/Tools/Standalone/Source/Driller/CombinedEventsControl.cpp.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/CombinedEventsControl.cpp
+--- o3de/Code/Tools/Standalone/Source/Driller/CombinedEventsControl.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/CombinedEventsControl.cpp	2021-07-07 21:16:39.204760553 +0000
+@@ -6,7 +6,7 @@
+  */
+ #include "StandaloneTools_precompiled.h"
+ 
+-#include <QtWidgets/QGridLayout>
++#include <QtWidgetso3de/QGridLayout>
+ 
+ #include "CombinedEventsControl.hxx"
+ #include <Source/Driller/moc_CombinedEventsControl.cpp>
+diff -up o3de/Code/Tools/Standalone/Source/Driller/CustomizeCSVExportWidget.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/CustomizeCSVExportWidget.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/CustomizeCSVExportWidget.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/CustomizeCSVExportWidget.hxx	2021-07-07 21:16:39.204760553 +0000
+@@ -14,7 +14,7 @@
+ 
+ #pragma once
+ 
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #endif
+ 
+ namespace Driller
+diff -up o3de/Code/Tools/Standalone/Source/Driller/DoubleListSelector.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/DoubleListSelector.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/DoubleListSelector.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/DoubleListSelector.hxx	2021-07-07 21:16:39.204760553 +0000
+@@ -14,7 +14,7 @@
+ 
+ #pragma once
+ 
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #endif
+ 
+ namespace Ui
+diff -up o3de/Code/Tools/Standalone/Source/Driller/DrillerMainWindow.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/DrillerMainWindow.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/DrillerMainWindow.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/DrillerMainWindow.hxx	2021-07-07 21:16:39.205760518 +0000
+@@ -27,7 +27,7 @@ class QToolbar;
+ class QDockWidget;
+ class QSettings;
+ 
+-#include <QtWidgets/QMainWindow>
++#include <QtWidgetso3de/QMainWindow>
+ #endif
+ 
+ namespace Ui
+diff -up o3de/Code/Tools/Standalone/Source/Driller/FilteredListView.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/FilteredListView.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/FilteredListView.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/FilteredListView.hxx	2021-07-07 21:16:39.205760518 +0000
+@@ -14,8 +14,8 @@
+ 
+ #pragma once
+ 
+-#include <QtWidgets/QWidget>
+-#include <QtWidgets/QListView>
++#include <QtWidgetso3de/QWidget>
++#include <QtWidgetso3de/QListView>
+ #include <qstringlistmodel.h>
+ #include <qstringlist.h>
+ #include <qsortfilterproxymodel.h>
+diff -up o3de/Code/Tools/Standalone/Source/Driller/IO/StreamerDrillerDialog.cpp.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/IO/StreamerDrillerDialog.cpp
+--- o3de/Code/Tools/Standalone/Source/Driller/IO/StreamerDrillerDialog.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/IO/StreamerDrillerDialog.cpp	2021-07-07 21:16:39.205760518 +0000
+@@ -13,7 +13,7 @@
+ #include "StreamerDataAggregator.hxx"
+ #include "StreamerEvents.h"
+ 
+-#include <QtWidgets/QSizePolicy>
++#include <QtWidgetso3de/QSizePolicy>
+ #include <AzToolsFramework/UI/UICore/QWidgetSavedState.h>
+ #include <AzCore/UserSettings/UserSettingsComponent.h>
+ #include <AzCore/Serialization/SerializeContext.h>
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Profiler/ProfilerDataPanel.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Profiler/ProfilerDataPanel.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/Profiler/ProfilerDataPanel.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Profiler/ProfilerDataPanel.hxx	2021-07-07 21:16:39.205760518 +0000
+@@ -14,9 +14,9 @@
+ #include <AzCore/std/containers/map.h>
+ #include <AzCore/std/containers/unordered_map.h>
+ 
+-#include <QtCore/QObject>
+-#include <QtWidgets/QWidget>
+-#include <QtWidgets/QTreeWidget>
++#include <QtCoreo3de/QObject>
++#include <QtWidgetso3de/QWidget>
++#include <QtWidgetso3de/QTreeWidget>
+ #include <Source/Driller/StripChart.hxx>
+ 
+ #include <Source/Driller/DrillerDataTypes.h>
+diff -up o3de/Code/Tools/Standalone/Source/Driller/RacetrackChart.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/RacetrackChart.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/RacetrackChart.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/RacetrackChart.hxx	2021-07-07 21:16:39.205760518 +0000
+@@ -12,7 +12,7 @@
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+ #include <AzCore/std/containers/vector.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ 
+ #include "Source/Driller/DrillerDataTypes.h"
+ #endif
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Replica/BaseDetailView.h.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Replica/BaseDetailView.h
+--- o3de/Code/Tools/Standalone/Source/Driller/Replica/BaseDetailView.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Replica/BaseDetailView.h	2021-07-07 21:16:39.206760483 +0000
+@@ -15,8 +15,8 @@
+ #include <AzCore/std/string/conversions.h>
+ 
+ #include <QAbstractItemModel>
+-#include <QtWidgets/QMainWindow>
+-#include <QtWidgets/QDialog>
++#include <QtWidgetso3de/QMainWindow>
++#include <QtWidgetso3de/QDialog>
+ #include <QItemSelectionModel>
+ 
+ #include <AzToolsFramework/UI/UICore/QWidgetSavedState.h>
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Replica/BaseDetailViewQObject.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Replica/BaseDetailViewQObject.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/Replica/BaseDetailViewQObject.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Replica/BaseDetailViewQObject.hxx	2021-07-07 21:16:39.206760483 +0000
+@@ -12,8 +12,8 @@
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+ 
+-#include <QtWidgets/QDialog>
+-#include <QtWidgets/qtreeview.h>
++#include <QtWidgetso3de/QDialog>
++#include <QtWidgetso3de/qtreeview.h>
+ #endif
+ 
+ namespace Ui
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaChunkTypeDetailView.h.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaChunkTypeDetailView.h
+--- o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaChunkTypeDetailView.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaChunkTypeDetailView.h	2021-07-07 21:16:39.206760483 +0000
+@@ -16,8 +16,8 @@
+ #include <AzCore/std/string/string.h>
+ 
+ #include <QAbstractItemModel>
+-#include <QtWidgets/QMainWindow>
+-#include <QtWidgets/QDialog>
++#include <QtWidgetso3de/QMainWindow>
++#include <QtWidgetso3de/QDialog>
+ #include <QItemSelectionModel>
+ 
+ #include "Source/Driller/StripChart.hxx"
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDataAggregatorConfigurationPanel.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDataAggregatorConfigurationPanel.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDataAggregatorConfigurationPanel.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDataAggregatorConfigurationPanel.hxx	2021-07-07 21:16:39.206760483 +0000
+@@ -13,7 +13,7 @@
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+ 
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include <QTimer>
+ 
+ // Generated File
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDataView.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDataView.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDataView.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDataView.hxx	2021-07-07 21:16:39.206760483 +0000
+@@ -17,8 +17,8 @@
+ #include <AzCore/std/string/string.h>
+ 
+ #include <QAbstractTableModel>
+-#include <QtWidgets/QMainWindow>
+-#include <QtWidgets/QDialog>
++#include <QtWidgetso3de/QMainWindow>
++#include <QtWidgetso3de/QDialog>
+ #include <qstyleditemdelegate.h>
+ #include <qitemselectionmodel.h>
+ 
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDetailView.h.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDetailView.h
+--- o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDetailView.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDetailView.h	2021-07-07 21:16:39.206760483 +0000
+@@ -16,10 +16,10 @@
+ #include <AzCore/std/containers/unordered_set.h>
+ #include <AzCore/std/string/string.h>
+ 
+-#include <QtWidgets/QTreeWidget>
++#include <QtWidgetso3de/QTreeWidget>
+ #include <QAbstractItemModel>
+-#include <QtWidgets/QMainWindow>
+-#include <QtWidgets/QDialog>
++#include <QtWidgetso3de/QMainWindow>
++#include <QtWidgetso3de/QDialog>
+ #include <QItemSelectionModel>
+ 
+ #include "Source/Driller/DrillerMainWindowMessages.h"
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDrillerConfigToolbar.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDrillerConfigToolbar.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDrillerConfigToolbar.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Replica/ReplicaDrillerConfigToolbar.hxx	2021-07-07 21:16:39.207760448 +0000
+@@ -14,7 +14,7 @@
+ 
+ #pragma once
+ 
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #endif
+ 
+ namespace Ui
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Trace/TraceDrillerDialog.cpp.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Trace/TraceDrillerDialog.cpp
+--- o3de/Code/Tools/Standalone/Source/Driller/Trace/TraceDrillerDialog.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Trace/TraceDrillerDialog.cpp	2021-07-07 21:16:39.207760448 +0000
+@@ -12,7 +12,7 @@
+ #include <Source/Driller/Trace/ui_TraceDrillerDialog.h>
+ #include "TraceMessageEvents.h"
+ 
+-#include <QtWidgets/QSizePolicy>
++#include <QtWidgetso3de/QSizePolicy>
+ #include <AzToolsFramework/UI/UICore/QWidgetSavedState.h>
+ #include <AzCore/UserSettings/UserSettingsComponent.h>
+ #include <AzCore/Serialization/SerializeContext.h>
+diff -up o3de/Code/Tools/Standalone/Source/Driller/Trace/TraceDrillerDialog.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/Driller/Trace/TraceDrillerDialog.hxx
+--- o3de/Code/Tools/Standalone/Source/Driller/Trace/TraceDrillerDialog.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Driller/Trace/TraceDrillerDialog.hxx	2021-07-07 21:16:39.207760448 +0000
+@@ -11,9 +11,9 @@
+ #pragma once
+ 
+ #if !defined(Q_MOC_RUN)
+-#include <QtWidgets/QDialog>
++#include <QtWidgetso3de/QDialog>
+ #include <QtGui/QIcon>
+-#include <QtCore/QAbstractItemModel>
++#include <QtCoreo3de/QAbstractItemModel>
+ 
+ #include <AzToolsFramework/UI/Logging/LogControl.h>
+ 
+diff -up o3de/Code/Tools/Standalone/Source/Editor/LuaEditor.cpp.qt5-fix o3de/Code/Tools/Standalone/Source/Editor/LuaEditor.cpp
+--- o3de/Code/Tools/Standalone/Source/Editor/LuaEditor.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/Editor/LuaEditor.cpp	2021-07-07 21:16:39.207760448 +0000
+@@ -13,7 +13,7 @@
+ #include "resource.h"
+ #endif
+ 
+-#include <QtCore/QCoreApplication>
++#include <QtCoreo3de/QCoreApplication>
+ 
+ #if defined(EXTERNAL_CRASH_REPORTING)
+ #include <ToolsCrashHandler.h>
+diff -up o3de/Code/Tools/Standalone/Source/LUA/BreakpointPanel.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/LUA/BreakpointPanel.hxx
+--- o3de/Code/Tools/Standalone/Source/LUA/BreakpointPanel.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/LUA/BreakpointPanel.hxx	2021-07-07 21:16:39.207760448 +0000
+@@ -12,9 +12,9 @@
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+ 
+-#include <QtCore/QObject>
+-#include <QtWidgets/QWidget>
+-#include <QtWidgets/QTableWidget>
++#include <QtCoreo3de/QObject>
++#include <QtWidgetso3de/QWidget>
++#include <QtWidgetso3de/QTableWidget>
+ 
+ #include "LUABreakpointTrackerMessages.h"
+ #endif
+diff -up o3de/Code/Tools/Standalone/Source/LUA/ClassReferenceFilter.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/LUA/ClassReferenceFilter.hxx
+--- o3de/Code/Tools/Standalone/Source/LUA/ClassReferenceFilter.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/LUA/ClassReferenceFilter.hxx	2021-07-07 21:16:39.207760448 +0000
+@@ -11,9 +11,9 @@
+ #include <AzCore/Memory/Memory.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+ 
+-#include <QtCore/QSortFilterProxyModel>
+-#include <QtWidgets/QMainWindow>
+-#include <QtCore/QSet>
++#include <QtCoreo3de/QSortFilterProxyModel>
++#include <QtWidgetso3de/QMainWindow>
++#include <QtCoreo3de/QSet>
+ 
+ 
+ class ClassReferenceFilterModel : public QSortFilterProxyModel
+diff -up o3de/Code/Tools/Standalone/Source/LUA/ClassReferencePanel.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/LUA/ClassReferencePanel.hxx
+--- o3de/Code/Tools/Standalone/Source/LUA/ClassReferencePanel.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/LUA/ClassReferencePanel.hxx	2021-07-07 21:16:39.208760414 +0000
+@@ -8,9 +8,9 @@
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+ 
+-#include <QtCore/QObject>
+-#include <QtWidgets/QWidget>
+-#include <QtWidgets/QTreeView>
++#include <QtCoreo3de/QObject>
++#include <QtWidgetso3de/QWidget>
++#include <QtWidgetso3de/QTreeView>
+ #endif
+ 
+ #pragma once
+diff -up o3de/Code/Tools/Standalone/Source/LUA/CodeCompletion/LUACompletionModel.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/LUA/CodeCompletion/LUACompletionModel.hxx
+--- o3de/Code/Tools/Standalone/Source/LUA/CodeCompletion/LUACompletionModel.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/LUA/CodeCompletion/LUACompletionModel.hxx	2021-07-07 21:16:39.208760414 +0000
+@@ -10,7 +10,7 @@
+ 
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+-#include <QtCore/QStringListModel>
++#include <QtCoreo3de/QStringListModel>
+ #include <Source/LUA/LUAEditorStyleMessages.h>
+ #include <QRegularExpression>
+ #endif
+diff -up o3de/Code/Tools/Standalone/Source/LUA/LUAEditorBreakpointWidget.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/LUA/LUAEditorBreakpointWidget.hxx
+--- o3de/Code/Tools/Standalone/Source/LUA/LUAEditorBreakpointWidget.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/LUA/LUAEditorBreakpointWidget.hxx	2021-07-07 21:16:39.208760414 +0000
+@@ -7,7 +7,7 @@
+ 
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include <AzCore/Memory/SystemAllocator.h>
+ #include <AzCore/std/functional.h>
+ #include <AzCore/std/containers/unordered_set.h>
+diff -up o3de/Code/Tools/Standalone/Source/LUA/LUAEditorFoldingWidget.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/LUA/LUAEditorFoldingWidget.hxx
+--- o3de/Code/Tools/Standalone/Source/LUA/LUAEditorFoldingWidget.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/LUA/LUAEditorFoldingWidget.hxx	2021-07-07 21:16:39.208760414 +0000
+@@ -10,7 +10,7 @@
+ 
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include "AzToolsFramework/UI/UICore/PlainTextEdit.hxx"
+ #endif
+ 
+diff -up o3de/Code/Tools/Standalone/Source/LUA/LUAEditorMainWindow.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/LUA/LUAEditorMainWindow.hxx
+--- o3de/Code/Tools/Standalone/Source/LUA/LUAEditorMainWindow.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/LUA/LUAEditorMainWindow.hxx	2021-07-07 21:16:39.208760414 +0000
+@@ -55,7 +55,7 @@ namespace LUA
+ }
+ class ClassReferenceFilterModel;
+ 
+-#include <QtWidgets/QMainWindow>
++#include <QtWidgetso3de/QMainWindow>
+ #endif
+ 
+ namespace LUAEditor
+diff -up o3de/Code/Tools/Standalone/Source/LUA/LUAEditorPlainTextEdit.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/LUA/LUAEditorPlainTextEdit.hxx
+--- o3de/Code/Tools/Standalone/Source/LUA/LUAEditorPlainTextEdit.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/LUA/LUAEditorPlainTextEdit.hxx	2021-07-07 21:16:39.208760414 +0000
+@@ -7,8 +7,8 @@
+ 
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+-#include <QtWidgets/QPlainTextEdit>
+-#include <QtWidgets/QCompleter>
++#include <QtWidgetso3de/QPlainTextEdit>
++#include <QtWidgetso3de/QCompleter>
+ #include "AzToolsFramework/UI/UICore/PlainTextEdit.hxx"
+ #include <AzCore/std/functional.h>
+ #endif
+diff -up o3de/Code/Tools/Standalone/Source/LUA/LUAEditorSettingsDialog.cpp.qt5-fix o3de/Code/Tools/Standalone/Source/LUA/LUAEditorSettingsDialog.cpp
+--- o3de/Code/Tools/Standalone/Source/LUA/LUAEditorSettingsDialog.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/LUA/LUAEditorSettingsDialog.cpp	2021-07-07 21:16:39.209760379 +0000
+@@ -11,7 +11,7 @@
+ #include <AzCore/Component/TickBus.h>
+ #include <AzCore/UserSettings/UserSettingsComponent.h>
+ 
+-#include <QtWidgets/QVBoxLayout>
++#include <QtWidgetso3de/QVBoxLayout>
+ #include <AzCore/Component/ComponentApplicationBus.h>
+ #include <AzCore/RTTI/TypeInfo.h>
+ #include <AzToolsFramework/UI/LegacyFramework/Core/EditorFrameworkAPI.h>
+diff -up o3de/Code/Tools/Standalone/Source/LUA/LUAEditorSettingsDialog.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/LUA/LUAEditorSettingsDialog.hxx
+--- o3de/Code/Tools/Standalone/Source/LUA/LUAEditorSettingsDialog.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/LUA/LUAEditorSettingsDialog.hxx	2021-07-07 21:16:39.209760379 +0000
+@@ -12,7 +12,7 @@
+ #include "LUAEditorView.hxx"
+ #include "LUAEditorStyleMessages.h"
+ 
+-#include <QtWidgets/QDialog>
++#include <QtWidgetso3de/QDialog>
+ #endif
+ 
+ #pragma once
+diff -up o3de/Code/Tools/Standalone/Source/LUA/LUAEditorView.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/LUA/LUAEditorView.hxx
+--- o3de/Code/Tools/Standalone/Source/LUA/LUAEditorView.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/LUA/LUAEditorView.hxx	2021-07-07 21:16:39.209760379 +0000
+@@ -12,7 +12,7 @@
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+ 
+-#include <QtWidgets/QDockWidget>
++#include <QtWidgetso3de/QDockWidget>
+ 
+ #include "LUAEditorContextInterface.h"
+ #include "LUABreakpointTrackerMessages.h"
+diff -up o3de/Code/Tools/Standalone/Source/LUA/StackPanel.hxx.qt5-fix o3de/Code/Tools/Standalone/Source/LUA/StackPanel.hxx
+--- o3de/Code/Tools/Standalone/Source/LUA/StackPanel.hxx.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/Standalone/Source/LUA/StackPanel.hxx	2021-07-07 21:16:39.209760379 +0000
+@@ -12,9 +12,9 @@
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+ 
+-#include <QtCore/QObject>
+-#include <QtWidgets/QWidget>
+-#include <QtWidgets/QTableWidget>
++#include <QtCoreo3de/QObject>
++#include <QtWidgetso3de/QWidget>
++#include <QtWidgetso3de/QTableWidget>
+ 
+ #include "LUAStackTrackerMessages.h"
+ #endif
+diff -up o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt.qt5-fix o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt
+--- o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt	2021-07-07 21:16:39.209760379 +0000
+@@ -58,8 +58,8 @@ ly_add_target(
+             ../External/CubeMapGen
+     BUILD_DEPENDENCIES
+         PUBLIC
+-            3rdParty::Qt::Core
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Coreo3de
++            3rdParty::Qt::Widgetso3de
+             3rdParty::Qt::Gui
+             3rdParty::etc2comp
+             3rdParty::PVRTexTool
+diff -up o3de/Gems/Atom/Tools/AtomToolsFramework/Code/CMakeLists.txt.qt5-fix o3de/Gems/Atom/Tools/AtomToolsFramework/Code/CMakeLists.txt
+--- o3de/Gems/Atom/Tools/AtomToolsFramework/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/Atom/Tools/AtomToolsFramework/Code/CMakeLists.txt	2021-07-07 21:16:39.209760379 +0000
+@@ -27,10 +27,10 @@ ly_add_target(
+             AZ::AzCore
+             AZ::AzToolsFramework
+             AZ::AzQtComponents
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Gui
+             3rdParty::Qt::Network
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             3rdParty::Python
+             Gem::Atom_RPI.Edit
+             Gem::Atom_RPI.Public
+diff -up o3de/Gems/Atom/Tools/MaterialEditor/Code/Source/main.cpp.qt5-fix o3de/Gems/Atom/Tools/MaterialEditor/Code/Source/main.cpp
+--- o3de/Gems/Atom/Tools/MaterialEditor/Code/Source/main.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/Atom/Tools/MaterialEditor/Code/Source/main.cpp	2021-07-07 21:16:39.210760344 +0000
+@@ -19,7 +19,7 @@
+ #include <AzQtComponents/Utilities/QtPluginPaths.h>
+ 
+ #include <QtGui/private/qhighdpiscaling_p.h>
+-#include <QtWidgets/QApplication>
++#include <QtWidgetso3de/QApplication>
+ #endif
+ 
+ int main(int argc, char** argv)
+diff -up o3de/Gems/Atom/Tools/ShaderManagementConsole/Code/Source/main.cpp.qt5-fix o3de/Gems/Atom/Tools/ShaderManagementConsole/Code/Source/main.cpp
+--- o3de/Gems/Atom/Tools/ShaderManagementConsole/Code/Source/main.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/Atom/Tools/ShaderManagementConsole/Code/Source/main.cpp	2021-07-07 21:16:39.210760344 +0000
+@@ -16,7 +16,7 @@
+ #include <AzQtComponents/Utilities/HandleDpiAwareness.h>
+ #include <AzQtComponents/Components/WindowDecorationWrapper.h>
+ 
+-#include <QtWidgets/QApplication>
++#include <QtWidgetso3de/QApplication>
+ #include <QtGui/private/qhighdpiscaling_p.h>
+ 
+ #include <Source/ShaderManagementConsoleApplication.h>
+diff -up o3de/Gems/AudioSystem/Code/CMakeLists.txt.qt5-fix o3de/Gems/AudioSystem/Code/CMakeLists.txt
+--- o3de/Gems/AudioSystem/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/AudioSystem/Code/CMakeLists.txt	2021-07-07 21:16:39.210760344 +0000
+@@ -185,9 +185,9 @@ if (PAL_TRAIT_BUILD_HOST_TOOLS)
+                 AUDIO_SYSTEM_EDITOR
+         BUILD_DEPENDENCIES
+             PUBLIC
+-                3rdParty::Qt::Core
++                3rdParty::Qt::Coreo3de
+                 3rdParty::Qt::Gui
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+                 AZ::AzCore
+                 AZ::AzToolsFramework
+                 Legacy::CryCommon
+@@ -209,7 +209,7 @@ if (PAL_TRAIT_BUILD_HOST_TOOLS)
+                 Include/Editor
+         BUILD_DEPENDENCIES
+             PRIVATE
+-                3rdParty::Qt::Core
++                3rdParty::Qt::Coreo3de
+                 Gem::AudioSystem.Editor.Static
+     )
+ 
+@@ -232,7 +232,7 @@ if (PAL_TRAIT_BUILD_HOST_TOOLS)
+             BUILD_DEPENDENCIES
+                 PRIVATE
+                     AZ::AzTest
+-                    3rdParty::Qt::Core
++                    3rdParty::Qt::Coreo3de
+                     Gem::AudioSystem.Editor.Static
+         )
+         ly_add_googletest(
+diff -up o3de/Gems/AWSCore/Code/CMakeLists.txt.qt5-fix o3de/Gems/AWSCore/Code/CMakeLists.txt
+--- o3de/Gems/AWSCore/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/AWSCore/Code/CMakeLists.txt	2021-07-07 21:16:39.210760344 +0000
+@@ -61,8 +61,8 @@ if (PAL_TRAIT_BUILD_HOST_TOOLS)
+         BUILD_DEPENDENCIES
+             PRIVATE
+                 AZ::AzQtComponents
+-                3rdParty::Qt::Core
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Coreo3de
++                3rdParty::Qt::Widgetso3de
+                 Gem::AWSCore.Static
+             PUBLIC
+                 AZ::AzToolsFramework
+@@ -153,7 +153,7 @@ if(PAL_TRAIT_BUILD_TESTS_SUPPORTED)
+             BUILD_DEPENDENCIES
+                 PRIVATE
+                     3rdParty::Qt::Gui
+-                    3rdParty::Qt::Widgets
++                    3rdParty::Qt::Widgetso3de
+                     AZ::AzTest
+                     Gem::AWSCore.Static
+                     Gem::AWSCore.Editor.Static
+diff -up o3de/Gems/EMotionFX/Code/CMakeLists.txt.qt5-fix o3de/Gems/EMotionFX/Code/CMakeLists.txt
+--- o3de/Gems/EMotionFX/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/CMakeLists.txt	2021-07-07 21:16:39.210760344 +0000
+@@ -97,7 +97,7 @@ if (PAL_TRAIT_BUILD_HOST_TOOLS)
+             PUBLIC
+                 EMotionFXStaticLib
+                 3rdParty::Qt::OpenGL
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+                 AZ::AssetBuilderSDK
+                 AZ::AzQtComponents
+                 AZ::GFxFramework
+diff -up o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/EMStudioSDK/Source/RenderPlugin/RenderWidget.cpp.qt5-fix o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/EMStudioSDK/Source/RenderPlugin/RenderWidget.cpp
+--- o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/EMStudioSDK/Source/RenderPlugin/RenderWidget.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/EMStudioSDK/Source/RenderPlugin/RenderWidget.cpp	2021-07-07 21:16:39.211760309 +0000
+@@ -243,7 +243,7 @@ namespace EMStudio
+ 
+         // get the button states
+         const bool leftButtonPressed            = event->buttons() & Qt::LeftButton;
+-        const bool middleButtonPressed          = event->buttons() & Qt::MidButton;
++        const bool middleButtonPressed          = event->buttons() & Qt::MiddleButton;
+         const bool rightButtonPressed           = event->buttons() & Qt::RightButton;
+         //const bool singleLeftButtonPressed    = (leftButtonPressed) && (middleButtonPressed == false) && (rightButtonPressed == false);
+         const bool altPressed                   = event->modifiers() & Qt::AltModifier;
+@@ -470,7 +470,7 @@ namespace EMStudio
+ 
+         // get the button states
+         const bool leftButtonPressed    = event->buttons() & Qt::LeftButton;
+-        const bool middleButtonPressed  = event->buttons() & Qt::MidButton;
++        const bool middleButtonPressed  = event->buttons() & Qt::MiddleButton;
+         const bool rightButtonPressed   = event->buttons() & Qt::RightButton;
+         const bool ctrlPressed          = event->modifiers() & Qt::ControlModifier;
+         const bool altPressed           = event->modifiers() & Qt::AltModifier;
+@@ -547,7 +547,7 @@ namespace EMStudio
+             {
+                 if (event->buttons() & Qt::LeftButton &&
+                     (event->modifiers() & Qt::AltModifier) == false &&
+-                    (event->buttons() & Qt::MidButton) == false &&
++                    (event->buttons() & Qt::MiddleButton) == false &&
+                     (event->buttons() & Qt::RightButton) == false)
+                 {
+                     QPoint tempMousePos = renderWidget->mapFromGlobal(QCursor::pos());
+diff -up o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphActionManager.h.qt5-fix o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphActionManager.h
+--- o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphActionManager.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphActionManager.h	2021-07-07 21:16:39.211760309 +0000
+@@ -10,7 +10,7 @@
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/std/containers/vector.h>
+ #include <EMotionFX/Source/MotionSet.h>
+-#include <QtCore/QObject>
++#include <QtCoreo3de/QObject>
+ #include <MCore/Source/StandardHeaders.h>
+ #endif
+ 
+diff -up o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphModel.h.qt5-fix o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphModel.h
+--- o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphModel.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphModel.h	2021-07-07 21:16:39.211760309 +0000
+@@ -16,8 +16,8 @@
+ #include <EMotionFX/Source/AnimGraphStateTransition.h>
+ #include <EMotionFX/Source/BlendTreeConnection.h>
+ #include <MCore/Source/Command.h>
+-#include <QtCore/QAbstractItemModel>
+-#include <QtCore/QItemSelectionModel>
++#include <QtCoreo3de/QAbstractItemModel>
++#include <QtCoreo3de/QItemSelectionModel>
+ #include <Editor/QtMetaTypes.h>
+ #endif
+ 
+diff -up o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphSelectionProxyModel.cpp.qt5-fix o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphSelectionProxyModel.cpp
+--- o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphSelectionProxyModel.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphSelectionProxyModel.cpp	2021-07-07 21:16:39.211760309 +0000
+@@ -6,7 +6,7 @@
+  */
+ 
+ #include <EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/SelectionProxyModel.h>
+-#include <QtCore/QSortFilterProxyModel>
++#include <QtCoreo3de/QSortFilterProxyModel>
+ 
+ 
+ namespace EMStudio
+diff -up o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphSortFilterProxyModel.h.qt5-fix o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphSortFilterProxyModel.h
+--- o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphSortFilterProxyModel.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/AnimGraphSortFilterProxyModel.h	2021-07-07 21:16:39.211760309 +0000
+@@ -10,7 +10,7 @@
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/RTTI/TypeInfo.h>
+ #include <AzCore/std/containers/unordered_set.h>
+-#include <QtCore/QSortFilterProxyModel>
++#include <QtCoreo3de/QSortFilterProxyModel>
+ #endif
+ 
+ 
+diff -up o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/NavigationLinkWidget.h.qt5-fix o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/NavigationLinkWidget.h
+--- o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/NavigationLinkWidget.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/NavigationLinkWidget.h	2021-07-07 21:16:39.211760309 +0000
+@@ -10,7 +10,7 @@
+ #if !defined(Q_MOC_RUN)
+ #include <EMotionStudio/Plugins/StandardPlugins/Source/StandardPluginsConfig.h>
+ #include <AzQtComponents/Components/Widgets/BreadCrumbs.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #endif
+ 
+ QT_FORWARD_DECLARE_CLASS(QPixmap)
+diff -up o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/NodeGraphWidget.cpp.qt5-fix o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/NodeGraphWidget.cpp
+--- o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/NodeGraphWidget.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/NodeGraphWidget.cpp	2021-07-07 21:16:39.212760274 +0000
+@@ -654,7 +654,7 @@ namespace EMStudio
+         const AnimGraphActionFilter& actionFilter = mPlugin->GetActionFilter();
+ 
+         // check if we can start panning
+-        if ((event->buttons() & Qt::RightButton && event->buttons() & Qt::LeftButton) || event->button() == Qt::RightButton || event->button() == Qt::MidButton)
++        if ((event->buttons() & Qt::RightButton && event->buttons() & Qt::LeftButton) || event->button() == Qt::RightButton || event->button() == Qt::MiddleButton)
+         {
+             // update button booleans
+             if (event->buttons() & Qt::RightButton && event->buttons() & Qt::LeftButton)
+@@ -687,7 +687,7 @@ namespace EMStudio
+                 }
+             }
+ 
+-            if (event->button() == Qt::MidButton)
++            if (event->button() == Qt::MiddleButton)
+             {
+                 mMiddleMousePressed = true;
+             }
+@@ -1008,7 +1008,7 @@ namespace EMStudio
+         }
+ 
+         // middle mouse button
+-        if (event->button() == Qt::MidButton)
++        if (event->button() == Qt::MiddleButton)
+         {
+             mMiddleMousePressed = false;
+             mPanning            = false;
+diff -up o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/ParameterWindow.cpp.qt5-fix o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/ParameterWindow.cpp
+--- o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/ParameterWindow.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/ParameterWindow.cpp	2021-07-07 21:16:39.212760274 +0000
+@@ -42,7 +42,7 @@
+ #include <QTreeWidget>
+ #include <QToolBar>
+ #include <QVBoxLayout>
+-#include <QtWidgets/private/qabstractitemview_p.h>
++#include <QtWidgetso3de/private/qabstractitemview_p.h>
+ 
+ namespace EMStudio
+ {
+diff -up o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/RoleFilterProxyModel.h.qt5-fix o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/RoleFilterProxyModel.h
+--- o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/RoleFilterProxyModel.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/RoleFilterProxyModel.h	2021-07-07 21:16:39.212760274 +0000
+@@ -9,7 +9,7 @@
+ 
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/std/containers/vector.h>
+-#include <QtCore/QSortFilterProxyModel>
++#include <QtCoreo3de/QSortFilterProxyModel>
+ #endif
+ 
+ 
+diff -up o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/SelectionProxyModel.h.qt5-fix o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/SelectionProxyModel.h
+--- o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/SelectionProxyModel.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/AnimGraph/SelectionProxyModel.h	2021-07-07 21:16:39.213760239 +0000
+@@ -8,7 +8,7 @@
+ #pragma once
+ 
+ #if !defined(Q_MOC_RUN)
+-#include <QtCore/QItemSelectionModel>
++#include <QtCoreo3de/QItemSelectionModel>
+ #include <AzCore/std/containers/vector.h>
+ #endif
+ 
+diff -up o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/TimeView/TrackDataHeaderWidget.cpp.qt5-fix o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/TimeView/TrackDataHeaderWidget.cpp
+--- o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/TimeView/TrackDataHeaderWidget.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/TimeView/TrackDataHeaderWidget.cpp	2021-07-07 21:16:39.213760239 +0000
+@@ -295,7 +295,7 @@ namespace EMStudio
+             mMouseRightClicked = true;
+         }
+ 
+-        if (event->button() == Qt::MidButton)
++        if (event->button() == Qt::MiddleButton)
+         {
+             mMouseMidClicked = true;
+         }
+@@ -377,7 +377,7 @@ namespace EMStudio
+             mIsScrolling = false;
+         }
+ 
+-        if (event->button() == Qt::MidButton)
++        if (event->button() == Qt::MiddleButton)
+         {
+             mMouseMidClicked = false;
+         }
+diff -up o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/TimeView/TrackDataWidget.cpp.qt5-fix o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/TimeView/TrackDataWidget.cpp
+--- o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/TimeView/TrackDataWidget.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/Plugins/StandardPlugins/Source/TimeView/TrackDataWidget.cpp	2021-07-07 21:16:39.213760239 +0000
+@@ -1355,7 +1355,7 @@ namespace EMStudio
+             mMouseRightClicked = true;
+         }
+ 
+-        if (event->button() == Qt::MidButton)
++        if (event->button() == Qt::MiddleButton)
+         {
+             mMouseMidClicked = true;
+         }
+@@ -1522,7 +1522,7 @@ namespace EMStudio
+             mIsScrolling = false;
+         }
+ 
+-        if (event->button() == Qt::MidButton)
++        if (event->button() == Qt::MiddleButton)
+         {
+             mMouseMidClicked = false;
+         }
+diff -up o3de/Gems/EMotionFX/Code/MysticQt/Source/DialogStack.h.qt5-fix o3de/Gems/EMotionFX/Code/MysticQt/Source/DialogStack.h
+--- o3de/Gems/EMotionFX/Code/MysticQt/Source/DialogStack.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/MysticQt/Source/DialogStack.h	2021-07-07 21:16:39.214760204 +0000
+@@ -11,8 +11,8 @@
+ //
+ #if !defined(Q_MOC_RUN)
+ #include "MysticQtConfig.h"
+-#include <QtWidgets/QWidget>
+-#include <QtWidgets/QScrollArea>
++#include <QtWidgetso3de/QWidget>
++#include <QtWidgetso3de/QScrollArea>
+ #include <MCore/Source/Array.h>
+ #endif
+ 
+diff -up o3de/Gems/EMotionFX/Code/MysticQt/Source/KeyboardShortcutManager.cpp.qt5-fix o3de/Gems/EMotionFX/Code/MysticQt/Source/KeyboardShortcutManager.cpp
+--- o3de/Gems/EMotionFX/Code/MysticQt/Source/KeyboardShortcutManager.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/MysticQt/Source/KeyboardShortcutManager.cpp	2021-07-07 21:16:39.214760204 +0000
+@@ -12,8 +12,8 @@
+ 
+ #include <MCore/Source/LogManager.h>
+ #include <MCore/Source/IDGenerator.h>
+-#include <QtCore/QStringList>
+-#include <QtCore/QSettings>
++#include <QtCoreo3de/QStringList>
++#include <QtCoreo3de/QSettings>
+ #include <QtGui/QKeyEvent>
+ 
+ namespace MysticQt
+diff -up o3de/Gems/EMotionFX/Code/MysticQt/Source/MysticQtConfig.h.qt5-fix o3de/Gems/EMotionFX/Code/MysticQt/Source/MysticQtConfig.h
+--- o3de/Gems/EMotionFX/Code/MysticQt/Source/MysticQtConfig.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/MysticQt/Source/MysticQtConfig.h	2021-07-07 21:16:39.214760204 +0000
+@@ -8,7 +8,7 @@
+ #pragma once
+ 
+ #include <AzCore/std/string/string.h>
+-#include <QtCore/QString>
++#include <QtCoreo3de/QString>
+ #include <MCore/Source/Config.h>
+ 
+ // when we use DLL files, setup the EMFX_API macro
+diff -up o3de/Gems/EMotionFX/Code/MysticQt/Source/RecentFiles.cpp.qt5-fix o3de/Gems/EMotionFX/Code/MysticQt/Source/RecentFiles.cpp
+--- o3de/Gems/EMotionFX/Code/MysticQt/Source/RecentFiles.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/MysticQt/Source/RecentFiles.cpp	2021-07-07 21:16:39.214760204 +0000
+@@ -11,10 +11,10 @@
+ #include <AzFramework/API/ApplicationAPI.h>
+ #include <AzFramework/StringFunc/StringFunc.h>
+ #include <EMotionFX/Source/EMotionFXManager.h>
+-#include <QtCore/QFileInfo>
+-#include <QtCore/QSettings>
++#include <QtCoreo3de/QFileInfo>
++#include <QtCoreo3de/QSettings>
+ #include <QtGui/QHelpEvent>
+-#include <QtWidgets/QToolTip>
++#include <QtWidgetso3de/QToolTip>
+ 
+ 
+ namespace MysticQt
+diff -up o3de/Gems/EMotionFX/Code/Source/Editor/PropertyWidgets/LODSceneGraphWidget.cpp.qt5-fix o3de/Gems/EMotionFX/Code/Source/Editor/PropertyWidgets/LODSceneGraphWidget.cpp
+--- o3de/Gems/EMotionFX/Code/Source/Editor/PropertyWidgets/LODSceneGraphWidget.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/Source/Editor/PropertyWidgets/LODSceneGraphWidget.cpp	2021-07-07 21:16:39.214760204 +0000
+@@ -6,8 +6,8 @@
+  */
+ 
+ #include <QStandardItemModel>
+-#include <QtWidgets/QCheckBox>
+-#include <QtWidgets/QTreeView>
++#include <QtWidgetso3de/QCheckBox>
++#include <QtWidgetso3de/QTreeView>
+ #include <SceneAPI/SceneCore/Containers/Scene.h>
+ #include <SceneAPI/SceneCore/Containers/Views/PairIterator.h>
+ #include <SceneAPI/SceneCore/Containers/Views/SceneGraphDownwardsIterator.h>
+diff -up o3de/Gems/EMotionFX/Code/Source/Editor/SelectionProxyModel.cpp.qt5-fix o3de/Gems/EMotionFX/Code/Source/Editor/SelectionProxyModel.cpp
+--- o3de/Gems/EMotionFX/Code/Source/Editor/SelectionProxyModel.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/Source/Editor/SelectionProxyModel.cpp	2021-07-07 21:16:39.214760204 +0000
+@@ -6,7 +6,7 @@
+  */
+ 
+ #include <Source/Editor/SelectionProxyModel.h>
+-#include <QtCore/QSortFilterProxyModel>
++#include <QtCoreo3de/QSortFilterProxyModel>
+ 
+ 
+ namespace EMotionFX
+diff -up o3de/Gems/EMotionFX/Code/Source/Editor/SelectionProxyModel.h.qt5-fix o3de/Gems/EMotionFX/Code/Source/Editor/SelectionProxyModel.h
+--- o3de/Gems/EMotionFX/Code/Source/Editor/SelectionProxyModel.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/Source/Editor/SelectionProxyModel.h	2021-07-07 21:16:39.215760169 +0000
+@@ -8,7 +8,7 @@
+ #pragma once
+ 
+ #if !defined(Q_MOC_RUN)
+-#include <QtCore/QItemSelectionModel>
++#include <QtCoreo3de/QItemSelectionModel>
+ #include <AzCore/std/containers/vector.h>
+ #endif
+ 
+diff -up o3de/Gems/EMotionFX/Code/Source/Editor/SimulatedObjectModel.h.qt5-fix o3de/Gems/EMotionFX/Code/Source/Editor/SimulatedObjectModel.h
+--- o3de/Gems/EMotionFX/Code/Source/Editor/SimulatedObjectModel.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/Source/Editor/SimulatedObjectModel.h	2021-07-07 21:16:39.215760169 +0000
+@@ -12,8 +12,8 @@
+ #include <EMotionFX/Source/Actor.h>
+ #include <EMotionFX/Source/ActorInstance.h>
+ #include <EMotionFX/Source/Node.h>
+-#include <QtCore/QAbstractItemModel>
+-#include <QtCore/QItemSelectionModel>
++#include <QtCoreo3de/QAbstractItemModel>
++#include <QtCoreo3de/QItemSelectionModel>
+ #include <Editor/ActorEditorBus.h>
+ #include <MCore/Source/Command.h>
+ #include <EMotionFX/Source/SimulatedObjectSetup.h>
+diff -up o3de/Gems/EMotionFX/Code/Source/Editor/SkeletonModel.h.qt5-fix o3de/Gems/EMotionFX/Code/Source/Editor/SkeletonModel.h
+--- o3de/Gems/EMotionFX/Code/Source/Editor/SkeletonModel.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/Source/Editor/SkeletonModel.h	2021-07-07 21:16:39.215760169 +0000
+@@ -11,8 +11,8 @@
+ #include <EMotionFX/Source/Actor.h>
+ #include <EMotionFX/Source/ActorInstance.h>
+ #include <EMotionFX/Source/Node.h>
+-#include <QtCore/QAbstractItemModel>
+-#include <QtCore/QItemSelectionModel>
++#include <QtCoreo3de/QAbstractItemModel>
++#include <QtCoreo3de/QItemSelectionModel>
+ #include <Editor/ActorEditorBus.h>
+ #include <Editor/QtMetaTypes.h>
+ #include <QIcon>
+diff -up o3de/Gems/EMotionFX/Code/Source/Editor/SkeletonSortFilterProxyModel.h.qt5-fix o3de/Gems/EMotionFX/Code/Source/Editor/SkeletonSortFilterProxyModel.h
+--- o3de/Gems/EMotionFX/Code/Source/Editor/SkeletonSortFilterProxyModel.h.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/Source/Editor/SkeletonSortFilterProxyModel.h	2021-07-07 21:16:39.215760169 +0000
+@@ -9,7 +9,7 @@
+ 
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/std/containers/vector.h>
+-#include <QtCore/QSortFilterProxyModel>
++#include <QtCoreo3de/QSortFilterProxyModel>
+ #include <AzQtComponents/Components/FilteredSearchWidget.h>
+ #endif
+ 
+diff -up o3de/Gems/EMotionFX/Code/Tests/SimulatedObjectModelTests.cpp.qt5-fix o3de/Gems/EMotionFX/Code/Tests/SimulatedObjectModelTests.cpp
+--- o3de/Gems/EMotionFX/Code/Tests/SimulatedObjectModelTests.cpp.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EMotionFX/Code/Tests/SimulatedObjectModelTests.cpp	2021-07-07 21:16:39.215760169 +0000
+@@ -13,7 +13,7 @@
+ #include "EMotionFX/Source/Skeleton.h"
+ #include "EMotionStudio/EMStudioSDK/Source/EMStudioManager.h"
+ #include "Editor/Plugins/SimulatedObject/SimulatedObjectWidget.h"
+-#include <QtWidgets/QApplication>
++#include <QtWidgetso3de/QApplication>
+ 
+ #include <Editor/SimulatedObjectModel.h>
+ #include <AzTest/AzTest.h>
+diff -up o3de/Gems/GradientSignal/Code/CMakeLists.txt.qt5-fix o3de/Gems/GradientSignal/Code/CMakeLists.txt
+--- o3de/Gems/GradientSignal/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/GradientSignal/Code/CMakeLists.txt	2021-07-07 21:16:39.215760169 +0000
+@@ -67,7 +67,7 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
+             PRIVATE
+                 Gem::LmbrCentral.Editor
+             PUBLIC
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+                 Legacy::CryCommon
+                 AZ::AzToolsFramework
+                 AZ::AssetBuilderSDK
+diff -up o3de/Gems/GraphCanvas/Code/CMakeLists.txt.qt5-fix o3de/Gems/GraphCanvas/Code/CMakeLists.txt
+--- o3de/Gems/GraphCanvas/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/GraphCanvas/Code/CMakeLists.txt	2021-07-07 21:16:39.216760134 +0000
+@@ -40,9 +40,9 @@ if (PAL_TRAIT_BUILD_HOST_TOOLS)
+                 AZ::AzCore
+                 AZ::AzFramework
+                 AZ::AzToolsFramework
+-                3rdParty::Qt::Core
++                3rdParty::Qt::Coreo3de
+                 3rdParty::Qt::Gui
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+     )
+ 
+     ly_add_target(
+@@ -62,9 +62,9 @@ if (PAL_TRAIT_BUILD_HOST_TOOLS)
+                 AZ::AzFramework
+                 AZ::AzToolsFramework
+                 AZ::AssetBuilderSDK
+-                3rdParty::Qt::Core
++                3rdParty::Qt::Coreo3de
+                 3rdParty::Qt::Gui
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+                 Gem::GraphCanvasWidgets
+         RUNTIME_DEPENDENCIES
+             3rdParty::Qt::Xml
+diff -up o3de/Gems/LandscapeCanvas/Code/CMakeLists.txt.qt5-fix o3de/Gems/LandscapeCanvas/Code/CMakeLists.txt
+--- o3de/Gems/LandscapeCanvas/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/LandscapeCanvas/Code/CMakeLists.txt	2021-07-07 21:16:39.216760134 +0000
+@@ -23,9 +23,9 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
+                 Include
+         BUILD_DEPENDENCIES
+             PRIVATE
+-                3rdParty::Qt::Core
++                3rdParty::Qt::Coreo3de
+                 3rdParty::Qt::Gui
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+                 AZ::AzCore
+                 AZ::AzToolsFramework
+                 Legacy::CryCommon
+diff -up o3de/Gems/LmbrCentral/Code/CMakeLists.txt.qt5-fix o3de/Gems/LmbrCentral/Code/CMakeLists.txt
+--- o3de/Gems/LmbrCentral/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/LmbrCentral/Code/CMakeLists.txt	2021-07-07 21:16:39.216760134 +0000
+@@ -68,7 +68,7 @@ if (PAL_TRAIT_BUILD_HOST_TOOLS)
+             PRIVATE
+                 ${additional_dependencies}
+             PUBLIC
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+                 Legacy::CryCommon
+                 Legacy::Editor.Headers
+                 AZ::AzToolsFramework
+@@ -96,6 +96,12 @@ if (PAL_TRAIT_BUILD_HOST_TOOLS)
+                 ${additional_dependencies}
+     )
+ 
++    unset(QT_LRELEASE_EXECUTABLE CACHE)
++    find_program(QT_LRELEASE_EXECUTABLE lrelease-qt5 HINTS "${QT_PATH}/bin")
++    mark_as_advanced(QT_LRELEASE_EXECUTABLE) # Hiding from GUI
++    if(NOT QT_LRELEASE_EXECUTABLE)
++        message(FATAL_ERROR "Qt's lrelease executable not found")
++    endif()
+     include(${pal_dir}/lrelease_${PAL_PLATFORM_NAME_LOWERCASE}.cmake)
+ 
+     ly_add_target_files(
+@@ -152,7 +158,7 @@ if(PAL_TRAIT_BUILD_TESTS_SUPPORTED)
+             BUILD_DEPENDENCIES
+                 PRIVATE
+                     3rdParty::Qt::Gui
+-                    3rdParty::Qt::Widgets
++                    3rdParty::Qt::Widgetso3de
+                     Legacy::CryCommon
+                     Legacy::Editor.Headers
+                     AZ::AzTest
+diff -up o3de/Gems/LyShine/Code/CMakeLists.txt.qt5-fix o3de/Gems/LyShine/Code/CMakeLists.txt
+--- o3de/Gems/LyShine/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/LyShine/Code/CMakeLists.txt	2021-07-07 21:16:39.216760134 +0000
+@@ -73,9 +73,9 @@ if (PAL_TRAIT_BUILD_HOST_TOOLS)
+                 Include
+         BUILD_DEPENDENCIES
+             PRIVATE
+-                3rdParty::Qt::Core
++                3rdParty::Qt::Coreo3de
+                 3rdParty::Qt::Gui
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+                 AZ::AzCore
+                 AZ::AzToolsFramework
+                 AZ::AssetBuilderSDK
+diff -up o3de/Gems/LyShine/Code/Editor/EditorCommon.h.qt5-fix o3de/Gems/LyShine/Code/Editor/EditorCommon.h
+--- o3de/Gems/LyShine/Code/Editor/EditorCommon.h.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/LyShine/Code/Editor/EditorCommon.h	2021-07-07 21:16:39.216760134 +0000
+@@ -10,7 +10,7 @@
+ #include <Include/IPlugin.h>
+ #include <IRenderer.h>
+ #include <ISerialize.h>
+-#include <QtWidgets/QMainWindow>
++#include <QtWidgetso3de/QMainWindow>
+ #include <LyShine/IDraw2d.h>
+ #include <LyShine/ILyShine.h>
+ #include <LyShine/Bus/UiCanvasBus.h>
+diff -up o3de/Gems/LyShine/Code/Editor/FindEntitySortFilterProxyModel.h.qt5-fix o3de/Gems/LyShine/Code/Editor/FindEntitySortFilterProxyModel.h
+--- o3de/Gems/LyShine/Code/Editor/FindEntitySortFilterProxyModel.h.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/LyShine/Code/Editor/FindEntitySortFilterProxyModel.h	2021-07-07 21:16:39.216760134 +0000
+@@ -11,7 +11,7 @@
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+-#include <QtCore/QSortFilterProxyModel>
++#include <QtCoreo3de/QSortFilterProxyModel>
+ #endif
+ 
+ #pragma once
+diff -up o3de/Gems/LyShine/Code/Editor/PropertyHandlerDirectory.h.qt5-fix o3de/Gems/LyShine/Code/Editor/PropertyHandlerDirectory.h
+--- o3de/Gems/LyShine/Code/Editor/PropertyHandlerDirectory.h.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/LyShine/Code/Editor/PropertyHandlerDirectory.h	2021-07-07 21:16:39.216760134 +0000
+@@ -9,7 +9,7 @@
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include <AzToolsFramework/UI/PropertyEditor/PropertyEditorAPI.h>
+ 
+ #include <AzToolsFramework/UI/PropertyEditor/PropertyAssetCtrl.hxx>
+diff -up o3de/Gems/LyShine/Code/Editor/PropertyHandlerSprite.cpp.qt5-fix o3de/Gems/LyShine/Code/Editor/PropertyHandlerSprite.cpp
+--- o3de/Gems/LyShine/Code/Editor/PropertyHandlerSprite.cpp.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/LyShine/Code/Editor/PropertyHandlerSprite.cpp	2021-07-07 21:16:39.217760099 +0000
+@@ -13,8 +13,8 @@
+ #include <QtGui/QIcon>
+ #include <QtGui/QImage>
+ #include <QtGui/QPixmap>
+-#include <QtWidgets/QHBoxLayout>
+-#include <QtWidgets/QPushButton>
++#include <QtWidgetso3de/QHBoxLayout>
++#include <QtWidgetso3de/QPushButton>
+ 
+ #include <AzCore/Asset/AssetManagerBus.h>
+ #include <AzCore/Memory/OSAllocator.h>
+diff -up o3de/Gems/LyShine/Code/Editor/PropertyHandlerSprite.h.qt5-fix o3de/Gems/LyShine/Code/Editor/PropertyHandlerSprite.h
+--- o3de/Gems/LyShine/Code/Editor/PropertyHandlerSprite.h.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/LyShine/Code/Editor/PropertyHandlerSprite.h	2021-07-07 21:16:39.217760099 +0000
+@@ -9,7 +9,7 @@
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/base.h>
+ #include <AzCore/Memory/SystemAllocator.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include <AzToolsFramework/UI/PropertyEditor/PropertyEditorAPI.h>
+ 
+ #include <AzToolsFramework/UI/PropertyEditor/PropertyAssetCtrl.hxx>
+diff -up o3de/Gems/LyShine/Code/Editor/UiSliceManager.cpp.qt5-fix o3de/Gems/LyShine/Code/Editor/UiSliceManager.cpp
+--- o3de/Gems/LyShine/Code/Editor/UiSliceManager.cpp.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/LyShine/Code/Editor/UiSliceManager.cpp	2021-07-07 21:16:39.217760099 +0000
+@@ -34,13 +34,13 @@
+ #include <AzToolsFramework/UI/UICore/WidgetHelpers.h>
+ #include <AzToolsFramework/UI/Slice/SlicePushWidget.hxx>
+ 
+-#include <QtWidgets/QWidget>
+-#include <QtWidgets/QDialog>
+-#include <QtWidgets/QFileDialog>
+-#include <QtWidgets/QMessageBox>
+-#include <QtWidgets/QErrorMessage>
+-#include <QtWidgets/QVBoxLayout>
+-#include <QtCore/QThread>
++#include <QtWidgetso3de/QWidget>
++#include <QtWidgetso3de/QDialog>
++#include <QtWidgetso3de/QFileDialog>
++#include <QtWidgetso3de/QMessageBox>
++#include <QtWidgetso3de/QErrorMessage>
++#include <QtWidgetso3de/QVBoxLayout>
++#include <QtCoreo3de/QThread>
+ 
+ #include <LyShine/Bus/UiElementBus.h>
+ #include <LyShine/Bus/Tools/UiSystemToolsBus.h>
+diff -up o3de/Gems/Maestro/Code/CMakeLists.txt.qt5-fix o3de/Gems/Maestro/Code/CMakeLists.txt
+--- o3de/Gems/Maestro/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/Maestro/Code/CMakeLists.txt	2021-07-07 21:16:39.217760099 +0000
+@@ -60,7 +60,7 @@ if (PAL_TRAIT_BUILD_HOST_TOOLS)
+                 MAESTRO_EDITOR
+         BUILD_DEPENDENCIES
+             PRIVATE
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+                 Legacy::CryCommon
+                 Legacy::Editor.Headers
+                 AZ::AzFramework
+diff -up o3de/Gems/PhysX/Code/Editor/ConfigStringLineEditCtrl.cpp.qt5-fix o3de/Gems/PhysX/Code/Editor/ConfigStringLineEditCtrl.cpp
+--- o3de/Gems/PhysX/Code/Editor/ConfigStringLineEditCtrl.cpp.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/PhysX/Code/Editor/ConfigStringLineEditCtrl.cpp	2021-07-07 21:16:39.218760064 +0000
+@@ -10,7 +10,7 @@
+ #include <AzToolsFramework/UI/PropertyEditor/PropertyQTConstants.h>
+ #include <AzQtComponents/Components/StyledLineEdit.h>
+ 
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ #include <QFocusEvent>
+ 
+ #include "ConfigStringLineEditCtrl.h"
+diff -up o3de/Gems/PhysX/Code/Editor/ConfigStringLineEditCtrl.h.qt5-fix o3de/Gems/PhysX/Code/Editor/ConfigStringLineEditCtrl.h
+--- o3de/Gems/PhysX/Code/Editor/ConfigStringLineEditCtrl.h.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/PhysX/Code/Editor/ConfigStringLineEditCtrl.h	2021-07-07 21:16:39.218760064 +0000
+@@ -13,7 +13,7 @@
+ #include <AzCore/Memory/SystemAllocator.h>
+ #include <AzToolsFramework/UI/PropertyEditor/PropertyEditorAPI.h>
+ #include <AzToolsFramework/UI/PropertyEditor/PropertyStringLineEditCtrl.hxx>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include <QValidator>
+ 
+ #include "UniqueStringContainer.h"
+diff -up o3de/Gems/QtForPython/Code/CMakeLists.txt.qt5-fix o3de/Gems/QtForPython/Code/CMakeLists.txt
+--- o3de/Gems/QtForPython/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/QtForPython/Code/CMakeLists.txt	2021-07-07 21:16:39.218760064 +0000
+@@ -32,7 +32,7 @@ ly_add_target(
+             AZ::AzCore
+             AZ::AzFramework
+             AZ::AzToolsFramework
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             Gem::EditorPythonBindings.Static
+     RUNTIME_DEPENDENCIES
+         3rdParty::pyside2
+diff -up o3de/Gems/SceneProcessing/Code/CMakeLists.txt.qt5-fix o3de/Gems/SceneProcessing/Code/CMakeLists.txt
+--- o3de/Gems/SceneProcessing/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/SceneProcessing/Code/CMakeLists.txt	2021-07-07 21:16:39.218760064 +0000
+@@ -33,7 +33,7 @@ if (PAL_TRAIT_BUILD_HOST_TOOLS)
+                 Include
+         BUILD_DEPENDENCIES
+             PUBLIC
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+                 3rdParty::mikkelsen
+                 AZ::AzCore
+                 AZ::SceneCore
+diff -up o3de/Gems/ScriptCanvas/Code/CMakeLists.txt.qt5-fix o3de/Gems/ScriptCanvas/Code/CMakeLists.txt
+--- o3de/Gems/ScriptCanvas/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/ScriptCanvas/Code/CMakeLists.txt	2021-07-07 21:16:39.218760064 +0000
+@@ -141,7 +141,7 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
+             PRIVATE
+                 AZ::AzCore
+                 AZ::AzToolsFramework
+-                3rdParty::Qt::Widgets
++                3rdParty::Qt::Widgetso3de
+                 Gem::ScriptCanvas
+     )
+ 
+@@ -207,9 +207,9 @@ if(PAL_TRAIT_BUILD_HOST_TOOLS)
+             PUBLIC
+                 Gem::ScriptCanvas.Editor.Static
+         RUNTIME_DEPENDENCIES
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             3rdParty::Qt::Gui
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Widgetso3de
+             Legacy::EditorCore
+             AZ::AzQtComponents
+             Gem::GraphCanvas.Editor
+diff -up o3de/Gems/ScriptCanvas/Code/Editor/Static/Include/ScriptCanvas/View/EditCtrls/GenericLineEditCtrl.h.qt5-fix o3de/Gems/ScriptCanvas/Code/Editor/Static/Include/ScriptCanvas/View/EditCtrls/GenericLineEditCtrl.h
+--- o3de/Gems/ScriptCanvas/Code/Editor/Static/Include/ScriptCanvas/View/EditCtrls/GenericLineEditCtrl.h.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/ScriptCanvas/Code/Editor/Static/Include/ScriptCanvas/View/EditCtrls/GenericLineEditCtrl.h	2021-07-07 21:16:39.218760064 +0000
+@@ -9,7 +9,7 @@
+ 
+ #if !defined(Q_MOC_RUN)
+ #include <AzCore/Memory/SystemAllocator.h>
+-#include <QtWidgets/QWidget>
++#include <QtWidgetso3de/QWidget>
+ #include <AzToolsFramework/UI/PropertyEditor/PropertyEditorAPI.h>
+ #include <ScriptCanvas/Core/Attributes.h>
+ 
+diff -up o3de/Gems/ScriptCanvas/Code/Editor/Static/Include/ScriptCanvas/View/EditCtrls/GenericLineEditCtrl.inl.qt5-fix o3de/Gems/ScriptCanvas/Code/Editor/Static/Include/ScriptCanvas/View/EditCtrls/GenericLineEditCtrl.inl
+--- o3de/Gems/ScriptCanvas/Code/Editor/Static/Include/ScriptCanvas/View/EditCtrls/GenericLineEditCtrl.inl.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/ScriptCanvas/Code/Editor/Static/Include/ScriptCanvas/View/EditCtrls/GenericLineEditCtrl.inl	2021-07-07 21:16:39.219760030 +0000
+@@ -5,7 +5,7 @@
+  *
+  */
+ 
+-#include <QtWidgets/QLineEdit>
++#include <QtWidgetso3de/QLineEdit>
+ 
+ namespace ScriptCanvasEditor
+ {
+diff -up o3de/Gems/ScriptCanvas/Code/Editor/Static/Source/View/EditCtrls/GenericLineEditCtrl.cpp.qt5-fix o3de/Gems/ScriptCanvas/Code/Editor/Static/Source/View/EditCtrls/GenericLineEditCtrl.cpp
+--- o3de/Gems/ScriptCanvas/Code/Editor/Static/Source/View/EditCtrls/GenericLineEditCtrl.cpp.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/ScriptCanvas/Code/Editor/Static/Source/View/EditCtrls/GenericLineEditCtrl.cpp	2021-07-07 21:16:39.219760030 +0000
+@@ -7,7 +7,7 @@
+ #include <ScriptCanvas/View/EditCtrls/GenericLineEditCtrl.h>
+ 
+ #include <AzToolsFramework/UI/PropertyEditor/PropertyQTConstants.h>
+-#include <QtWidgets/QHBoxLayout>
++#include <QtWidgetso3de/QHBoxLayout>
+ 
+ #include <QFocusEvent>
+ 
+diff -up o3de/Gems/ScriptCanvas/Code/Editor/View/Widgets/GraphTabBar.cpp.qt5-fix o3de/Gems/ScriptCanvas/Code/Editor/View/Widgets/GraphTabBar.cpp
+--- o3de/Gems/ScriptCanvas/Code/Editor/View/Widgets/GraphTabBar.cpp.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/ScriptCanvas/Code/Editor/View/Widgets/GraphTabBar.cpp	2021-07-07 21:16:39.219760030 +0000
+@@ -249,7 +249,7 @@ namespace ScriptCanvasEditor
+ 
+         void GraphTabBar::mouseReleaseEvent(QMouseEvent* event)
+         {
+-            if (event->button() == Qt::MidButton)
++            if (event->button() == Qt::MiddleButton)
+             {
+                 int tabIndex = tabAt(event->localPos().toPoint());
+ 
+diff -up o3de/Gems/SliceFavorites/Code/CMakeLists.txt.qt5-fix o3de/Gems/SliceFavorites/Code/CMakeLists.txt
+--- o3de/Gems/SliceFavorites/Code/CMakeLists.txt.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/SliceFavorites/Code/CMakeLists.txt	2021-07-07 21:16:39.219760030 +0000
+@@ -26,8 +26,8 @@ ly_add_target(
+     BUILD_DEPENDENCIES
+         PUBLIC
+             Legacy::CryCommon
+-            3rdParty::Qt::Core
+-            3rdParty::Qt::Widgets
++            3rdParty::Qt::Coreo3de
++            3rdParty::Qt::Widgetso3de
+             AZ::AzToolsFramework
+ )
+ 
+@@ -44,9 +44,9 @@ ly_add_target(
+             Include
+     BUILD_DEPENDENCIES
+         PRIVATE
+-            3rdParty::Qt::Core
++            3rdParty::Qt::Coreo3de
+             Gem::SliceFavorites.Editor.Static
+ )
+ 
+ # the above module is for use in Tools only (no need to load it in builders)
+-ly_create_alias(NAME SliceFavorites.Tools    NAMESPACE Gem TARGETS Gem::SliceFavorites.Editor)
+\ No newline at end of file
++ly_create_alias(NAME SliceFavorites.Tools    NAMESPACE Gem TARGETS Gem::SliceFavorites.Editor)
+diff -up o3de/Gems/SliceFavorites/Code/Source/SliceFavoritesWidget.cpp.qt5-fix o3de/Gems/SliceFavorites/Code/Source/SliceFavoritesWidget.cpp
+--- o3de/Gems/SliceFavorites/Code/Source/SliceFavoritesWidget.cpp.qt5-fix	2021-07-07 13:33:56.000000000 +0000
++++ o3de/Gems/SliceFavorites/Code/Source/SliceFavoritesWidget.cpp	2021-07-07 21:16:39.219760030 +0000
+@@ -16,8 +16,8 @@
+ #include <QMenu>
+ #include <QMessageBox>
+ #include <QPainter>
+-#include <QtCore/QPropertyAnimation>
+-#include <QtCore/QTimer>
++#include <QtCoreo3de/QPropertyAnimation>
++#include <QtCoreo3de/QTimer>
+ #include <AzToolsFramework/AssetBrowser/AssetSelectionModel.h>
+ #include <AzToolsFramework/AssetEditor/AssetEditorBus.h>
+ 

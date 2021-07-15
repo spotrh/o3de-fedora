@@ -1,0 +1,12 @@
+diff -up o3de/Gems/MultiplayerCompression/Code/Source/LZ4Compressor.cpp.lz4-compress-hc o3de/Gems/MultiplayerCompression/Code/Source/LZ4Compressor.cpp
+--- o3de/Gems/MultiplayerCompression/Code/Source/LZ4Compressor.cpp.lz4-compress-hc	2021-05-04 11:53:08.000000000 -0400
++++ o3de/Gems/MultiplayerCompression/Code/Source/LZ4Compressor.cpp	2021-05-05 12:42:31.043483723 -0400
+@@ -60,7 +60,7 @@ namespace MultiplayerCompression
+         AZ_Warning("Multiplayer Compressor", compDataSize >= compWorstCaseSize, "Outbuffer size (%lu B) passed to Compress() is less than estimated worst case (%lu B)", compDataSize, compWorstCaseSize);
+ 
+         // Note that this returns a non-negative int so we are narrowing into a size_t here
+-        compSize = LZ4_compressHC(reinterpret_cast<const char*>(uncompData), reinterpret_cast<char*>(compData), uncompSize);
++        compSize = LZ4_compress_HC(reinterpret_cast<const char*>(uncompData), reinterpret_cast<char*>(compData), uncompSize, compWorstCaseSize, 0);
+ 
+         if (compSize == 0)
+         {

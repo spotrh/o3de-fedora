@@ -1,0 +1,12 @@
+diff -up o3de/Gems/EMotionFX/Code/EMotionFX/Pipeline/SceneAPIExt/Rules/MotionMetaDataRule.h.final-fix o3de/Gems/EMotionFX/Code/EMotionFX/Pipeline/SceneAPIExt/Rules/MotionMetaDataRule.h
+--- o3de/Gems/EMotionFX/Code/EMotionFX/Pipeline/SceneAPIExt/Rules/MotionMetaDataRule.h.final-fix	2021-07-08 17:21:33.638860770 +0000
++++ o3de/Gems/EMotionFX/Code/EMotionFX/Pipeline/SceneAPIExt/Rules/MotionMetaDataRule.h	2021-07-08 17:21:49.701301353 +0000
+@@ -37,7 +37,7 @@ namespace EMotionFX::Pipeline::Rule
+         AZStd::unique_ptr<EMotionFX::MotionEventTable> m_motionEventTable;
+     };
+ 
+-    class MotionMetaDataRule
++    class MotionMetaDataRule final
+         : public ExternalToolRule<AZStd::shared_ptr<MotionMetaData>>
+     {
+     public:

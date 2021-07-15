@@ -1,0 +1,78 @@
+diff -up o3de/Code/Tools/ProjectManager/Platform/Linux/Python_linux.cpp.system-python o3de/Code/Tools/ProjectManager/Platform/Linux/Python_linux.cpp
+--- o3de/Code/Tools/ProjectManager/Platform/Linux/Python_linux.cpp.system-python	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Code/Tools/ProjectManager/Platform/Linux/Python_linux.cpp	2021-07-13 21:50:34.815988876 +0000
+@@ -19,10 +19,12 @@ namespace Platform
+     {
+         bool succeeded = true;
+ 
++/*
+         succeeded = succeeded && InsertPythonLibraryPath(paths, pythonPackage, engineRoot, "python/runtime/%s/python/lib");
+         succeeded = succeeded && InsertPythonLibraryPath(paths, pythonPackage, engineRoot, "python/runtime/%s/python/lib/python3.7/lib-dynload");
+         succeeded = succeeded && InsertPythonLibraryPath(paths, pythonPackage, engineRoot, "python/runtime/%s/python/lib/python3.7");
+         succeeded = succeeded && InsertPythonLibraryPath(paths, pythonPackage, engineRoot, "python/runtime/%s/python/lib/python3.7/site-packages");
++*/
+         return succeeded;
+     }
+ 
+diff -up o3de/Code/Tools/ProjectManager/Source/PythonBindings.cpp.system-python o3de/Code/Tools/ProjectManager/Source/PythonBindings.cpp
+--- o3de/Code/Tools/ProjectManager/Source/PythonBindings.cpp.system-python	2021-07-13 21:50:34.814988911 +0000
++++ o3de/Code/Tools/ProjectManager/Source/PythonBindings.cpp	2021-07-13 22:05:54.899913501 +0000
+@@ -245,6 +245,7 @@ namespace O3DE::ProjectManager
+             return false;
+         }
+ 
++        /*
+         // set PYTHON_HOME
+         AZStd::string pyBasePath = Platform::GetPythonHomePath(PY_PACKAGE, m_enginePath.c_str());
+ 	printf("pyBasePath is %s", pyBasePath.c_str());
+@@ -258,6 +259,7 @@ namespace O3DE::ProjectManager
+         AZStd::wstring pyHomePath;
+         AZStd::to_wstring(pyHomePath, pyBasePath);
+         Py_SetPythonHome(pyHomePath.c_str());
++        */
+ 
+         // display basic Python information
+         AZ_TracePrintf("python", "Py_GetVersion=%s \n", Py_GetVersion());
+@@ -269,9 +271,11 @@ namespace O3DE::ProjectManager
+ 
+         try
+         {
++            /*
+             // ignore system location for sites site-packages
+             Py_IsolatedFlag = 1; // -I - Also sets Py_NoUserSiteDirectory.  If removed PyNoUserSiteDirectory should be set.
+             Py_IgnoreEnvironmentFlag = 1; // -E
++            */
+ 
+             const bool initializeSignalHandlers = true;
+             pybind11::initialize_interpreter(initializeSignalHandlers);
+diff -up o3de/Gems/EditorPythonBindings/Code/Source/PythonSystemComponent.cpp.system-python o3de/Gems/EditorPythonBindings/Code/Source/PythonSystemComponent.cpp
+--- o3de/Gems/EditorPythonBindings/Code/Source/PythonSystemComponent.cpp.system-python	2021-07-07 13:33:55.000000000 +0000
++++ o3de/Gems/EditorPythonBindings/Code/Source/PythonSystemComponent.cpp	2021-07-13 21:50:34.816988841 +0000
+@@ -474,6 +474,7 @@ namespace EditorPythonBindings
+         const char* engineRoot = nullptr;
+         AzFramework::ApplicationRequests::Bus::BroadcastResult(engineRoot, &AzFramework::ApplicationRequests::GetEngineRoot);
+ 
++	/*
+         // set PYTHON_HOME
+         AZStd::string pyBasePath = Platform::GetPythonHomePath(PY_PACKAGE, engineRoot);
+         if (!AZ::IO::SystemFile::Exists(pyBasePath.c_str()))
+@@ -484,6 +485,7 @@ namespace EditorPythonBindings
+         AZStd::wstring pyHomePath;
+         AZStd::to_wstring(pyHomePath, pyBasePath);
+         Py_SetPythonHome(pyHomePath.c_str());
++	*/
+ 
+         // display basic Python information
+         AZ_TracePrintf("python", "Py_GetVersion=%s \n", Py_GetVersion());
+@@ -494,9 +496,11 @@ namespace EditorPythonBindings
+         PyImport_AppendInittab("azlmbr_redirect", RedirectOutput::PyInit_RedirectOutput);
+         try
+         {
++            /*
+             // ignore system location for sites site-packages
+             Py_IsolatedFlag = 1; // -I - Also sets Py_NoUserSiteDirectory.  If removed PyNoUserSiteDirectory should be set.
+             Py_IgnoreEnvironmentFlag = 1; // -E
++            */
+             Py_InspectFlag = 1; // unhandled SystemExit will terminate the process unless Py_InspectFlag is set
+ 
+             const bool initializeSignalHandlers = true;

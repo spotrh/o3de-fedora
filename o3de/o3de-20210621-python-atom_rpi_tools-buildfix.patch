@@ -1,0 +1,5 @@
+diff -up o3de/Gems/Atom/RPI/Tools/atom_rpi_tools/__init__.py.installfix o3de/Gems/Atom/RPI/Tools/atom_rpi_tools/__init__.py
+--- o3de/Gems/Atom/RPI/Tools/atom_rpi_tools/__init__.py.installfix	2021-06-28 20:34:24.516532094 +0000
++++ o3de/Gems/Atom/RPI/Tools/atom_rpi_tools/__init__.py	2021-06-28 20:34:39.626457784 +0000
+@@ -0,0 +1 @@
++# needed to install
