@@ -1,9 +1,11 @@
 Name:		aws-sdk-cpp
 Version:	1.8.163
-Release:	1%{?dist}
+Release:	2%{?dist}
 Summary:	AWS SDK for C++
 URL:		https://github.com/aws/aws-sdk-cpp
 Source0:	https://github.com/aws/aws-sdk-cpp/archive/%{version}.tar.gz
+# Explicitly include <thread> in any test code where we try to do sleep_for
+Patch0:		aws-sdk-cpp-1.8.163-include-thread.patch
 License:	ASL 2.0 and MIT and Zlib
 BuildRequires:	cmake, make, gcc-c++
 BuildRequires:	libcurl-devel, openssl-devel, zlib-devel
@@ -30,11 +32,13 @@ Development files for aws-sdk-cpp.
 
 %prep
 %setup -q
+%patch0 -p1 -b .threadfix
 
 # Set a false SOVERSION to 0 for all the shared libs. Hopefully.
 for i in aws-cpp-sdk-*/CMakeLists.txt testing-resources/CMakeLists.txt; do echo $i && sed -i '/^add_library(\${PROJECT_NAME}.*/a set_target_properties(${PROJECT_NAME} PROPERTIES SOVERSION 0)' $i; done
 
 %build
+%global optflags %{optflags} -Wno-error=nonnull -Wp,-D_GLIBCXX_USE_NANOSLEEP -Wno-error=maybe-uninitialized -Wno-error=uninitialized
 %cmake -DBUILD_SHARED_LIBS=ON -DBUILD_DEPS=OFF
 %cmake_build
 
@@ -61,5 +65,9 @@ for i in aws-cpp-sdk-*/CMakeLists.txt testing-resources/CMakeLists.txt; do echo 
 %{_libdir}/pkgconfig/testing-resources.pc
 
 %changelog
+* Mon Jun 21 2021 Tom Callaway <spot@fedoraproject.org> - 1.8.163-2
+- tweak optflags so that things build
+- Explicitly include <thread> in any test code where we try to do sleep_for
+
 * Wed Mar 17 2021 Tom Callaway <spot@fedoraproject.org> - 1.8.163-1
 - initial package

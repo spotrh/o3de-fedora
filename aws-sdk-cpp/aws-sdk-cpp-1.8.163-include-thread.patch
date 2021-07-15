@@ -1,0 +1,67 @@
+diff -up aws-sdk-cpp-1.8.163/aws-cpp-sdk-cognitoidentity-integration-tests/IdentityPoolOperationTest.cpp.threadfix aws-sdk-cpp-1.8.163/aws-cpp-sdk-cognitoidentity-integration-tests/IdentityPoolOperationTest.cpp
+--- aws-sdk-cpp-1.8.163/aws-cpp-sdk-cognitoidentity-integration-tests/IdentityPoolOperationTest.cpp.threadfix	2021-03-16 19:26:56.000000000 +0000
++++ aws-sdk-cpp-1.8.163/aws-cpp-sdk-cognitoidentity-integration-tests/IdentityPoolOperationTest.cpp	2021-06-21 19:47:16.631860527 +0000
+@@ -29,6 +29,7 @@
+ #include <aws/core/utils/json/JsonSerializer.h>
+ #include <aws/core/utils/Outcome.h>
+ #include <aws/testing/TestingEnvironment.h>
++#include <thread>
+ 
+ using namespace Aws::CognitoIdentity;
+ using namespace Aws::CognitoIdentity::Model;
+diff -up aws-sdk-cpp-1.8.163/aws-cpp-sdk-identity-management-tests/auth/STSAssumeRoleCredentialsProviderTest.cpp.threadfix aws-sdk-cpp-1.8.163/aws-cpp-sdk-identity-management-tests/auth/STSAssumeRoleCredentialsProviderTest.cpp
+--- aws-sdk-cpp-1.8.163/aws-cpp-sdk-identity-management-tests/auth/STSAssumeRoleCredentialsProviderTest.cpp.threadfix	2021-03-16 19:26:56.000000000 +0000
++++ aws-sdk-cpp-1.8.163/aws-cpp-sdk-identity-management-tests/auth/STSAssumeRoleCredentialsProviderTest.cpp	2021-06-21 19:47:16.631860527 +0000
+@@ -9,6 +9,7 @@
+ #include <aws/core/utils/Outcome.h>
+ #include <aws/core/utils/DateTime.h>
+ #include <aws/external/gtest.h>
++#include <thread>
+ 
+ using namespace Aws::Auth;
+ using namespace Aws::STS;
+diff -up aws-sdk-cpp-1.8.163/aws-cpp-sdk-mediastore-data-integration-tests/MediaStoreDataTest.cpp.threadfix aws-sdk-cpp-1.8.163/aws-cpp-sdk-mediastore-data-integration-tests/MediaStoreDataTest.cpp
+--- aws-sdk-cpp-1.8.163/aws-cpp-sdk-mediastore-data-integration-tests/MediaStoreDataTest.cpp.threadfix	2021-03-16 19:26:56.000000000 +0000
++++ aws-sdk-cpp-1.8.163/aws-cpp-sdk-mediastore-data-integration-tests/MediaStoreDataTest.cpp	2021-06-21 19:47:16.631860527 +0000
+@@ -26,6 +26,7 @@
+ #include <aws/testing/platform/PlatformTesting.h>
+ #include <aws/testing/TestingEnvironment.h>
+ #include <fstream>
++#include <thread>
+ 
+ using namespace Aws;
+ using namespace Aws::Utils;
+diff -up aws-sdk-cpp-1.8.163/aws-cpp-sdk-redshift-integration-tests/RedshiftClientTest.cpp.threadfix aws-sdk-cpp-1.8.163/aws-cpp-sdk-redshift-integration-tests/RedshiftClientTest.cpp
+--- aws-sdk-cpp-1.8.163/aws-cpp-sdk-redshift-integration-tests/RedshiftClientTest.cpp.threadfix	2021-03-16 19:26:56.000000000 +0000
++++ aws-sdk-cpp-1.8.163/aws-cpp-sdk-redshift-integration-tests/RedshiftClientTest.cpp	2021-06-21 19:47:16.631860527 +0000
+@@ -36,7 +36,7 @@
+ #include <aws/redshift/model/DeleteSnapshotCopyGrantRequest.h>
+ #include <aws/redshift/model/EnableSnapshotCopyRequest.h>
+ #include <aws/redshift/model/DisableSnapshotCopyRequest.h>
+-
++#include <thread>
+ 
+ using namespace Aws::Auth;
+ using namespace Aws::Http;
+diff -up aws-sdk-cpp-1.8.163/aws-cpp-sdk-s3control-integration-tests/S3ControlTest.cpp.threadfix aws-sdk-cpp-1.8.163/aws-cpp-sdk-s3control-integration-tests/S3ControlTest.cpp
+--- aws-sdk-cpp-1.8.163/aws-cpp-sdk-s3control-integration-tests/S3ControlTest.cpp.threadfix	2021-06-21 19:57:39.169121173 +0000
++++ aws-sdk-cpp-1.8.163/aws-cpp-sdk-s3control-integration-tests/S3ControlTest.cpp	2021-06-21 19:57:49.429071087 +0000
+@@ -34,6 +34,7 @@
+ #include <aws/access-management/AccessManagementClient.h>
+ #include <aws/iam/IAMClient.h>
+ #include <aws/cognito-identity/CognitoIdentityClient.h>
++#include <thread>
+ 
+ using namespace Aws;
+ using namespace Aws::Http;
+diff -up aws-sdk-cpp-1.8.163/aws-cpp-sdk-sqs-integration-tests/QueueOperationTest.cpp.threadfix aws-sdk-cpp-1.8.163/aws-cpp-sdk-sqs-integration-tests/QueueOperationTest.cpp
+--- aws-sdk-cpp-1.8.163/aws-cpp-sdk-sqs-integration-tests/QueueOperationTest.cpp.threadfix	2021-03-16 19:26:56.000000000 +0000
++++ aws-sdk-cpp-1.8.163/aws-cpp-sdk-sqs-integration-tests/QueueOperationTest.cpp	2021-06-21 19:47:16.631860527 +0000
+@@ -35,6 +35,7 @@
+ #include <aws/core/utils/memory/stl/AWSStringStream.h>
+ #include <aws/testing/TestingEnvironment.h>
+ #include <aws/core/utils/UUID.h>
++#include <thread>
+ 
+ using namespace Aws::Http;
+ using namespace Aws;
