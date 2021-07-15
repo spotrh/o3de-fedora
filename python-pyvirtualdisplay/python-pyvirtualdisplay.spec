@@ -3,7 +3,7 @@
 
 Name:           python-%{dist_name}
 Version:        2.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Python wrapper for Xvfb, Xephyr, and Xvnc
 License:        BSD
 URL:            https://github.com/ponty/pyvirtualdisplay
@@ -18,7 +18,7 @@ BuildRequires:  %{py3_dist pillow}
 BuildRequires:  %{py3_dist entrypoint2}
 BuildRequires:  %{py3_dist vncdotool}
 BuildRequires:  %{py3_dist psutil}
-BuildRequires:  xorg-x11-apps
+# BuildRequires:  xorg-x11-apps
 
 %global _description %{expand:
 pyvirtualdisplay is a python wrapper for Xvfb, Xephyr and Xvnc.}
@@ -54,5 +54,8 @@ Requires:       %{py3_dist py}
 %{python3_sitelib}/pyvirtualdisplay*
 
 %changelog
+* Mon Jun 21 2021 Tom Callaway <spot@fedoraproject.org> - 2.1-2
+- drop xorg-x11-apps BR
+
 * Thu Mar 11 2021 Tom Callaway <spot@fedoraproject.org> - 2.1-1
 - Initial package
