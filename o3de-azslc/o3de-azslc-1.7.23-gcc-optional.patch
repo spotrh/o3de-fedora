@@ -1,0 +1,11 @@
+diff -up o3de-azslc-1.7.23/src/AzslcCodeEmissionMutator.h.gcc-fix o3de-azslc-1.7.23/src/AzslcCodeEmissionMutator.h
+--- o3de-azslc-1.7.23/src/AzslcCodeEmissionMutator.h.gcc-fix	2021-07-28 12:47:53.125281467 -0400
++++ o3de-azslc-1.7.23/src/AzslcCodeEmissionMutator.h	2021-07-28 12:48:06.755488528 -0400
+@@ -7,6 +7,7 @@
+  */
+ #pragma once
+ 
++#include <optional>
+ #include "AzslcUtils.h"
+ 
+ namespace AZ::ShaderCompiler
