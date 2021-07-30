@@ -1,0 +1,250 @@
+diff -up mcpp-2.7.2/src/internal.H.o3de mcpp-2.7.2/src/internal.H
+--- mcpp-2.7.2/src/internal.H.o3de	2021-07-30 13:53:31.684831869 -0400
++++ mcpp-2.7.2/src/internal.H	2021-07-30 13:54:03.076309090 -0400
+@@ -505,6 +505,8 @@ extern int      (* mcpp_fputc)( int c, O
+                 (* mcpp_fputs)( const char * s, OUTDEST od),
+                 (* mcpp_fprintf)( OUTDEST od, const char * format, ...);
+ 
++extern void     (*g_report_include)(FILE *, const char *, const char *, const char *);
++
+ /* system.c */
+ extern void     do_options( int argc, char ** argv, char ** in_pp
+         , char ** out_pp);
+diff -up mcpp-2.7.2/src/main.c.o3de mcpp-2.7.2/src/main.c
+--- mcpp-2.7.2/src/main.c.o3de	2021-07-30 13:54:14.118476955 -0400
++++ mcpp-2.7.2/src/main.c	2021-07-30 13:54:30.460725390 -0400
+@@ -336,7 +336,7 @@ int     main
+ #endif
+ (
+     int argc,
+-    char ** argv
++    const char ** argv
+ )
+ {
+     char *  in_file = NULL;
+diff -up mcpp-2.7.2/src/main_libmcpp.c.o3de mcpp-2.7.2/src/main_libmcpp.c
+--- mcpp-2.7.2/src/main_libmcpp.c.o3de	2021-07-30 13:54:41.676895900 -0400
++++ mcpp-2.7.2/src/main_libmcpp.c	2021-07-30 13:54:57.831141482 -0400
+@@ -3,7 +3,7 @@
+ #include "mcpp_lib.h"
+ 
+ int
+-main (int argc, char *argv[])
++main (int argc, const char *argv[])
+ {
+     return mcpp_lib_main (argc, argv);
+ }
+diff -up mcpp-2.7.2/src/mcpp_lib.def.o3de mcpp-2.7.2/src/mcpp_lib.def
+--- mcpp-2.7.2/src/mcpp_lib.def.o3de	2021-07-30 13:55:10.457333428 -0400
++++ mcpp-2.7.2/src/mcpp_lib.def	2021-07-30 13:55:26.636579389 -0400
+@@ -5,3 +5,4 @@ EXPORTS
+ 	mcpp_set_out_func
+ 	mcpp_use_mem_buffers
+ 	mcpp_get_mem_buffer
++	mcpp_set_report_include_callback
+diff -up mcpp-2.7.2/src/mcpp_lib.h.o3de mcpp-2.7.2/src/mcpp_lib.h
+--- mcpp-2.7.2/src/mcpp_lib.h.o3de	2021-07-30 13:55:39.112769052 -0400
++++ mcpp-2.7.2/src/mcpp_lib.h	2021-07-30 13:59:23.738183854 -0400
+@@ -10,7 +10,7 @@
+             || __MINGW64__
+ #if     DLL_EXPORT || (__CYGWIN__ && PIC)
+ #define DLL_DECL    __declspec( dllexport)
+-#elif   DLL_IMPORT
++#elif   MCPP_DLL_IMPORT
+ #define DLL_DECL    __declspec( dllimport)
+ #else
+ #define DLL_DECL
+@@ -19,13 +19,31 @@
+ #define DLL_DECL
+ #endif
+ 
+-extern DLL_DECL int     mcpp_lib_main( int argc, char ** argv);
+-extern DLL_DECL void    mcpp_reset_def_out_func( void);
+-extern DLL_DECL void    mcpp_set_out_func(
+-                    int (* func_fputc)  ( int c, OUTDEST od),
+-                    int (* func_fputs)  ( const char * s, OUTDEST od),
+-                    int (* func_fprintf)( OUTDEST od, const char * format, ...)
+-                    );
+-extern DLL_DECL void    mcpp_use_mem_buffers( int tf);
+-extern DLL_DECL char *  mcpp_get_mem_buffer( OUTDEST od);
++#include <stdio.h>
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++    extern DLL_DECL int     mcpp_lib_main( int argc, const char ** argv);
++    extern DLL_DECL void    mcpp_reset_def_out_func( void);
++    extern DLL_DECL void    mcpp_set_out_func(
++                        int (* func_fputc)  ( int c, MCPP_OUTDEST od),
++                        int (* func_fputs)  ( const char * s, MCPP_OUTDEST od),
++                        int (* func_fprintf)( MCPP_OUTDEST od, const char * format, ...)
++                        );
++    extern DLL_DECL void    mcpp_use_mem_buffers( int tf);
++    extern DLL_DECL char *  mcpp_get_mem_buffer( MCPP_OUTDEST od);
++
++    extern DLL_DECL void    mcpp_set_report_include_callback(
++                        void(*report_include)(FILE * fp,               /* Open file pointer    */
++                                              const char *  src_dir,   /* Directory of source  */
++                                              const char *  filename,  /* Name of the file     */
++                                              const char *  fullname)  /* Full path            */
++    );
++
++#ifdef __cplusplus
++}
++#endif
++
+ #endif  /* _MCPP_LIB_H  */
+diff -up mcpp-2.7.2/src/mcpp_out.h.o3de mcpp-2.7.2/src/mcpp_out.h
+--- mcpp-2.7.2/src/mcpp_out.h.o3de	2021-07-30 13:59:35.629364627 -0400
++++ mcpp-2.7.2/src/mcpp_out.h	2021-07-30 14:00:50.914509257 -0400
+@@ -4,10 +4,19 @@
+ 
+ /* Choices for output destination */
+ typedef enum {
+-    OUT,                        /* ~= fp_out    */
+-    ERR,                        /* ~= fp_err    */
+-    DBG,                        /* ~= fp_debug  */
+-    NUM_OUTDEST
+-} OUTDEST;
++    MCPP_OUT,                        /* ~= fp_out    */
++    MCPP_ERR,                        /* ~= fp_err    */
++    MCPP_DBG,                        /* ~= fp_debug  */
++    MCPP_NUM_OUTDEST
++} MCPP_OUTDEST;
++
++// O3DE: keep build compatibility with MCPP
++#ifndef MCPP_DONT_USE_SHORT_NAMES
++ #define OUT MCPP_OUT
++ #define ERR MCPP_ERR
++ #define DBG MCPP_DBG
++ #define NUM_OUTDEST MCPP_NUM_OUTDEST
++ #define OUTDEST MCPP_OUTDEST
++#endif
+ 
+ #endif  /* _MCPP_OUT_H  */
+diff -up mcpp-2.7.2/src/noconfig.H.o3de mcpp-2.7.2/src/noconfig.H
+diff -up mcpp-2.7.2/src/support.c.o3de mcpp-2.7.2/src/support.c
+--- mcpp-2.7.2/src/support.c.o3de	2021-07-30 14:01:26.040047010 -0400
++++ mcpp-2.7.2/src/support.c	2021-07-30 14:03:07.779604606 -0400
+@@ -364,6 +364,19 @@ void    mcpp_set_out_func(
+ }
+ #endif
+ 
++void (*g_report_include)(FILE *, const char *, const char *, const char *);
++
++void mcpp_set_report_include_callback(
++    void(*report_include)(
++        FILE * fp,               /* Open file pointer    */
++        const char *  src_dir,   /* Directory of source  */
++        const char *  filename,  /* Name of the file     */
++        const char *  fullname)  /* Full path            */
++)
++{
++    g_report_include = report_include;
++}
++
+ int     get_unexpandable(
+     int     c,                              /* First char of token  */
+     int     diag                            /* Flag of diagnosis    */
+diff -up mcpp-2.7.2/src/system.c.o3de mcpp-2.7.2/src/system.c
+--- mcpp-2.7.2/src/system.c.o3de	2021-07-30 14:03:21.835819800 -0400
++++ mcpp-2.7.2/src/system.c	2021-07-30 14:07:56.314021944 -0400
+@@ -3339,7 +3339,7 @@ static int  is_full_path(
+ #if SYS_FAMILY == SYS_UNIX
+     if (path[0] == PATH_DELIM)
+ #elif   SYS_FAMILY == SYS_WIN
+-    if ((path[1] == ':' && path[2] == PATH_DELIM)   /* "C:/path"    */
++    if ((path[1] == ':' && (path[2] == PATH_DELIM || path[2] == '\\'))   /* "C:/path"    */
+             || path[0] == PATH_DELIM)       /* Root dir of current drive    */
+ #elif   1
+ /* For other systems you should write code here.    */
+@@ -3499,6 +3499,8 @@ search:
+      * Note: inc_dirp is restored to the parent includer's directory
+      *   by get_ch() when the current includer is finished.
+      */
++    if (g_report_include)
++        g_report_include(fp, src_dir, filename, fullname);
+     infile->dirp = inc_dirp = dirp;
+ #if 0   /* This part is only for debugging  */
+     chk_dirp( dirp);
+@@ -3903,6 +3905,28 @@ static int  chk_dirp(
+ }
+ #endif
+ 
++char* mincs_ifnotnull(char* p1, char* p2)
++{
++    if (!p1) return p2;
++    if (!p2) return p1;
++    return p1 < p2 ? p1 : p2;
++}
++
++/* extract directory part of a file path */
++static char g_space[1024];
++char * dir_of(const char* path)
++{
++    const char * lastsep = mincs_ifnotnull(strrchr(path, PATH_DELIM),
++                                           strrchr(path, '\\'));
++    if (!lastsep) return NULL;
++    if (lastsep - path >= 1024)
++        cfatal("path too long encountered. %s", path, 0L, NULL);
++
++    strncpy(g_space, path, lastsep - path + 1);
++    g_space[lastsep - path + 1] = 0;
++    return g_space;
++}
++
+ FILEINFO*       sh_file;
+ int             sh_line;
+ 
+@@ -3956,17 +3980,34 @@ static void cur_file(
+ 
+     if (mcpp_debug & MACRO_CALL) {  /* In macro notification mode   */
+         if (sharp_file)                         /* Main input file  */
+-            name = file->filename;
++            name = file->full_fname;
+         else                /* Output full-path-list, normalized    */
+             name = cur_fullname;
+     } else {                /* Usually, the path not "normalized"   */
+         if (sharp_file) {                       /* Main input file  */
+             name = file->filename;
+         } else if (str_eq( file->filename, file->real_fname)) {
+-            sprintf( work_buf, "%s%s", *(file->dirp), cur_fname);
+-            name = work_buf;
++            name = file->full_fname; // O3DE: absolute paths required
+         } else {            /* Changed by '#line fname' directive   */
+-            name = file->filename;
++            if (!is_full_path(file->filename)) {     // O3DE: this block does the best it can to get real full paths.
++                name = dir_of(cur_fullname);  // extract first part of path
++                if (!name)  // no directory found in cur_fullname (weird case)
++                    name = file->filename;
++                else {
++                    sprintf( work_buf, "%s%s", name, file->filename);
++                    FILE* reachable = fopen(work_buf, "r");
++                    if (reachable) {
++                        name = norm_path(null, work_buf, FALSE, FALSE);
++                        fclose(reachable);
++                    } else {  // non reachable file encountered
++                        name = file->filename;  // input verbatim
++                    }
++                }
++                if (strlen(name) == 0)
++                    name = file->filename;  // as is
++            } else {  // absolute path already
++                name = file->filename;
++            }
+         }
+     }
+     if (sharp_filename == NULL || ! str_eq( name, sharp_filename)) {
+diff -up mcpp-2.7.2/src/testmain.c.o3de mcpp-2.7.2/src/testmain.c
+--- mcpp-2.7.2/src/testmain.c.o3de	2021-07-30 14:08:03.052125102 -0400
++++ mcpp-2.7.2/src/testmain.c	2021-07-30 14:08:13.994292622 -0400
+@@ -13,7 +13,7 @@
+ 
+ #include "mcpp_lib.h"
+ 
+-int main(int argc, char *argv[])
++int main(int argc, const char *argv[])
+ {
+     int     i, j;
+     char ** tmp_argv;
