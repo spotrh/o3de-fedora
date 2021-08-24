@@ -1,0 +1,42 @@
+diff -up o3de/Gems/Atom/RHI/Code/Include/Atom/RHI/SwapChain.h.linux-hack o3de/Gems/Atom/RHI/Code/Include/Atom/RHI/SwapChain.h
+--- o3de/Gems/Atom/RHI/Code/Include/Atom/RHI/SwapChain.h.linux-hack	2021-07-28 20:27:03.650488870 +0000
++++ o3de/Gems/Atom/RHI/Code/Include/Atom/RHI/SwapChain.h	2021-07-28 20:27:13.750135340 +0000
+@@ -81,6 +81,8 @@ namespace AZ
+ 
+             AZ_RTTI(SwapChain, "{888B64A5-D956-406F-9C33-CF6A54FC41B0}", Object);
+ 
++            AZStd::atomic_uint resizeCounter = {0};
++
+         protected:
+             SwapChain();
+ 
+diff -up o3de/Gems/Atom/RHI/Code/Source/RHI/SwapChain.cpp.linux-hack o3de/Gems/Atom/RHI/Code/Source/RHI/SwapChain.cpp
+--- o3de/Gems/Atom/RHI/Code/Source/RHI/SwapChain.cpp.linux-hack	2021-07-28 20:27:32.170490550 +0000
++++ o3de/Gems/Atom/RHI/Code/Source/RHI/SwapChain.cpp	2021-07-28 20:27:48.324925079 +0000
+@@ -164,6 +164,8 @@ namespace AZ
+                 m_currentImageIndex = 0;
+             }
+ 
++            resizeCounter++;
++
+             return resultCode;
+         }
+ 
+diff -up o3de/Gems/Atom/RHI/Vulkan/Code/Source/RHI/CommandQueue.cpp.linux-hack o3de/Gems/Atom/RHI/Vulkan/Code/Source/RHI/CommandQueue.cpp
+--- o3de/Gems/Atom/RHI/Vulkan/Code/Source/RHI/CommandQueue.cpp.linux-hack	2021-07-28 20:28:01.838452048 +0000
++++ o3de/Gems/Atom/RHI/Vulkan/Code/Source/RHI/CommandQueue.cpp	2021-07-28 20:28:39.299140767 +0000
+@@ -42,6 +42,14 @@ namespace AZ
+ 
+         void CommandQueue::ExecuteWork(const RHI::ExecuteWorkRequest& rhiRequest)
+         {
++            for (RHI::SwapChain* swapChain : rhiRequest.m_swapChainsToPresent)
++            {
++                if (swapChain->resizeCounter == 0)
++                {
++                    return;
++                }
++            }
++
+             const ExecuteWorkRequest& request = static_cast<const ExecuteWorkRequest&>(rhiRequest);
+             QueueCommand([=](void* queue) 
+             {

@@ -1,0 +1,199 @@
+diff -up o3de/Code/Framework/AzCore/AzCore/Script/lua/lua.h.system-lua o3de/Code/Framework/AzCore/AzCore/Script/lua/lua.h
+--- o3de/Code/Framework/AzCore/AzCore/Script/lua/lua.h.system-lua	2021-07-28 18:08:48.000000000 +0000
++++ o3de/Code/Framework/AzCore/AzCore/Script/lua/lua.h	2021-07-28 18:32:12.715432704 +0000
+@@ -9,9 +9,9 @@
+ #define AZCORE_LUA
+ 
+ extern "C" {
+-#   include <Lua/lua.h>
+-#   include <Lua/lualib.h>
+-#   include <Lua/lauxlib.h>
++#   include <lua.h>
++#   include <lualib.h>
++#   include <lauxlib.h>
+ }
+ 
+ // Currently we support Lua 5.1 and later (we have tested with 5.2)
+diff -up o3de/Code/Framework/AzCore/AzCore/Script/ScriptContext.cpp.system-lua o3de/Code/Framework/AzCore/AzCore/Script/ScriptContext.cpp
+--- o3de/Code/Framework/AzCore/AzCore/Script/ScriptContext.cpp.system-lua	2021-07-28 18:08:48.000000000 +0000
++++ o3de/Code/Framework/AzCore/AzCore/Script/ScriptContext.cpp	2021-07-28 18:32:12.719432564 +0000
+@@ -22,9 +22,9 @@
+ #include <AzCore/StringFunc/StringFunc.h>
+ 
+ extern "C" {
+-#   include <Lua/lualib.h>
+-#   include <Lua/lauxlib.h>
+-#   include <Lua/lobject.h>
++#   include <lualib.h>
++#   include <lauxlib.h>
++#   include <lobject.h>
+ }
+ 
+ #include <limits>
+diff -up o3de/Code/Framework/AzCore/AzCore/Script/ScriptContextDebug.cpp.system-lua o3de/Code/Framework/AzCore/AzCore/Script/ScriptContextDebug.cpp
+--- o3de/Code/Framework/AzCore/AzCore/Script/ScriptContextDebug.cpp.system-lua	2021-07-28 18:08:48.000000000 +0000
++++ o3de/Code/Framework/AzCore/AzCore/Script/ScriptContextDebug.cpp	2021-07-28 18:32:12.719432564 +0000
+@@ -19,8 +19,8 @@
+ #include <AzCore/std/string/tokenize.h>
+ 
+ extern "C" {
+-#   include <Lua/lualib.h>
+-#   include <Lua/lauxlib.h>
++#   include <lualib.h>
++#   include <lauxlib.h>
+ }
+ 
+ namespace AZ
+@@ -925,7 +925,7 @@ ScriptContextDebug::ReadValue(DebugValue
+                 }
+                 else
+                 {
+-                    subValue.m_name = OSString::format("[%lld]", lua_tointeger(l, -2));
++                    subValue.m_name = OSString::format("[%td]", lua_tointeger(l, -2));
+                 }
+                 ReadValue(subValue, tablesVisited, isReadOnly);
+                 lua_pop(l, 1);    // pop the value and leave the key for next iteration
+diff -up o3de/Code/Framework/AzCore/AzCore/Script/ScriptPropertyTable.cpp.system-lua o3de/Code/Framework/AzCore/AzCore/Script/ScriptPropertyTable.cpp
+--- o3de/Code/Framework/AzCore/AzCore/Script/ScriptPropertyTable.cpp.system-lua	2021-07-28 18:08:48.000000000 +0000
++++ o3de/Code/Framework/AzCore/AzCore/Script/ScriptPropertyTable.cpp	2021-07-28 18:32:12.720432528 +0000
+@@ -13,8 +13,8 @@
+ 
+ 
+ extern "C" {
+-#   include <Lua/lualib.h>
+-#   include <Lua/lauxlib.h>
++#   include <lualib.h>
++#   include <lauxlib.h>
+ }
+ 
+ namespace AZ
+diff -up o3de/Code/Framework/AzCore/Tests/Script.cpp.system-lua o3de/Code/Framework/AzCore/Tests/Script.cpp
+--- o3de/Code/Framework/AzCore/Tests/Script.cpp.system-lua	2021-07-28 18:08:48.000000000 +0000
++++ o3de/Code/Framework/AzCore/Tests/Script.cpp	2021-07-28 18:32:12.721432493 +0000
+@@ -4426,7 +4426,7 @@ ramenShop.handler:Connect(4);
+         EXPECT_TRUE(lua_isnil(m_lua, -1)) << "First assignable element is not empty";
+         lua_pop(m_lua, 1);
+ 
+-        EXPECT_EQ(2u, lua_rawlen(m_lua, -1)) << "Cache table contains more than just header";
++        EXPECT_EQ(2u, lua_objlen(m_lua, -1)) << "Cache table contains more than just header";
+ 
+         lua_pop(m_lua, 1);
+     }
+diff -up o3de/Code/Framework/AzFramework/AzFramework/Script/ScriptComponent.cpp.system-lua o3de/Code/Framework/AzFramework/AzFramework/Script/ScriptComponent.cpp
+--- o3de/Code/Framework/AzFramework/AzFramework/Script/ScriptComponent.cpp.system-lua	2021-07-28 18:08:48.000000000 +0000
++++ o3de/Code/Framework/AzFramework/AzFramework/Script/ScriptComponent.cpp	2021-07-28 18:32:12.721432493 +0000
+@@ -29,8 +29,8 @@
+ 
+ 
+ extern "C" {
+-#   include <Lua/lualib.h>
+-#   include <Lua/lauxlib.h>
++#   include <lualib.h>
++#   include <lauxlib.h>
+ }
+ 
+ namespace ScriptComponentCpp
+@@ -62,8 +62,7 @@ namespace ScriptComponentCpp
+         }
+ 
+         // get this off the laptop
+-        const int stripBinaryRepresentation = 1;
+-        return lua_dump(l, LuaStreamWriter, &stream, stripBinaryRepresentation) == 0;
++        return lua_dump(l, LuaStreamWriter, &stream) == 0;
+     }
+ 
+     AZ::Outcome<void, AZStd::string> WriteAssetInfo(const AzFramework::ScriptCompileRequest& request, AZ::IO::GenericStream&, AZ::IO::GenericStream& out)
+diff -up o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/ScriptEditorComponent.cpp.system-lua o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/ScriptEditorComponent.cpp
+--- o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/ScriptEditorComponent.cpp.system-lua	2021-07-28 18:08:49.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/AzToolsFramework/ToolsComponents/ScriptEditorComponent.cpp	2021-07-28 18:32:12.721432493 +0000
+@@ -21,8 +21,8 @@
+ #include <AzCore/Script/ScriptContextDebug.h>
+ 
+ extern "C" {
+-#include<Lua/lualib.h>
+-#include<Lua/lauxlib.h>
++#include <lualib.h>
++#include <lauxlib.h>
+ }
+ 
+ namespace AZ
+diff -up o3de/Code/Framework/AzToolsFramework/Tests/Script/ScriptComponentTests.cpp.system-lua o3de/Code/Framework/AzToolsFramework/Tests/Script/ScriptComponentTests.cpp
+--- o3de/Code/Framework/AzToolsFramework/Tests/Script/ScriptComponentTests.cpp.system-lua	2021-07-28 18:08:49.000000000 +0000
++++ o3de/Code/Framework/AzToolsFramework/Tests/Script/ScriptComponentTests.cpp	2021-07-28 18:32:50.794096571 +0000
+@@ -17,8 +17,8 @@
+ #include "EntityTestbed.h"
+ 
+ extern "C" {
+-#   include <Lua/lualib.h>
+-#   include <Lua/lauxlib.h>
++#   include <lualib.h>
++#   include <lauxlib.h>
+ }
+ 
+ namespace UnitTest
+diff -up o3de/Gems/LmbrCentral/Code/Source/Builders/LuaBuilder/LuaHelpers.cpp.system-lua o3de/Gems/LmbrCentral/Code/Source/Builders/LuaBuilder/LuaHelpers.cpp
+--- o3de/Gems/LmbrCentral/Code/Source/Builders/LuaBuilder/LuaHelpers.cpp.system-lua	2021-07-28 18:08:50.000000000 +0000
++++ o3de/Gems/LmbrCentral/Code/Source/Builders/LuaBuilder/LuaHelpers.cpp	2021-07-28 18:32:50.794096571 +0000
+@@ -40,7 +40,6 @@ namespace LuaBuilder
+         {
+             AZ_TracePrintf(AssetBuilderSDK::ErrorWindow, "Top of stack is not function!");
+         }
+-        const int stripBinaryInformation = 0;
+-        return lua_dump(l, LuaStreamWriter, &stream, stripBinaryInformation) == 0;
++        return lua_dump(l, LuaStreamWriter, &stream) == 0;
+     }
+ }
+diff -up o3de/Gems/ScriptCanvas/Code/Include/ScriptCanvas/Execution/Interpreted/ExecutionInterpretedOut.cpp.system-lua o3de/Gems/ScriptCanvas/Code/Include/ScriptCanvas/Execution/Interpreted/ExecutionInterpretedOut.cpp
+--- o3de/Gems/ScriptCanvas/Code/Include/ScriptCanvas/Execution/Interpreted/ExecutionInterpretedOut.cpp.system-lua	2021-07-28 18:08:50.000000000 +0000
++++ o3de/Gems/ScriptCanvas/Code/Include/ScriptCanvas/Execution/Interpreted/ExecutionInterpretedOut.cpp	2021-07-28 18:32:50.795096536 +0000
+@@ -82,7 +82,7 @@ namespace ScriptCanvas
+             // Lua: lambda, args...
+             const int result = InterpretedSafeCall(m_lua, numArguments, 0);
+             // Lua: ?
+-            if (result != LUA_OK)
++            if (result != 0)
+             {
+                 // Lua: error
+                 lua_pop(m_lua, 1);
+@@ -137,7 +137,7 @@ namespace ScriptCanvas
+             // Lua: lambda, args...
+             const int result = InterpretedSafeCall(m_lua, numArguments, 1);
+             // Lua: ?
+-            if (result != LUA_OK)
++            if (result != 0)
+             {
+                 // Lua: error
+                 lua_pop(m_lua, 1);
+@@ -195,7 +195,7 @@ namespace ScriptCanvas
+             // Lua: lambda, args...
+             const int result = InterpretedSafeCall(m_lua, argsCount, LUA_MULTRET);
+             // Lua: ?
+-            if (result != LUA_OK)
++            if (result != 0)
+             {
+                 // Lua: error
+                 lua_pop(m_lua, 1);
+diff -up o3de/Gems/ScriptCanvas/Code/Include/ScriptCanvas/Execution/Interpreted/ExecutionStateInterpretedPerActivation.cpp.system-lua o3de/Gems/ScriptCanvas/Code/Include/ScriptCanvas/Execution/Interpreted/ExecutionStateInterpretedPerActivation.cpp
+--- o3de/Gems/ScriptCanvas/Code/Include/ScriptCanvas/Execution/Interpreted/ExecutionStateInterpretedPerActivation.cpp.system-lua	2021-07-28 18:08:50.000000000 +0000
++++ o3de/Gems/ScriptCanvas/Code/Include/ScriptCanvas/Execution/Interpreted/ExecutionStateInterpretedPerActivation.cpp	2021-07-28 18:32:50.795096536 +0000
+@@ -118,7 +118,7 @@ namespace ScriptCanvas
+         // Lua: instance, graph_VM.k_OnGraphStartFunctionName, instance
+         const int result = Execution::InterpretedSafeCall(lua, 1, 0);
+         // Lua: instance ?
+-        if (result == LUA_OK)
++        if (result == 0)
+         {
+             // Lua: instance
+             lua_pop(lua, 1);
+diff -up o3de/Gems/ScriptCanvas/Code/Include/ScriptCanvas/Execution/Interpreted/ExecutionStateInterpretedPure.cpp.system-lua o3de/Gems/ScriptCanvas/Code/Include/ScriptCanvas/Execution/Interpreted/ExecutionStateInterpretedPure.cpp
+--- o3de/Gems/ScriptCanvas/Code/Include/ScriptCanvas/Execution/Interpreted/ExecutionStateInterpretedPure.cpp.system-lua	2021-07-28 18:08:50.000000000 +0000
++++ o3de/Gems/ScriptCanvas/Code/Include/ScriptCanvas/Execution/Interpreted/ExecutionStateInterpretedPure.cpp	2021-07-28 18:32:50.795096536 +0000
+@@ -59,7 +59,7 @@ namespace ScriptCanvas
+         // Lua: graph_VM, graph_VM['k_OnGraphStartFunctionName'], userdata<ExecutionState>, args...
+         const int result = Execution::InterpretedSafeCall(lua, aznumeric_caster(1 + range.totalCount), 0);
+         // Lua: graph_VM, ?
+-        if (result == LUA_OK)
++        if (result == 0)
+         {
+             // Lua: graph_VM
+             lua_pop(lua, 1);

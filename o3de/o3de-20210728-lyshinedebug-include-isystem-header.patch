@@ -1,0 +1,14 @@
+diff -up o3de/Gems/LyShine/Code/Source/LyShineDebug.h.fixme o3de/Gems/LyShine/Code/Source/LyShineDebug.h
+--- o3de/Gems/LyShine/Code/Source/LyShineDebug.h.fixme	2021-07-29 20:48:48.928946075 +0000
++++ o3de/Gems/LyShine/Code/Source/LyShineDebug.h	2021-07-29 20:52:14.839763383 +0000
+@@ -12,9 +12,9 @@
+ 
+ #include <Atom/RPI.Reflect/Image/Image.h>
+ #include <AtomCore/Instance/Instance.h>
++#endif
+ 
+ #include <CryCommon/ISystem.h>
+-#endif
+ 
+ ////////////////////////////////////////////////////////////////////////////////////////////////////
+ //! Class for drawing test displays for testing the LyShine functionality

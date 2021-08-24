@@ -1,0 +1,12 @@
+diff -up o3de/cmake/Platform/Common/Install_common.cmake.destdir o3de/cmake/Platform/Common/Install_common.cmake
+--- o3de/cmake/Platform/Common/Install_common.cmake.destdir	2021-07-28 20:03:05.265714734 +0000
++++ o3de/cmake/Platform/Common/Install_common.cmake	2021-07-28 20:03:45.782301597 +0000
+@@ -18,7 +18,7 @@ cmake_path(RELATIVE_PATH CMAKE_LIBRARY_O
+ # of baking the path. This is needed so `cmake --install --prefix <someprefix>` works regardless of the CMAKE_INSTALL_PREFIX
+ # used to generate the solution.
+ # CMAKE_INSTALL_PREFIX is still used when building the INSTALL target
+-set(install_output_folder "\${CMAKE_INSTALL_PREFIX}/${runtime_output_directory}/${PAL_PLATFORM_NAME}/$<CONFIG>")
++set(install_output_folder "\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${runtime_output_directory}/${PAL_PLATFORM_NAME}/$<CONFIG>")
+ 
+ 
+ #! ly_setup_target: Setup the data needed to re-create the cmake target commands for a single target

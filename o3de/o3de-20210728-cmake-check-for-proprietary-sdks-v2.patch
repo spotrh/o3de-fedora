@@ -1,0 +1,106 @@
+diff -up o3de/cmake/Platform/Linux/PAL_linux.cmake.proprietarysdk o3de/cmake/Platform/Linux/PAL_linux.cmake
+--- o3de/cmake/Platform/Linux/PAL_linux.cmake.proprietarysdk	2021-07-28 19:58:16.960770252 +0000
++++ o3de/cmake/Platform/Linux/PAL_linux.cmake	2021-07-28 19:59:56.288305903 +0000
+@@ -41,3 +41,10 @@ ly_set(LY_PYTHON_CMD ${CMAKE_CURRENT_SOU
+ # Set the default window manager that applications should be using on Linux 
+ # Note: Only ("xcb", "wayland", or "xlib" should be considered)
+ set(PAL_TRAIT_LINUX_WINDOW_MANAGER "xcb" CACHE STRING "Sets the Window Manager type to use when configuring Linux (xcb, wayland, or xlib)")  
++
++# The only places where we know for sure that the Proprietary SDKs exist on Linux are x86_64 (maybe also i386, but who cares about that)
++if(CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64 OR CMAKE_SYSTEM_PROCESSOR STREQUAL amd64)
++  ly_set(PAL_TRAIT_PLATFORM_HAS_PROPRIETARY_SDKS TRUE)
++else()
++  ly_set(PAL_TRAIT_PLATFORM_HAS_PROPRIETARY_SDKS FALSE)
++endif()
+diff -up o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt.proprietarysdk o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt
+--- o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt.proprietarysdk	2021-07-28 19:58:16.880773042 +0000
++++ o3de/Gems/Atom/Asset/ImageProcessingAtom/Code/CMakeLists.txt	2021-07-28 19:58:16.961770217 +0000
+@@ -20,6 +20,10 @@ if(NOT PAL_TRAIT_BUILD_HOST_TOOLS)
+     return()
+ endif()
+ 
++if(NOT PAL_TRAIT_PLATFORM_HAS_PROPRIETARY_SDKS)
++    return()
++endif()
++
+ set(platform_tools_files)
+ set(pal_tools_include_files)
+ set(pal_tools_include_dirs)
+diff -up o3de/Gems/Atom/Tools/MaterialEditor/Code/CMakeLists.txt.proprietarysdk o3de/Gems/Atom/Tools/MaterialEditor/Code/CMakeLists.txt
+--- o3de/Gems/Atom/Tools/MaterialEditor/Code/CMakeLists.txt.proprietarysdk	2021-07-28 18:08:49.000000000 +0000
++++ o3de/Gems/Atom/Tools/MaterialEditor/Code/CMakeLists.txt	2021-07-28 19:58:16.961770217 +0000
+@@ -18,6 +18,9 @@ if(NOT PAL_TRAIT_ATOM_MATERIAL_EDITOR_AP
+     return()
+ endif()
+ 
++if(NOT PAL_TRAIT_PLATFORM_HAS_PROPRIETARY_SDKS)
++    return()
++endif()
+ 
+ ly_add_target(
+     NAME MaterialEditor.Document STATIC
+diff -up o3de/Gems/AudioEngineWwise/Code/Platform/Linux/PAL_linux.cmake.proprietarysdk o3de/Gems/AudioEngineWwise/Code/Platform/Linux/PAL_linux.cmake
+--- o3de/Gems/AudioEngineWwise/Code/Platform/Linux/PAL_linux.cmake.proprietarysdk	2021-07-28 18:08:49.000000000 +0000
++++ o3de/Gems/AudioEngineWwise/Code/Platform/Linux/PAL_linux.cmake	2021-07-28 19:58:16.961770217 +0000
+@@ -6,4 +6,9 @@
+ #
+ #
+ 
+-set(PAL_TRAIT_AUDIO_ENGINE_WWISE_USE_STUB FALSE)
++# Wwise SDK is only available on Linux/x86_64
++if(CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64 OR CMAKE_SYSTEM_PROCESSOR STREQUAL amd64)
++   set(PAL_TRAIT_AUDIO_ENGINE_WWISE_USE_STUB FALSE)
++else()
++   set(PAL_TRAIT_AUDIO_ENGINE_WWISE_USE_STUB TRUE)
++endif()
+diff -up o3de/Gems/NvCloth/Code/Platform/Linux/PAL_linux.cmake.proprietarysdk o3de/Gems/NvCloth/Code/Platform/Linux/PAL_linux.cmake
+diff -up o3de/Gems/PhysX/Code/CMakeLists.txt.proprietarysdk o3de/Gems/PhysX/Code/CMakeLists.txt
+--- o3de/Gems/PhysX/Code/CMakeLists.txt.proprietarysdk	2021-07-28 18:08:50.000000000 +0000
++++ o3de/Gems/PhysX/Code/CMakeLists.txt	2021-07-28 20:01:05.607888172 +0000
+@@ -74,7 +74,7 @@ ly_add_target(
+ ly_create_alias(NAME PhysX.Clients NAMESPACE Gem TARGETS Gem::PhysX)
+ ly_create_alias(NAME PhysX.Servers NAMESPACE Gem TARGETS Gem::PhysX)
+ 
+-if(PAL_TRAIT_BUILD_HOST_TOOLS)
++if(PAL_TRAIT_BUILD_HOST_TOOLS AND PAL_TRAIT_PHYSX_SUPPORTED)
+ 
+     ly_add_target(
+         NAME PhysX.Editor.Static STATIC
+@@ -149,7 +149,7 @@ endif()
+ ################################################################################
+ # Tests
+ ################################################################################
+-if(PAL_TRAIT_BUILD_TESTS_SUPPORTED)
++if(PAL_TRAIT_BUILD_TESTS_SUPPORTED AND PAL_TRAIT_PHYSX_SUPPORTED)
+ 
+     
+ 
+diff -up o3de/Gems/PhysX/Code/Source/Platform/Linux/PAL_linux.cmake.proprietarysdk o3de/Gems/PhysX/Code/Source/Platform/Linux/PAL_linux.cmake
+--- o3de/Gems/PhysX/Code/Source/Platform/Linux/PAL_linux.cmake.proprietarysdk	2021-07-28 19:58:26.740429156 +0000
++++ o3de/Gems/PhysX/Code/Source/Platform/Linux/PAL_linux.cmake	2021-07-28 20:02:06.289771700 +0000
+@@ -6,7 +6,12 @@
+ #
+ #
+ 
+-set(PAL_TRAIT_PHYSX_SUPPORTED TRUE)
++# PhysX only available on Linux/x86_64
++if(CMAKE_SYSTEM_PROCESSOR STREQUAL x86_64 OR CMAKE_SYSTEM_PROCESSOR STREQUAL amd64)
++   set(PAL_TRAIT_PHYSX_SUPPORTED TRUE)
++else()
++   set(PAL_TRAIT_PHYSX_SUPPORTED FALSE)
++endif()
+ set(PAL_TRAIT_JOINTS_TYPED_TEST_CASE FALSE)
+ 
+ if(PAL_TRAIT_BUILD_HOST_TOOLS)
+diff -up o3de/Gems/PhysXDebug/Code/CMakeLists.txt.proprietarysdk o3de/Gems/PhysXDebug/Code/CMakeLists.txt
+--- o3de/Gems/PhysXDebug/Code/CMakeLists.txt.proprietarysdk	2021-07-28 18:08:50.000000000 +0000
++++ o3de/Gems/PhysXDebug/Code/CMakeLists.txt	2021-07-28 19:58:26.740429156 +0000
+@@ -45,7 +45,7 @@ ly_add_target(
+ ly_create_alias(NAME PhysXDebug.Clients NAMESPACE Gem TARGETS Gem::PhysXDebug)
+ ly_create_alias(NAME PhysXDebug.Servers NAMESPACE Gem TARGETS Gem::PhysXDebug)
+ 
+-if(PAL_TRAIT_BUILD_HOST_TOOLS)
++if(PAL_TRAIT_BUILD_HOST_TOOLS AND PAL_TRAIT_PHYSX_SUPPORTED)
+     ly_add_target(
+         NAME PhysXDebug.Editor GEM_MODULE
+         NAMESPACE Gem

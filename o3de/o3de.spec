@@ -1,27 +1,82 @@
-%global commit 4f523e496f89e1f1e6998c21b99833338d0e4d81
+%global commit db8f78890f686c6549ad1771cd5863d4313158a0
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 %global toolchain clang
-%global gitdate 20210707
+%global gitdate 20210728
+
+# The goal is to build with system packages.
+# However, it is useful to be able to build with the pre-built bundled components for testing.
+%global system_build 0
+
+%if ! 0%{?system_build}
+%global btype .prebuilt
+# We also cannot do debuginfo when not doing a system build (for obvious reasons)
+%global debug_package %{nil}
+%endif
 
 Name:		o3de
 Version:	2107.1
-Release:	4.git%{shortcommit}%{?dist}
+Release:	6.git%{shortcommit}%{?dist}%{?btype}
 Summary:	A game engine architected for performance, modularity, and productivity
-URL:		https://github.com/aws/o3de
+URL:		https://github.com/o3de/o3de
 License:	ASL 2.0 or MIT
-# git clone https://github.com/aws/o3de.git
-# tar --exclude-vcs -cvJf o3de-20210707git4f523e4.tar.xz o3de/
+# git clone https://github.com/o3de/o3de.git
+# tar --exclude-vcs -cvJf o3de-20210310git448c549.tar.xz o3de/
 Source0:	o3de-%{gitdate}git%{shortcommit}.tar.xz
 # o3de needs a forked version of rapidxml-devel
 # We cannot use the Fedora system copy
 Source1:	rapidxml-o3de-fork.tar.gz
+# Copies of the files that would have been downloaded.
+%if ! 0%{?system_build}
+Source100:	assimp-5.0.1-rev11-multiplatform.tar.xz
+Source101:	ASTCEncoder-2017_11_14-rev2-multiplatform.tar.xz
+Source102:	AWSGameLiftServerSDK-3.4.1-rev1-linux.tar.xz
+Source103:	AWSNativeSDK-1.7.167-rev5-linux.tar.xz
+Source104:	azslc-1.7.23-rev2-linux.tar.xz
+Source105:	cityhash-1.1-multiplatform.tar.xz
+Source106:	DirectXShaderCompilerDxc-1.6.2104-o3de-rev2-linux.tar.xz
+Source107:	etc2comp-9cd0f9cae0-rev1-linux.tar.xz
+Source108:	expat-2.1.0-multiplatform.tar.xz
+Source109:	freetype-2.10.4.14-linux.tar.xz
+Source110:	googlebenchmark-1.5.0-rev2-linux.tar.xz
+Source111:	googletest-1.8.1-rev4-linux.tar.xz
+Source112:	ilmbase-2.3.0-rev4-multiplatform.tar.xz
+Source113:	libsamplerate-0.2.1-rev2-linux.tar.xz
+Source114:	Lua-5.3.5-rev5-linux.tar.xz
+Source115:	lux_core-2.2-rev5-multiplatform.tar.xz
+Source116:	lz4-r128-multiplatform.tar.xz
+Source117:	mcpp-2.7.2_az.1-rev1-linux.tar.xz
+Source118:	md5-2.0-multiplatform.tar.xz
+Source119:	mikkelsen-1.0.0.4-linux.tar.xz
+Source120:	NvCloth-v1.1.6-4-gd243404-pr58-rev1-linux.tar.xz
+Source121:	OpenSSL-1.1.1b-rev2-linux.tar.xz
+Source122:	PhysX-4.1.2.29882248-rev3-linux.tar.xz
+Source123 :	poly2tri-7f0487a-rev1-linux.tar.xz
+Source124:	PVRTexTool-4.24.0-rev4-multiplatform.tar.xz
+Source125:	pybind11-2.4.3-rev2-multiplatform.tar.xz
+Source126:	python-3.7.10-rev2-linux.tar.xz
+# So... this isn't actually the tarball from upstream.
+# That tarball has Ubuntu specific linking.
+# I built a Fedora one. We swap out the SHA256SUM later.
+Source127:	qt-5.15.2-rev5-linux.tar.xz
+Source128:	RapidJSON-1.1.0-multiplatform.tar.xz
+Source129:	RapidXML-1.13-multiplatform.tar.xz
+Source130:	SPIRVCross-2021.04.29-rev1-linux.tar.xz
+Source131:	SQLite-3.32.2-rev3-multiplatform.tar.xz
+Source132:	squish-ccr-20150601-rev3-multiplatform.tar.xz
+Source133:	tiff-4.2.0.15-linux.tar.xz
+Source134:	unwind-1.2.1-linux.tar.xz
+Source135:	v-hacd-2.3-1a49edf-rev1-linux.tar.xz
+Source136:	xxhash-0.7.4-rev1-multiplatform.tar.xz
+Source137:	zlib-1.2.8-rev2-multiplatform.tar.xz
+Source138:	zstd-1.35-multiplatform.tar.xz
+%endif
 Patch1:		o3de-DEBUG.patch
-Patch2:		o3de-20210707-system-qt5.patch
+Patch2:		o3de-20210728-system-qt5.patch
 Patch3:		o3de-20210621-python-hack.patch
 Patch4:		o3de-no-add_dependencies.patch
-Patch6:		o3de-20210621-system-compat-lua.patch
+Patch6:		o3de-20210728-system-compat-lua.patch
 # error: 'TypedTestCase_P_IsDeprecated' is deprecated: TYPED_TEST_CASE_P is deprecated, please use TYPED_TEST_SUITE_P [-Werror,-Wdeprecated-declarations]
-Patch7:		o3de-20210621-gtest-use-suite.patch
+Patch7:		o3de-20210728-gtest-use-suite.patch
 # Silence python3.sh, the echo noise is ending up in Makefiles
 Patch8:		o3de-20210504-silence-python-script.patch
 # Python 3.9 xml.etree.ElementTree.Element has no attribute getchildren
@@ -48,35 +103,39 @@ Patch17:	o3de-20210411-fix-link.patch
 # specifically, ZSTD_resetCStream()
 Patch19:	o3de-20210504-zstd-1.5-deprecation-fix.patch
 # Set flags if proprietary SDKs exist
-Patch20:	o3de-20210707-cmake-check-for-proprietary-sdks-v2.patch
+Patch20:	o3de-20210728-cmake-check-for-proprietary-sdks-v2.patch
 # Check architecture for optimization flags
 # On aarch64, use graviton2 opt
 Patch21:	o3de-20210707-aarch64-use-graviton2-opt-not-x86_64.patch
 # Use destdir in the windeployqt calls
-Patch22:	o3de-20210707-cmake-use-destdir.patch
+Patch22:	o3de-20210728-cmake-use-destdir.patch
 # Add the __init__.py needed for atom_rpi_tools to build properly as a python module
 Patch23:	o3de-20210621-python-atom_rpi_tools-buildfix.patch
-# In file included from /home/fedora/rpmbuild/BUILD/o3de/Gems/EMotionFX/Code/EMotionFX/Tools/EMotionStudio/EMStudioSDK/Source/Commands.cpp:25:
-# /home/fedora/rpmbuild/BUILD/o3de/Gems/EMotionFX/Code/EMotionFX/Pipeline/SceneAPIExt/Rules/MotionMetaDataRule.h:49:31: error: class with destructor marked 'final' cannot be inherited from [-Werror,-Wfinal-dtor-non-final-class]
-#         ~MotionMetaDataRule() final = default;
-#                               ^
-# /home/fedora/rpmbuild/BUILD/o3de/Gems/EMotionFX/Code/EMotionFX/Pipeline/SceneAPIExt/Rules/MotionMetaDataRule.h:40:11: note: mark 'EMotionFX::Pipeline::Rule::MotionMetaDataRule' as 'final' to silence this warning
-#     class MotionMetaDataRule
-#           ^
-Patch24:	o3de-20210707-class-final-fix.patch
 # Try to debug python
 Patch25:	o3de-python-debug.patch
 # Try to use system python
 Patch26:	o3de-20210707-system-python.patch
 # Fix python-o3de so it can build/install
 Patch27:	o3de-20210707-python-o3de-buildfix.patch
+# https://gist.github.com/fabioanderegg/d82f62f6b512b688fddede128e5d8fa6
+Patch28:	o3de-20210728-linux-hack.patch
+# If -D_RELEASE is set, Gems/LyShine/Code/Source/LyShineDebug.cpp does not compile with this error:
+# /home/fedora/rpmbuild/BUILD/o3de/Gems/LyShine/Code/Source/LyShineDebug.h:36:31: error: unknown type name 'CV_r_DebugUIDraw2dFont'
+#    DeclareStaticConstIntCVar(CV_r_DebugUIDraw2dFont, 0);
+# This is because the header that defines DeclareStaticConstIntCVar() [CryCommon/ISystem.h] is wrapped in
+# #ifndef _RELEASE
+# Pulling #include <CryCommon/ISystem.h> outside of that conditional resolves the build error
+Patch29:	o3de-20210728-lyshinedebug-include-isystem-header.patch
 # Hack up the system support, do this patch last.
-Patch28:	o3de-20210707-cmake-system-bits.patch
+Patch30:	o3de-20210728-cmake-system-bits.patch
 
 # This is mostly due to external dependencies, not so much something in the o3de code.
 ExclusiveArch:	x86_64 aarch64
 BuildRequires:	clang, cmake
-BuildRequires:	qt5-qtwebengine-devel, qt5-linguist, qt5-qtsvg-devel, qt5-qtbase-o3de-devel, qt5-qtbase-o3de-private-devel
+BuildRequires:	openssl-devel
+%if 0%{?system_build}
+BuildRequires:  qt5-qtwebengine-devel, qt5-linguist, qt5-qtsvg-devel
+BuildRequires:	qt5-qtbase-o3de-devel, qt5-qtbase-o3de-private-devel
 BuildRequires:	python3, python3-atomicwrites, python3-attrs, python3-boto, python3-botocore
 BuildRequires:	python3-certifi, python3-chardet, python3-colorama, python3-docutils
 BuildRequires:	python3-gitdb, python3-GitPython, python3-idna, python3-imageio
@@ -95,51 +154,53 @@ BuildRequires:	gtest-devel, gmock-devel, google-benchmark-devel
 BuildRequires:	xxhash-devel, alembic-devel, poly2tri-devel
 BuildRequires:	OpenEXR-devel, luxcorerender-devel, libunwind-devel
 BuildRequires:	hdf5-devel, compat-lua-devel >= 5.1.5-19
-BuildRequires:	libsamplerate-devel, libatomic, SDL2-devel
-
-# We use this to clean up duplicates
-BuildRequires:	rdfind
-
+BuildRequires:	libsamplerate-devel
+# mcpp is in Fedora, but o3de needs changes which are not (yet) in that mcpp package
+BuildRequires:  mcpp >= 2.7.2-29
+BuildRequires:  libmcpp-devel >= 2.7.2-29
 # Currently missing in Fedora
-BuildRequires:	python3-easyprocess, python3-pyscreenshot
-BuildRequires:	mikktspace-devel, lzssho-devel, cityhash-devel
-BuildRequires:	squish-ccr-devel, aws-sdk-cpp-devel, etc2comp-devel
-BuildRequires:	dyad-devel, amazon-gamelift-server-sdk-devel
-BuildRequires:	v-hacd-devel
-# Seems to be no longer used.
-# BuildRequires:	qt5-windeployqt
-BuildRequires:	python3-hashids
-BuildRequires:	DirectXShaderCompiler
-
+BuildRequires:  python3-easyprocess, python3-pyscreenshot
+BuildRequires:  mikktspace-devel, lzssho-devel, cityhash-devel
+BuildRequires:  squish-ccr-devel, aws-sdk-cpp-devel, etc2comp-devel
+BuildRequires:  dyad-devel, amazon-gamelift-server-sdk-devel
+BuildRequires:  v-hacd-devel
+BuildRequires:  python3-hashids
+BuildRequires:  DirectXShaderCompiler
+BuildRequires:  o3de-azslc
+BuildRequires:  SPIRV-Cross
 # Forked changes, see:
 # https://github.com/assimp/assimp/pull/3857
 # https://github.com/assimp/assimp/pull/3858
 # https://github.com/assimp/assimp/pull/3859
 BuildRequires:  assimp-devel
-
-# From rpmfusion
-BuildRequires:	ffmpeg-devel
-
 %ifarch x86_64
 # Proprietary *barf*
 # Looks like this one is gone now
-BuildRequires:	PVRTexTool-devel, Wwise-devel
+BuildRequires:  PVRTexTool-devel, Wwise-devel
 # This one would be open source except for the bundled cg-toolkit dependency
-BuildRequires:	PhysX-devel
+BuildRequires:  PhysX-devel
 %endif
-
 # This one is trying to be open source, but failing
 # https://github.com/NVIDIAGameWorks/NvCloth/issues/60
-BuildRequires:	NvCloth-devel
+BuildRequires:  NvCloth-devel
+%endif
+BuildRequires:	libatomic, SDL2-devel
+
+# We use this to clean up duplicates
+BuildRequires:	rdfind
 
 # Runtime Requires
+%if 0%{?system_build}
 Requires:	astc-encoder
+Requires:	DirectXShaderCompiler, o3de-azslc, mcpp, SPIRV-Cross
+%endif
 
 # We probably need these python modules
 Requires:	python3-atom-rpi-tools, python3-o3de
 
 # Explicit requires for qt bits we make symlinks to
 Requires:	qt5-qtbase, qt5-qtbase-o3de, qt5-qtbase-gui, qt5-qtbase-o3de-gui, qt5-qtsvg, qt5-linguist
+
 
 
 %description
@@ -189,6 +250,7 @@ developed by the Atom team. The project contains the following tools:
 
 %prep
 %setup -q -n %{name}
+%if 0%{?system_build}
 %patch2 -p1 -b .qt5-fix
 %patch3 -p1 -b .python-hack
 %patch4 -p1 -b .no-add_dependencies
@@ -205,14 +267,17 @@ developed by the Atom team. The project contains the following tools:
 %patch17 -p1 -b .fix-link
 %patch19 -p1 -b .zstd-1.5
 %patch20 -p1 -b .proprietarysdk
-%patch21 -p1 -b .graviton2opt
-%patch22 -p1 -b .destdir
 %patch23 -p1 -b .python-buildfix
-%patch24 -p1 -b .final-fix
 %patch25 -p1 -b .debug-python
 %patch26 -p1 -b .system-python
 %patch27 -p1 -b .python-o3de-buildfix
-%patch28 -p1 -b .system
+%patch30 -p1 -b .system
+%endif
+
+%patch21 -p1 -b .graviton2opt
+%patch22 -p1 -b .destdir
+%patch28 -p1 -b .linux-hack
+%patch29 -p1 -b .lyshinedebug-include-isystem-header
 
 # if we want to build with -Wall, we have to add...
 # also, -Wno-error=unused-variable. The code is filthy with them.
@@ -232,30 +297,82 @@ developed by the Atom team. The project contains the following tools:
 # also, -Wno-error=tautological-constant-out-of-range-compare Probably EASYFIX
 # also, -Wno-error=tautological-bitwise-compare Probably EASYFIX
 # also, -Wno-error=tautological-compare Probably EASYFIX
+# also, -Wno-error=pointer-bool-conversion Probably EASYFIX
 
-# seems like the optflags make things fail to link. for now, just hack in -g for debuginfo
+# seems like the optflags make things fail to link. for now, just hack in:
+# -g for debuginfo
+# -DPLATFORM_SUPPORTS_AWS_NATIVE_SDK because the code assumes it is true but never sets it anywhere. :P
+# -Wno-error=pointer-bool-conversion because it fails to build without it
 linepos=53
-for i in -g; do
+for i in -g -DPLATFORM_SUPPORTS_AWS_NATIVE_SDK -Wno-error=pointer-bool-conversion; do
 	sed -i "$linepos a \ \ \ \ \ \ \ \ \"$i\"" cmake/Platform/Common/Clang/Configurations_clang.cmake
 	((linepos=linepos+1))
 done
 
 mkdir 3rdParty
+%if 0%{?system_build}
 touch 3rdParty/3rdParty.txt
 pushd 3rdParty
 tar xf %{SOURCE1}
 popd
-
 mkdir -p python/runtime/python-3.7.10-rev2-linux/python/bin
 pushd python/runtime/python-3.7.10-rev2-linux/python/bin
-	ln -s /usr/bin/python3 python
+        ln -s /usr/bin/python3 python
 popd
+%else
+mkdir -p 3rdParty/downloaded_packages
+pushd 3rdParty/downloaded_packages
+	cp %{SOURCE100} .
+	cp %{SOURCE101} .
+	cp %{SOURCE102} .
+	cp %{SOURCE103} .
+	cp %{SOURCE104} .
+	cp %{SOURCE105} .
+	cp %{SOURCE106} .
+	cp %{SOURCE107} .
+	cp %{SOURCE108} .
+	cp %{SOURCE109} .
+	cp %{SOURCE110} .
+	cp %{SOURCE111} .
+	cp %{SOURCE112} .
+	cp %{SOURCE113} .
+	cp %{SOURCE114} .
+	cp %{SOURCE115} .
+	cp %{SOURCE116} .
+	cp %{SOURCE117} .
+	cp %{SOURCE118} .
+	cp %{SOURCE119} .
+	cp %{SOURCE120} .
+	cp %{SOURCE121} .
+	cp %{SOURCE122} .
+	cp %{SOURCE123} .
+	cp %{SOURCE124} .
+	cp %{SOURCE125} .
+	cp %{SOURCE126} .
+	cp %{SOURCE127} .
+	cp %{SOURCE128} .
+	cp %{SOURCE129} .
+	cp %{SOURCE130} .
+	cp %{SOURCE131} .
+	cp %{SOURCE132} .
+	cp %{SOURCE133} .
+	cp %{SOURCE134} .
+	cp %{SOURCE135} .
+	cp %{SOURCE136} .
+	cp %{SOURCE137} .
+	cp %{SOURCE138} .
+popd
+# Just slide our Fedora built copy of the o3de-forked QT files (x86_64) right on in there.
+sed -i 's/76b395897b941a173002845c7219a5f8a799e44b269ffefe8091acc048130f28/1bef8dd73c278ab13dbca0584710aa95fc222ae25be6df8343d8f773e0b55c7c/g' cmake/3rdParty/Platform/Linux/BuiltInPackages_linux.cmake
+%endif
+
 chmod +x python/get_python.sh python/python.sh python/pip.sh
 
 # sed -i 's|set(QT_PATH ${BASE_PATH}/gcc_64)|set(QT_PATH %{_libdir}/qt5)|g' cmake/3rdParty/Platform/Linux/Qt_linux.cmake
 
 
 %build
+%if 0%{?system_build}
 # First, lets do the python modules
 pushd Gems/Atom/RPI/Tools
 %py3_build
@@ -264,9 +381,17 @@ popd
 pushd scripts/o3de
 %py3_build
 popd
+%endif
 
 %cmake -DCMAKE_BUILD_TYPE=release -DLY_3RDPARTY_PATH=3rdParty/ -DQT_VERSION_MAJOR=5 -DQT_VERSION_MINOR=15 -DQT_PATH=%{_libdir}/qt5 -DQt5_LRELEASE_EXECUTABLE=/usr/bin/lrelease-qt5 -DQt5Core_RCC_EXECUTABLE=/usr/bin/rcc-qt5 -DCMAKE_INSTALL_PREFIX:PATH=/opt/o3de
+%if ! 0%{?system_build}
+# We need to hack in our copy of openssl. Sorry. :(
+rm -rf 3rdParty/packages/OpenSSL-1.1.1b-rev2-linux/OpenSSL/lib/libssl.so* 3rdParty/packages/OpenSSL-1.1.1b-rev2-linux/OpenSSL/lib/libcrypto.so*
+cp -a %{_libdir}/libssl.so* %{_libdir}/libcrypto.so* 3rdParty/packages/OpenSSL-1.1.1b-rev2-linux/OpenSSL/lib/
+%endif
 %cmake_build
+
+# Left as a note to myself.
 %if 0
 pushd %_vpath_builddir
 make -f CMakeFiles/Makefile2 all
@@ -274,6 +399,7 @@ popd
 %endif
 
 %install
+%if 0%{?system_build}
 # First, lets do the python modules
 pushd Gems/Atom/RPI/Tools
 %py3_install
@@ -282,9 +408,11 @@ popd
 pushd scripts/o3de
 %py3_install
 popd
+%endif
 
 %cmake_install
 
+%if 0%{?system_build}
 # We do not need multiple copies of qt bits.
 # 1. This is dumb.
 # 2. This is wasteful.
@@ -312,6 +440,7 @@ done
 rm -rf lrelease-qt5
 ln -s ../../../../../%{_bindir}/lrelease-qt5
 popd
+%endif
 
 
 # convert duplicates into hardlinks
@@ -327,6 +456,7 @@ rdfind -makehardlinks true %{buildroot}/opt/o3de
 %files devel
 /opt/o3de/include
 
+%if 0%{?system_build}
 %files -n python3-atom-rpi-tools
 %license LICENSE.txt
 %{python3_sitelib}/atom_rpi_tools*
@@ -334,9 +464,17 @@ rdfind -makehardlinks true %{buildroot}/opt/o3de
 %files -n python3-o3de
 %license LICENSE.txt
 %{python3_sitelib}/o3de*
-
+%endif
 
 %changelog
+* Mon Aug  2 2021 Tom Callaway <spot@fedoraproject.org> - 2107.1-6.gitdb8f788
+- create conditional to do bundled/system builds
+- NOTE: Code still does pip calls to install python deps, cannot build without network yet
+
+* Wed Jul 28 2021 Tom Callaway <spot@fedoraproject.org> - 2107.1-5.gitdb8f788
+- update to latest devel
+- apply fabioanderegg's patch for linux editor
+
 * Tue Jul 13 2021 Tom Callaway <spot@fedoraproject.org> - 2107.1-4.git4f523e4
 - try to use system python
 - package up python3-o3de
