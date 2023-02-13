@@ -155,6 +155,7 @@ BuildRequires:	xxhash-devel, alembic-devel, poly2tri-devel
 BuildRequires:	OpenEXR-devel, luxcorerender-devel, libunwind-devel
 BuildRequires:	hdf5-devel, compat-lua-devel >= 5.1.5-19
 BuildRequires:	libsamplerate-devel
+BuildRequires:	ffmpeg-free-devel
 # mcpp is in Fedora, but o3de needs changes which are not (yet) in that mcpp package
 BuildRequires:  mcpp >= 2.7.2-29
 BuildRequires:  libmcpp-devel >= 2.7.2-29
@@ -193,6 +194,7 @@ BuildRequires:	rdfind
 %if 0%{?system_build}
 Requires:	astc-encoder
 Requires:	DirectXShaderCompiler, o3de-azslc, mcpp, SPIRV-Cross
+Requires:	ffmpeg-free
 %endif
 
 # We probably need these python modules
